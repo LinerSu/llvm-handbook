@@ -57,4 +57,4 @@ SORT stage ASC, facet ASC
 
 ## 🔗 Source-tree crosswalk
 
-Each note's `src:` points at the real path. `IR/` ↔ `llvm/lib/IR`, `Analysis/` ↔ `llvm/lib/Analysis`, `Transforms/{InstCombine,Scalar}` ↔ the matching passes. Concept chapters: [[Loop-Optimization.MOC]]. Book bridges: [[dragon-book-ch6.MOC|Dragon Book Ch.6]] · [[dragon-book-ch8.MOC|Ch.8]] · [[dragon-book-ch9.MOC|Ch.9]] · [[dragon-book-ch10.MOC|Ch.10]] · [[dragon-book-ch11.MOC|Ch.11]] · [[dragon-book-ch12.MOC|Ch.12]] (theory → LLVM).
+Each note's `src:` points at the real path. `IR/` ↔ `llvm/lib/IR`, `Analysis/` ↔ `llvm/lib/Analysis`, `Transforms/{InstCombine,Scalar}` ↔ the matching passes. Concept chapters: [[Loop-Optimization.MOC]]. Book bridges: [[dragon-book-ch6.MOC|Dragon Book Ch.6]] · [[dragon-book-ch8.MOC|Ch.8]] · [[dragon-book-ch9.MOC|Ch.9]] · [[dragon-book-ch10.MOC|Ch.10]] · [[dragon-book-ch11.MOC|Ch.11]] · [[dragon-book-ch12.MOC|Ch.12]] · [[muchnick.MOC|Muchnick]] (theory → LLVM).

@@ -44,7 +44,7 @@ Because the address is an *affine* AddRec, LLVM knows successive iterations touc
 
 > [!info] Consumers of `ScalarEvolution`
 > - **IndVarSimplify** — canonicalize induction variables, widen them, replace exit values with closed forms.
-> - **Loop Strength Reduction (LSR)** — rewrite expensive `i*stride` into cheaper pointer increments using the AddRec.
+> - **Loop Strength Reduction (LSR)** — rewrite expensive `i*stride` into cheaper pointer increments using the AddRec. → [[induction-variables-and-strength-reduction]]
 > - **Loop vectorizer / unroller** — need the trip count and proof that memory strides don't overlap.
 > - **Dependence analysis** and **`scev-aa`** — compare two affine SCEVs to decide whether `a[i]` and `a[i+1]` can alias.
 
@@ -58,5 +58,6 @@ SCEV is strongest on **affine** (linear) recurrences over integers; non-linear e
 > SCEV turns "how does this value change each iteration?" into algebra: induction variables become **add recurrences `{start,+,step}<loop>`**, which give LLVM exact trip counts and strides — the prerequisite for strength reduction, vectorization, and loop dependence analysis.
 
 > [!quote] Further reading
+> - **Also in:** Muchnick *Advanced Compiler Design & Impl.* §14 — induction-variable analysis.
 > - **Dragon Book §9.8** — symbolic analysis (induction variables, affine expressions of loop variables).
 > - [LLVM `ScalarEvolution`](https://llvm.org/doxygen/classllvm_1_1ScalarEvolution.html); Bachmann, Wang, Zima — *Chains of Recurrences*.

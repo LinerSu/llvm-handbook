@@ -66,5 +66,6 @@ This is why a constant lattice (height 2) or a bit-vector lattice (height = #fac
 > A dataflow analysis is **monotone functions on a finite-height lattice**; that pair guarantees a sound fixpoint that **terminates**. Distributivity is the extra property that makes the computed answer (MFP) as precise as the ideal (MOP).
 
 > [!quote] Further reading
+> - **Also in:** Muchnick *Advanced Compiler Design & Impl.* §8.1–8.3 — lattices and the iterative framework.
 > - **Dragon Book §9.3** — foundations of data-flow analysis (lattices, monotone frameworks, MOP vs MFP).
 > - Kildall 1973 (monotone framework); Cousot & Cousot 1977 (abstract interpretation / Galois connections).

@@ -85,5 +85,6 @@ flowchart TD
 > $B$ **post-dominates** $A$ iff every path from $A$ to the exit passes through $B$ — the dominance relation on the reverse CFG. Used by control-dependence and sinking transforms.
 
 > [!quote] Sources
+> - **Also in:** Muchnick *Advanced Compiler Design & Impl.* §7 — control-flow analysis (dominators, intervals).
 > - [doxygen — `DominatorTree`](https://llvm.org/doxygen/classllvm_1_1DominatorTree.html)
 > - Cytron, Ferrante, Rosen, Wegman, Zadeck 1991 (SSA + dominance frontiers); Lengauer & Tarjan 1979 (fast dominators).

@@ -53,6 +53,7 @@ Inlining trades **code size and compile time** for speed, so the threshold matte
 > Inlining = paste the callee into the caller, mainly to **expose it to the caller's context** for further optimization. LLVM does it **bottom-up over call-graph SCCs**, deciding per call site by **legality → mandatory → `InlineCost` vs threshold**.
 
 > [!quote] Further reading
+> - **Also in:** Muchnick *Advanced Compiler Design & Impl.* §15 — procedure integration / in-line expansion.
 > - **Source:** [`Transforms/IPO/Inliner.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/IPO/Inliner.cpp) · cost in [`Analysis/InlineCost.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Analysis/InlineCost.cpp)
 > - **Dragon Book §12.2** — why interprocedural analysis (inlining as the motivating transform).
 > - [LLVM `Inliner`](https://llvm.org/doxygen/Inliner_8h_source.html); `InlineCost.cpp`; the CGSCC pass manager ([[call-graph]]).

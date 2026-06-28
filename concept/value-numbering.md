@@ -192,6 +192,7 @@ verified_on: 2026-06-28
 > - **Partition/equivalence-based** (offline) — two values are ==congruent== if computed by the same operator with pairwise-congruent operands; refine **congruence classes** to a fixed point.
 
 > [!quote] Sources & further reading
+> - **Also in:** Muchnick *Advanced Compiler Design & Impl.* §12.4 — value numbering.
 > - **Source:** [`Transforms/Scalar/GVN.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/GVN.cpp) · [`NewGVN.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/NewGVN.cpp)
 > - [LLVM Passes — `gvn`](https://llvm.org/docs/Passes.html#gvn-global-value-numbering) (and NewGVN).
 > - Gulwani et al., *A Polynomial-Time Algorithm for Global Value Numbering*.

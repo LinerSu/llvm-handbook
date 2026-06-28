@@ -97,6 +97,7 @@ Constant propagation & folding; dead-code elimination; available-expression CSE 
 > The official MLIR tutorial *"Writing DataFlow Analyses in MLIR"* still documents the **old** `ForwardDataFlowAnalysis`/`LatticeElement` API; the current framework is the generic **`DataFlowSolver`** (added in D126751). Verify class names against current doxygen before relying on the tutorial. (This note records the discrepancy per [[source-hierarchy]].)
 
 > [!quote] Sources & confidence
+> - **Also in:** Muchnick *Advanced Compiler Design & Impl.* §8 — iterative & control-tree data-flow analysis.
 > - **Source:** [`Transforms/Scalar/SCCP.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/SCCP.cpp) · [`include/llvm/Analysis/SparsePropagation.h`](https://github.com/llvm/llvm-project/blob/main/llvm/include/llvm/Analysis/SparsePropagation.h)
 > - Kildall 1973 (monotone framework, MFP/MOP) · Cousot & Cousot 1977 (abstract interpretation) · Wegman & Zadeck 1991 (SCCP) — *verified, canonical*.
 > - `SparsePropagation.h` generic sparse solver — *verified against LLVM doxygen (2026-06)*.

@@ -221,5 +221,6 @@ verified_on: 2026-06-28
 > ```
 
 > [!quote] Sources
+> - **Also in:** Muchnick *Advanced Compiler Design & Impl.* §10 — alias analysis.
 > - [LLVM Alias Analysis Infrastructure](https://llvm.org/docs/AliasAnalysis.html) — `alias`, `getModRefInfo`, chained AA.
 > - DSA: Lattner & Adve, *Data Structure Analysis* (and SeaDSA for the array-collapse refinement).

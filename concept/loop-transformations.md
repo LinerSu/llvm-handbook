@@ -270,6 +270,7 @@ verified_on: 2026-06-28
 > Better **data locality** (touch `a[f]`/`b[f]` together → fewer cache misses) and less **loop-control overhead** (one set of compares/increments/branches). Combined with scalar replacement of array temporaries it can raise memory-bandwidth utilization.
 
 > [!quote] Sources (official LLVM docs)
+> - **Also in:** Muchnick *Advanced Compiler Design & Impl.* §13.2 (LICM) and §14 (loop optimizations).
 > - **Source:** [`Transforms/Scalar/`](https://github.com/llvm/llvm-project/tree/main/llvm/lib/Transforms/Scalar) (LICM, LoopUnroll, LoopDistribute, LoopFuse) · [`Transforms/Vectorize/`](https://github.com/llvm/llvm-project/tree/main/llvm/lib/Transforms/Vectorize)
 > - [LLVM Loop Terminology (and Canonical Forms)](https://llvm.org/docs/LoopTerminology.html)
 > - [LLVM Language Reference — `phi`](https://llvm.org/docs/LangRef.html#phi-instruction)

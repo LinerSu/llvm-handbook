@@ -62,5 +62,6 @@ Dependence analysis is the **legality oracle** for the whole loop-optimization s
 > A transform that touches loop iteration order is legal only if it preserves **array dependences** (flow/anti/output, with distance/direction). LLVM answers this with **`DependenceAnalysis`** (SCEV subscripts + ZIV/SIV/MIV/GCD/Banerjee tests) and **`LoopAccessAnalysis`** (runtime checks for the vectorizer).
 
 > [!quote] Further reading
+> - **Also in:** Muchnick *Advanced Compiler Design & Impl.* §9 — dependence analysis & dependence graphs.
 > - **Source:** [`Analysis/DependenceAnalysis.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Analysis/DependenceAnalysis.cpp) · [`Analysis/LoopAccessAnalysis.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Analysis/LoopAccessAnalysis.cpp)
 > - **Dragon Book §11.6** — array data-dependence analysis (distance/direction, GCD & Banerjee tests).

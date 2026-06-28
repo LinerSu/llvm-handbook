@@ -77,6 +77,7 @@ When a value can't stay in a register, it's **spilled**: a stack slot is allocat
 > Register allocation = pack ∞ virtual registers into finite physical ones, spilling the rest. Graph coloring is the textbook framing; **LLVM's default `Greedy` allocator instead splits and evicts live intervals by spill-weight** — same problem, a more incremental solution.
 
 > [!quote] Further reading
+> - **Also in:** Muchnick *Advanced Compiler Design & Impl.* §16 — register allocation by graph coloring.
 > - **Source:** [`CodeGen/RegAllocGreedy.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/CodeGen/RegAllocGreedy.cpp) (+ `RegAllocBasic/Fast/PBQP.cpp`, `LiveIntervals`)
 > - **Dragon Book §8.8** — register allocation and assignment via graph coloring.
 > - **Greedy Register Allocation in LLVM 3.0** — J. Stoklund Olesen, LLVM Project Blog (2011): the canonical account of why LLVM uses splitting + eviction over `LiveIntervals` rather than coloring. ↗ https://blog.llvm.org/2011/09/greedy-register-allocation-in-llvm-30.html

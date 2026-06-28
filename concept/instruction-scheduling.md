@@ -60,6 +60,7 @@ Scheduling happens in codegen after [[instruction-selection]], around [[register
 > Scheduling = pick a legal order of machine instructions (respecting data/control/resource deps) that **hides latency and exposes ILP without blowing up register pressure**. LLVM: the **MachineScheduler** on a dependence DAG (pre- and post-RA), plus **MachinePipeliner** (Swing Modulo Scheduling) to overlap loop iterations.
 
 > [!quote] Further reading
+> - **Also in:** Muchnick *Advanced Compiler Design & Impl.* §17 — code scheduling (list scheduling, software pipelining).
 > - **Source:** [`CodeGen/MachineScheduler.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/CodeGen/MachineScheduler.cpp) · [`CodeGen/MachinePipeliner.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/CodeGen/MachinePipeliner.cpp)
 > - **Dragon Book §10** — code-scheduling constraints, basic-block & global scheduling, software pipelining.
 > - [LLVM CodeGenerator](https://llvm.org/docs/CodeGenerator.html).
