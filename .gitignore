@@ -1,0 +1,14 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp / scratch
+*.tmp
+*.swp
+_wtest.tmp
+
+# Obsidian local state (keep config, drop machine-specific bits)
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+.trash/
