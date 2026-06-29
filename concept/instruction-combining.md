@@ -22,6 +22,9 @@ verified_on: 2026-06-28
 > [!abstract] Chapter map
 > The **peephole / canonicalization** pass: rewrite small instruction patterns into fewer, simpler, more *canonical* ones — **without touching the CFG** — driven by a worklist.
 
+> [!tip] See it live
+> [[running-example#4. Interprocedural — inlining and constant folding|The running example]] shows an instcombine canonicalization: once `k = 4` is inlined, `mul %0, 4` becomes `shl %0, 2` (multiply by a power of two → shift).
+
 > [!info]+ From classic compiler theory → LLVM
 > | Classic concept | LLVM realization |
 > |---|---|

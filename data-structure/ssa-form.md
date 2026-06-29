@@ -22,6 +22,9 @@ verified_on: 2026-06-28
 > 1. **SSA**: every value assigned once; **def-use / use-def** chains; the **φ** function at merges.
 > 2. How LLVM spells φ (the `phi` instruction) and why minimal SSA uses **dominance frontiers**.
 
+> [!tip] See it live
+> The φ-nodes described here appear for real in [[running-example#3. After mem2reg and loop opts|the running example's loop]] — `%sum.05` (a reduction) and `%indvars.iv` (the counter), each `phi`-merging the preheader and back-edge values.
+
 > [!info]+ From classic compiler theory → LLVM
 > | Classic SSA concept | LLVM realization |
 > |---|---|

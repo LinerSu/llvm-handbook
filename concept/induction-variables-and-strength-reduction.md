@@ -24,6 +24,9 @@ verified_on: 2026-06-28
 > [!abstract] Chapter map
 > An **induction variable** changes by a fixed amount each iteration. **Strength reduction** replaces an *expensive* value derived from an IV (a multiply, an address `base + i·w`) with a *cheap* one maintained incrementally (an add). LLVM does this in two cooperating passes: **IndVarSimplify** (canonicalize IVs via [[scalar-evolution|SCEV]]) and **LoopStrengthReduce (LSR)**.
 
+> [!tip] See it live
+> [[running-example#3. After mem2reg and loop opts|The running example's `-O1` loop]] shows IndVarSimplify's work: the IV widened to i64 (`%indvars.iv`), the exposed `%wide.trip.count`, and the **LFTR** exit test `icmp eq %indvars.iv.next, %wide.trip.count`.
+
 > [!info] The two ideas
 > - **Induction variable (IV)** — a value whose SCEV is an add-recurrence `{start,+,step}<loop>` (basic IV `i`; *derived* IV like `i·4` or `a + i·4`).
 > - **Strength reduction** — maintain a derived IV by **adding its step** each iteration instead of recomputing it: `t = a + i·4` becomes `t += 4`.

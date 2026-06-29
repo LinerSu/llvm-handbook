@@ -22,6 +22,9 @@ verified_on: 2026-06-28
 > [!abstract] Chapter map
 > SCEV is LLVM's **symbolic analysis** of how scalar values change across loop iterations. It rewrites induction variables and the expressions built on them into closed-form symbolic recurrences, so loop passes can reason about trip counts, strides, and dependences algebraically instead of by simulation.
 
+> [!tip] See it live
+> In [[running-example#3. After mem2reg and loop opts|the running example]], SCEV is why `i` becomes `%indvars.iv` (the `{0,+,1}` add-recurrence, widened to i64) and why `%wide.trip.count` materializes the loop's trip count.
+
 > [!info] The core representation: add recurrences
 > SCEV expresses a loop-varying value as a **chain of recurrences**, written `{start,+,step}<loop>` (an *add recurrence*, AddRec). `{0,+,1}<L>` is "starts at 0, adds 1 each iteration of L" — the canonical induction variable. Building blocks: constants, `SCEVUnknown` (opaque values), `+`/`*`, `min`/`max`, and nested AddRecs (for nested loops).
 

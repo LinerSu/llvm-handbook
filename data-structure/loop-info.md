@@ -23,6 +23,9 @@ verified_on: 2026-06-28
 > 2. The `LoopInfo` analysis — what it guarantees and doesn't.
 > 3. **Canonical forms** that make loop passes simpler: *LoopSimplify*, *LCSSA*, *rotation*.
 
+> [!tip] See it live
+> Every term here is visible in [[running-example#3. After mem2reg and loop opts|the running example's `-O1` loop]]: `for.body.preheader` (the preheader), the `for.body` header/latch with its back-edge, and `%sum.0.lcssa` (the LCSSA closing φ at the exit).
+
 > [!info]+ From classic compiler theory → how LLVM actually does it
 > | Dragon-book concept | LLVM realization |
 > |---|---|

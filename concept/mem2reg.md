@@ -27,6 +27,9 @@ sources:
 > [!abstract] Chapter map
 > Front ends emit every local variable as a stack slot (`alloca` + `load`/`store`). **mem2reg** is the pass that turns those promotable stack slots into **SSA virtual registers + φ-nodes** — i.e. it *constructs* [[ssa-form|SSA]]. It is the classic Cytron et al. algorithm: place φ at iterated dominance frontiers, then rename.
 
+> [!tip] See it live
+> Watch mem2reg work on the shared example: [[running-example#2. Front-end IR — everything is a stack slot|before — five `alloca`s]] → [[running-example#3. After mem2reg and loop opts|after — `%sum.05` and `%indvars.iv` are φ-nodes, allocas gone]].
+
 > [!info]+ Classic SSA construction → LLVM mem2reg
 > | Classic (Cytron et al. 1991) | LLVM realization |
 > |---|---|

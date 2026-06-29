@@ -24,6 +24,9 @@ verified_on: 2026-06-28
 > 3. **LLVM IR**: a typed, RISC-like, SSA, three-address representation — its syntax and object model.
 > 4. The **object model** Module → Function → BasicBlock → Instruction, and the core classes Type / Value / Use.
 
+> [!tip] See it live
+> See this object model in real IR: [[running-example#1. The program|a tiny C program]] and its [[running-example#2. Front-end IR — everything is a stack slot|front-end `-O0` output]] — a Module of Functions, each a CFG of BasicBlocks of Instructions.
+
 > [!info]+ From classic compiler theory → how LLVM is built
 > | Classic concept | LLVM realization |
 > |---|---|

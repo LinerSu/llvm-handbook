@@ -48,7 +48,7 @@ int caller(int *a, int n) {
 
 A scaled array reduction plus a caller that pins `k = 4`. Small, but it exercises stack slots, a loop, array addressing, arithmetic, a reduction, and an interprocedural constant.
 
-## 2. Front-end IR (`-O0`) — everything is a stack slot
+## 2. Front-end IR — everything is a stack slot
 
 > [!example]+ `accumulate` at `-O0` (before mem2reg)
 > ```llvm
@@ -118,7 +118,7 @@ The single most important before/after in the vault. Compare with §2:
 - **SCEV + IndVarSimplify** ([[scalar-evolution]], [[induction-variables-and-strength-reduction]]): the IV is **widened to i64**, the **trip count** `%wide.trip.count` is materialized, and the exit test is canonicalized to `icmp eq …, trip_count` (**LFTR**).
 - **Inferred facts** ([[extending-llvm-ir]], [[pointer-alias-analysis]]): `%a` gained `nocapture readonly`; the load carries `!tbaa`.
 
-## 4. Interprocedural (`caller` at `-O1`)
+## 4. Interprocedural — inlining and constant folding
 
 > [!example]+ `caller` — `accumulate` inlined, `k = 4` propagated
 > ```llvm

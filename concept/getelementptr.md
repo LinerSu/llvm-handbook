@@ -24,6 +24,9 @@ verified_on: 2026-06-28
 > 3. The famous **extra `0`** and "no superfluous indices".
 > 4. **`inbounds`**, overflow/`poison`, and GEP's **aliasing contract**.
 
+> [!tip] See it live
+> `a[i]` in the running example lowers to a GEP: [[running-example#2. Front-end IR — everything is a stack slot|`getelementptr inbounds i32, ptr %a, i64 %i`]] — pure address math, no load.
+
 > [!info]+ From classic compiler theory → LLVM
 > | What you already know | LLVM realization |
 > |---|---|

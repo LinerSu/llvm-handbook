@@ -23,6 +23,9 @@ verified_on: 2026-06-28
 > [!abstract] Chapter map
 > Inlining replaces a call with a copy of the callee's body. Its real value isn't just removing call overhead — it's **exposing the callee's code to the caller's context**, which unlocks constant propagation, [[value-numbering|CSE]], and dead-code elimination across what used to be a call boundary. In LLVM it's a **bottom-up CGSCC pass** governed by a cost model.
 
+> [!tip] See it live
+> In [[running-example#4. Interprocedural — inlining and constant folding|the running example]], `caller` inlines `accumulate`; with the argument `k = 4` now visible, `mul %0, %k` folds to `shl %0, 2` — the "exposed to the caller's context" payoff in two lines.
+
 ---
 
 ## 1. What and why
