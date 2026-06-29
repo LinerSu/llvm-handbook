@@ -45,13 +45,13 @@ This is **lazy code motion** (Knoop–Rüthing–Steffen): place each computatio
 ## 2. In LLVM — load PRE inside GVN
 
 > [!info] What LLVM actually does
-> LLVM's **`GVN`** pass (engineering detail: [[llvm-gvn]]) performs PRE primarily for **loads** ("load PRE"). Using [[memory-ssa|memory dependence]], when a loaded value is available on some predecessors of a block but not all, GVN **inserts the load on the missing edge** to make it fully available, then eliminates the redundant load.
+> LLVM's **`GVN`** pass (engineering detail: [[llvm-gvn]]) performs PRE primarily for **loads** ("load PRE"). Using **memory-dependence analysis** (`MemoryDependenceResults`), when a loaded value is available on some predecessors of a block but not all, GVN **inserts the load on the missing edge** to make it fully available, then eliminates the redundant load.
 > - It is **guarded**: GVN will not insert a load on a path where it didn't already occur (no new faults), and it **won't grow code** — so e.g. **critical edges block load PRE** unless they can be split safely.
 > - Scalar PRE in GVN is more limited; the full value-based **GVN-PRE** algorithm (VanDrunen–Hosking) is **not implemented in upstream LLVM** (it was only prototyped externally, never merged).
 
 ## 3. Why it matters
 
-PRE removes redundancies that plain [[value-numbering|GVN/CSE]] can't — especially **loads hoisted out of the common path** and computations partially redundant across `if`/loop structure — without ever adding work to a path that didn't have it. It pairs with [[memory-ssa|Memory SSA]] (to know a load is available) and alias analysis (to know it isn't clobbered).
+PRE removes redundancies that plain [[value-numbering|GVN/CSE]] can't — especially **loads hoisted out of the common path** and computations partially redundant across `if`/loop structure — without ever adding work to a path that didn't have it. It pairs with **memory-dependence analysis** (`MemoryDependenceResults` — what default GVN uses to find an available load) and alias analysis (to know it isn't clobbered); MemorySSA-based GVN is opt-in (it's what `NewGVN` uses).
 
 > [!summary] The one thing to remember
 > PRE = "make a partially-redundant computation fully redundant by inserting it on the missing paths, then delete it." In LLVM this is mostly **load PRE in the GVN pass**, carefully guarded so it never adds a fault or grows code; full value-based GVN-PRE is not implemented in upstream LLVM.

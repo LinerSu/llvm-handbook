@@ -15,7 +15,7 @@ status: draft
 > Get values out of memory and remove pointless memory traffic. The arc *split aggregates → promote stack slots to registers → eliminate dead/forwarded loads and stores*. The legality currency throughout is **alias analysis** + [[memory-ssa|Memory SSA]].
 
 ## 1. Split aggregates
-Break structs/arrays into independent scalar slots so each can be promoted. → **[[scalar-replacement-of-aggregates|SROA]]** (runs before mem2reg).
+Break structs/arrays into independent scalar slots, then promote them. → **[[scalar-replacement-of-aggregates|SROA]]** — note SROA *itself* promotes the resulting scalars to SSA (it subsumes mem2reg's job, calling the same `PromoteMemToReg`); standalone mem2reg is the scalar-only special case.
 
 ## 2. Promote to registers
 Turn promotable `alloca`s (address never escapes) into SSA values + φ — the single biggest source of downstream optimization. → **[[mem2reg|mem2reg]]**.

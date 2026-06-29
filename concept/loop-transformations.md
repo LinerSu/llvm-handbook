@@ -233,7 +233,7 @@ verified_on: 2026-06-28
 
 > [!info] Why & how
 > - **Why:** improve cache locality / reduce misses, and **expose parallelism** (each split loop can run independently).
-> - **How** (`LoopDistributeLegacy`): partition instructions by walking the body backward; unsafe-dependence instructions go to *cyclic* partitions, the rest to *non-cyclic* ones. Memory dependence of loads/stores is classified via [[memory-ssa|Memory SSA]] as **Def** / **Clobber** / **Unknown**. Only innermost, single-exit loops are considered.
+> - **How** (`LoopDistributePass`): partition instructions by walking the body backward; unsafe-dependence instructions go to *cyclic* partitions, the rest to *non-cyclic* ones. Memory dependences are classified by **LoopAccessAnalysis** (`MemoryDepChecker` — NoDep / Forward / Backward / Unknown), not Memory SSA. Only innermost, single-exit loops are considered.
 
 ---
 

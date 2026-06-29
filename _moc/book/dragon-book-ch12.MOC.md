@@ -23,7 +23,7 @@ verified_on: 2026-06-28
 | 12.1 | Basic concepts (call graph, call sites, contexts) | `CallGraph` / `LazyCallGraph`, CGSCC bottom-up | [[call-graph]] |
 | 12.2 | Why interprocedural analysis? | inlining as the motivating IPO | [[inlining]] |
 | 12.3 | A logical (Datalog) representation of data flow | Andersen's points-to as **inclusion constraints** | [[pointer-alias-analysis]] |
-| 12.4 | A simple pointer-analysis algorithm (Andersen) | inclusion-based AA (LLVM `cfl-anders-aa`); cf. equality-based [[unification|Steensgaard]] | [[pointer-alias-analysis]], [[unification]] |
+| 12.4 | A simple pointer-analysis algorithm (Andersen) | inclusion-based AA — no in-tree CFL-AA in modern LLVM (`cfl-anders-aa`/`cfl-steens-aa` removed 2022); cf. equality-based [[unification|Steensgaard]] | [[pointer-alias-analysis]], [[unification]] |
 | 12.5 | Context-insensitive interprocedural analysis | flow-/context-insensitive AA | [[pointer-alias-analysis]] |
 | 12.6 | Context-sensitive pointer analysis (cloning) | **DSA** bottom-up/top-down cloning | [[pointer-alias-analysis]] |
 | 12.7 | Datalog implementation by BDDs | (niche; not a core LLVM technique) | — |
@@ -39,7 +39,7 @@ verified_on: 2026-06-28
 
 > [!info] Three things to keep in mind while reading the book
 > - **Interprocedural ≈ run bottom-up over the call graph.** LLVM's CGSCC pass manager visits SCCs callee-first; that order *is* the practical face of "interprocedural" ([[call-graph]], [[inlining]]).
-> - **Andersen vs Steensgaard, both shipped.** §12.4's inclusion-based Andersen is LLVM's `cfl-anders-aa`; the equality/[[unification]]-based Steensgaard is `cfl-steens-aa`. Full context-sensitive **DSA** lives in the external `poolalloc` module, not core ([[pointer-alias-analysis]]).
+> - **Andersen vs Steensgaard — textbook, not in-tree.** LLVM's CFL-AA passes (`cfl-anders-aa`, inclusion-based; `cfl-steens-aa`, equality/[[unification]]-based) were **removed from LLVM in 2022** and are absent in 22.x; the in-tree alias analyses today are BasicAA, TBAA, ScopedNoAliasAA, GlobalsAA, SCEV-AA. Andersen/Steensgaard remain the canonical *algorithms*; full context-sensitive **DSA** lived in the external `poolalloc` module ([[pointer-alias-analysis]]).
 > - **Inlining often substitutes for analysis.** In practice LLVM gets much interprocedural precision simply by **inlining** and then running intraprocedural passes, rather than a separate whole-program analysis.
 
 ```dataview

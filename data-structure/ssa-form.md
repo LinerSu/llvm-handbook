@@ -52,8 +52,8 @@ verified_on: 2026-06-28
 > [!info] The two chains (and they are *not* symmetric)
 > | Chain | Direction | Definition | LLVM form |
 > |---|---|---|---|
-> | **Use-def (UD)** | forward | for a *use*, the set of definitions that reach it without an intervening def | which def feeds this operand |
-> | **Def-use (DU)** | backward | for a *definition*, the set of uses it reaches | the **use list** of a `Value` — "all `User`s of a `Value`" |
+> | **Use-def (UD)** | backward | for a *use*, the set of definitions that reach it without an intervening def | which def feeds this operand |
+> | **Def-use (DU)** | forward | for a *definition*, the set of uses it reaches | the **use list** of a `Value` — "all `User`s of a `Value`" |
 >
 > Remember `Value != location`: SSA names a *value*, not a memory cell. (Memory needs [[memory-ssa|Memory SSA]].)
 
@@ -78,20 +78,14 @@ verified_on: 2026-06-28
 
 > [!example]+ φ in real IR
 > ```llvm
-> define void @_Z1mbb(i8 %r, i8 %y) {
+> define i1 @or_bb(i1 %a, i1 %b) {
 > entry:
->   %l      = alloca i8, align 1
->   %0      = load i8, ptr %y.addr, align 1
->   %tobool = trunc i8 %0 to i1
->   br i1 %tobool, label %lor.end, label %lor.rhs
+>   br i1 %a, label %lor.end, label %lor.rhs   ; if %a is true, short-circuit (||)
 > lor.rhs:                 ; preds = %entry
->   %1   = load i8, ptr %r.addr, align 1
->   %rhs = %1
 >   br label %lor.end
 > lor.end:                 ; preds = %lor.rhs, %entry
->   %2 = phi i1 [ 3, %entry ], [ %rhs, %lor.rhs ]   ; pick by incoming edge
->   store i8 %2, ptr %l, align 1
->   ret void
+>   %r = phi i1 [ true, %entry ], [ %b, %lor.rhs ]   ; pick by incoming edge
+>   ret i1 %r
 > }
 > ```
 

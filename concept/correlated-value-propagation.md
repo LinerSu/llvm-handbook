@@ -60,7 +60,7 @@ sources:
 ## 3. In LLVM
 
 > [!info] Where it lives
-> [`Transforms/Scalar/CorrelatedValuePropagation.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/CorrelatedValuePropagation.cpp), scheduled in the `-O2`/`-O3` scalar pipeline, typically near [[jump-threading|JumpThreading]] (the other LVI consumer). CVP **preserves** LVI; the analysis is released once both have run.
+> [`Transforms/Scalar/CorrelatedValuePropagation.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/CorrelatedValuePropagation.cpp), scheduled in the `-O2`/`-O3` scalar pipeline, typically near [[jump-threading|JumpThreading]] (the other LVI consumer). CVP actually **abandons** LVI at the end of its own run (keeping LVI live is expensive), so JumpThreading recomputes it; CVP does preserve the DominatorTree.
 
 ## 4. CVP vs SCCP vs the analysis
 

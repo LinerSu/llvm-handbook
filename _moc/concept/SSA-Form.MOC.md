@@ -21,7 +21,7 @@ Every value is assigned **exactly once**; control-flow merges reconcile definiti
 Minimal SSA places φ at **iterated dominance frontiers** (Cytron et al. 1991), computed from the [[dominator-tree|dominator tree]] over the [[control-flow-graph|CFG]].
 
 ## 3. Construction
-LLVM scalars are SSA *by construction*; the real work is promoting memory to registers. → **[[mem2reg|mem2reg]]** (alloca → SSA + φ) and its prerequisite **[[scalar-replacement-of-aggregates|SROA]]** (split aggregates first).
+LLVM scalars are SSA *by construction*; the real work is promoting memory to registers. → **[[mem2reg|mem2reg]]** (scalar alloca → SSA + φ) and **[[scalar-replacement-of-aggregates|SROA]]**, which splits aggregates *and* promotes them itself — SROA subsumes mem2reg, they are not an ordered pair.
 
 ## 4. Lifting to memory
 Memory has no SSA names natively; **[[memory-ssa|Memory SSA]]** gives loads/stores the same def-use chains, enabling memory-aware optimization.

@@ -109,7 +109,7 @@ verified_on: 2026-06-28
 
 - ==Global== identifiers (functions, global variables) start with `@`.
 - ==Local== identifiers (registers, types) start with `%`.
-- Every global and local register is **assigned exactly once** (SSA).
+- Every **local** (`%`) register is **assigned exactly once** (SSA); `@` globals instead name memory locations (writable repeatedly via `store`), so they are not SSA values.
 - The identifier regex is `[%@][-a-zA-Z$._][-a-zA-Z$._0-9]*`.
 
 > [!example] Named, unnamed, constants

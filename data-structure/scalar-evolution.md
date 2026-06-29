@@ -52,7 +52,7 @@ It builds on [[loop-info|LoopInfo]] (it reasons relative to a specific loop) and
 
 ## 3. Limits
 
-SCEV is strongest on **affine** (linear) recurrences over integers; non-linear evolution, data-dependent bounds, and wrapping/overflow force conservative `SCEVUnknown` results or guard conditions. Overflow reasoning relies on `nsw`/`nuw` flags carried from the front end.
+SCEV is strongest on **affine** (linear) recurrences over integers; non-linear evolution, data-dependent bounds, and wrapping/overflow force conservative `SCEVUnknown` results or guard conditions. Overflow reasoning uses `nsw`/`nuw` flags — but SCEV largely **infers these itself** (via constant-range and loop-guard reasoning) rather than depending on flags carried from the front end.
 
 > [!summary] The one thing to remember
 > SCEV turns "how does this value change each iteration?" into algebra: induction variables become **add recurrences `{start,+,step}<loop>`**, which give LLVM exact trip counts and strides — the prerequisite for strength reduction, vectorization, and loop dependence analysis.

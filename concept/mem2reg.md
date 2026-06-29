@@ -47,7 +47,7 @@ sources:
 
 > [!info] Promotion criteria
 > An `alloca` is promotable iff:
-> - it is a **first-class scalar** type with **array size 1** (no aggregates — those are [[scalar-replacement-of-aggregates|SROA]]'s job first);
+> - every `load`/`store` uses the alloca's **allocated type** directly (no bitcast/type-pun) — usually a scalar, though whole-aggregate allocas qualify too; aggregates are normally split first by [[scalar-replacement-of-aggregates|SROA]];
 > - it is used **only** by `load`/`store` (its address does **not** escape — no pointer arithmetic, no passing to calls);
 > - the loads/stores are **non-volatile**.
 

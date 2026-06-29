@@ -61,7 +61,7 @@ verified_on: 2026-06-28
 > | Step | What it does |
 > |---|---|
 > | **Fold** | if a binary operator has a constant operand, move it to the **right-hand side** (canonical form), then constant-fold |
-> | **Rewrite** | bitwise ops with constant operands are grouped so **shifts** come first, then `or`, then `and`, then `xor`; compares are canonicalized (`<,>,≤,≥` → `=`/`≠` where possible) |
+> | **Rewrite** | bitwise ops with constant operands are grouped so **shifts** come first, then `or`, then `and`, then `xor`; compares are canonicalized toward strict, unsigned predicates (e.g. `ule x,7` → `ult x,8`; signed → unsigned when the sign is known) |
 >
 > Each rewrite can expose new opportunities, so changed instructions and their users are pushed back on the worklist.
 

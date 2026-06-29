@@ -46,11 +46,11 @@ for (i = 0; i < n; i++) { sum += *p; p += 4; }   // multiply → add
 ## 2. In LLVM — IndVarSimplify then LSR
 
 > [!info] A two-pass division of labor
-> - **`IndVarSimplify`** uses SCEV to **canonicalize** induction variables: **expose the trip count**, **widen** narrow IVs to the native width, and **rewrite exit values** to closed forms. It *prepares* loops — e.g. turning `for (i=0;i<n;i+=2) … p[i]` into a unit-stride `for (i=0;i!=n;++i) … p[i*2]`.
+> - **`IndVarSimplify`** uses SCEV to **canonicalize** induction variables: **expose the trip count**, **widen** narrow IVs to the native width, and **rewrite exit values** to closed forms. Its canonicalization is mainly of the **exit test** (LFTR) — e.g. turning `for (i=7; i*i<1000; ++i)` into `for (i=0; i!=25; ++i)` — rather than renumbering strides into one unit-stride IV.
 > - **`LoopStrengthReduce` (LSR)** then **strength-reduces** the SCEV expressions — replacing the `i*2`/`base + i·w` computations with minimal-cost IVs and **targeting the machine's addressing modes** (so `a[i]` becomes a single incremented pointer/scaled-index).
 
 > [!warning] Why they're paired
-> IndVarSimplify's canonicalization can *introduce* a multiply (the `p[i*2]` above) and is a **pessimization on its own** — it relies on **LSR running afterward** to clean it up. Treat them as one IV-optimization stage, not two independent passes.
+> IndVarSimplify can leave **widened** IVs and SCEV-expanded expressions that aren't cheap on their own — it relies on **LSR running afterward** to lower them to addressing-mode-friendly increments. Treat them as one IV-optimization stage, not two independent passes.
 
 ## 3. Why it matters
 

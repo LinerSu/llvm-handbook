@@ -124,7 +124,7 @@ So a subclass can handle things at any granularity: one specific opcode (`visitA
 LLVM uses `InstVisitor` wherever a pass must act per-opcode:
 
 - [[instruction-combining|InstCombine]] — `InstCombinerImpl : InstVisitor<…, Instruction*>` (note the non-void `RetTy`: each `visitXXX` returns the replacement instruction). It pairs the visitor with a **worklist** rather than a single linear walk.
-- [[instruction-selection|SelectionDAGBuilder]] — `visit()` lowers each IR instruction into DAG nodes.
+- [[instruction-selection|SelectionDAGBuilder]] — lowers each IR instruction into DAG nodes via its **own** opcode `switch` (from `Instruction.def`); it is *not* an `InstVisitor` subclass, just the same dispatch idea.
 - `PtrUseVisitor` — a specialized visitor for walking the uses of a pointer (used by [[scalar-replacement-of-aggregates|SROA]]).
 
 > [!note] Cross-ecosystem cousins

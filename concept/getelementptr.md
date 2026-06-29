@@ -69,7 +69,7 @@ verified_on: 2026-06-28
 
 ---
 
-### 2. Indices are byte offsets *derived from types*
+### 2. Indices are element counts; byte offsets are *derived from types*
 
 > [!example]+ Offsets from a base
 > ```llvm
@@ -88,7 +88,7 @@ verified_on: 2026-06-28
 > - `i64 0` — step over the pointer (0 elements from it);
 > - `i32 1` — select the second field.
 >
-> Drop the `0` and you'd be selecting a field of *the pointer*, which is wrong.
+> Drop the `0` and the lone index would instead **step the pointer**: `getelementptr {ptr,i32}, ptr %MyStruct, i32 1` computes `&MyStruct[1]` (the *next* struct), not field 1 — the `0` is needed because the first index always steps the base pointer.
 
 > [!tip] When GEP can't do it in one shot
 > GEP can index *through* aggregates but **cannot dereference**. If a pointer sits **inside** the structure, you need a `load` in between:
