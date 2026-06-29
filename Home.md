@@ -11,7 +11,7 @@ The vault is one book spanning **theory → algorithm → LLVM → real-world us
 
 ## Start here
 - **Ecosystems** — [[LLVM.MOC|LLVM]] (more to come: MLIR, Clang, Rust, Swift, JAX, PyTorch)
-- **Chapters (concept MOCs)** — [[Loop-Optimization.MOC|Loop Optimization]] · [[data-flow-analysis|Dataflow Analysis]]
+- **Chapters (concept MOCs)** — Foundations: [[LLVM-IR.MOC|LLVM IR]] · [[SSA-Form.MOC|SSA Form]] · [[Control-Flow.MOC|Control Flow]] · [[Dataflow-Analysis.MOC|Dataflow Analysis]]. Optimization: [[Loop-Optimization.MOC|Loop Optimization]] · [[Redundancy-Elimination.MOC|Redundancy Elimination]] · [[Dead-Code-Elimination.MOC|Dead-Code Elimination]] · [[Constant-Propagation.MOC|Constant & Value Propagation]] · [[Memory-Optimization.MOC|Memory Optimization]] · [[Interprocedural-Analysis.MOC|Interprocedural Optimization]] · [[Code-Generation.MOC|Code Generation]]
 - **Book bridges** — [[dragon-book-ch6.MOC|Dragon Book Ch.6 → LLVM]] (Intermediate-Code Generation) · [[dragon-book-ch8.MOC|Ch.8 → LLVM]] (Code Generation) · [[dragon-book-ch9.MOC|Ch.9]] (Machine-Indep. Optimizations) · [[dragon-book-ch10.MOC|Ch.10]] (Instruction-Level Parallelism) · [[dragon-book-ch11.MOC|Ch.11]] (Parallelism & Locality) · [[dragon-book-ch12.MOC|Ch.12]] (Interprocedural Analysis) · [[muchnick.MOC|Muchnick — Advanced Compiler Design]] (whole-book reading map)
 - **The rulebook** — [[classification-protocol]] · [[controlled-vocabulary]] · [[callout-legend]] · [[source-hierarchy]] · [[chapter-bridge-pipeline]] · [[note-checklist]] · [[llvm-version]]
 
