@@ -15,6 +15,7 @@ Run this after writing or updating **any** vault note, as a matter of course —
 4. **Fences** — code fences balanced (even count); no stray inline triple-backticks in prose.
 5. **LLVM-first** — the note describes LLVM directly; a source book appears only in the `book:` frontmatter and a `> [!quote] Further reading` footer — never `§x` citations in the body.
 6. **House style** — frontmatter contract complete (`facet · stage · ecosystem · concepts · status · verified_on`); the arc + **≥1 worked example**; a diagram where shape is the point; a `[!summary]` one-line takeaway.
+   - **Reuse the running example** ([[running-example]]) — link the relevant anchor and show only the slice you need, rather than inventing a fresh program. Mint a new example *only* when the running one genuinely can't show the concept; if you extend it, add the extension to [[running-example]] §7 (one place), not scattered across notes. Prefer **real `clang`/`opt` output** over hand-written IR (hand-authored examples are how subtly-wrong ones creep in).
 7. **Classification** — `facet`/`stage`/`ecosystem` assigned per [[classification-protocol]]; any new `concepts:` key added to [[controlled-vocabulary]].
 
 ## When the note makes LLVM claims
