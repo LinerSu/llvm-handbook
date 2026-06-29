@@ -98,6 +98,28 @@ for path in files:
 
 LINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
 FENCE_RE = re.compile(r"^\s*```")
+HEAD_RE = re.compile(r"^#{1,6}\s+(.+?)\s*$")
+
+def norm_head(s):
+    """Normalize a heading / link anchor for comparison (lenient, Obsidian-ish)."""
+    s = re.sub(r"[`*_]", "", s)
+    return re.sub(r"\s+", " ", s).strip().lower()
+
+# headings per note, so [[note#heading]] anchor links can be validated
+note_headings = {}
+for path in files:
+    nm = os.path.basename(path)[:-3]
+    hs, fenced = set(), False
+    for ln in open(path, encoding="utf-8").read().splitlines():
+        if FENCE_RE.match(ln):
+            fenced = not fenced
+            continue
+        if fenced:
+            continue
+        hm = HEAD_RE.match(ln)
+        if hm:
+            hs.add(norm_head(hm.group(1)))
+    note_headings[nm] = hs
 
 # ---- per-file checks --------------------------------------------------------
 facet_dirs_seen = set()
@@ -159,16 +181,27 @@ for path in files:
     if is_content:
         facet_dirs_seen.add(top)
 
-    # --- wikilink resolution (whole file) ---
+    # --- wikilink resolution + anchor validation (whole file) ---
     for m in LINK_RE.finditer(text):
         raw = m.group(1).replace("\\|", "|")  # Obsidian escapes | as \| inside tables
-        target = raw.split("|")[0].split("#")[0].strip().rstrip("\\")
-        if not target:
+        linktext = raw.split("|")[0]
+        target = linktext.split("#")[0].strip().rstrip("\\")
+        anchor = linktext.split("#", 1)[1].strip() if "#" in linktext else ""
+        if target:
+            tbase = target.split("/")[-1]
+            if tbase not in note_names and target not in note_names:
+                err(r, f"broken wikilink [[{target}]]")
+                continue
+            target_name = tbase if tbase in note_names else target
+        elif anchor:
+            target_name = base  # [[#heading]] = same file
+        else:
             continue
-        # allow path-style links by matching trailing basename
-        tbase = target.split("/")[-1]
-        if tbase not in note_names and target not in note_names:
-            err(r, f"broken wikilink [[{target}]]")
+        # heading-anchor check (WARN; skip block refs like #^id)
+        if anchor and not anchor.startswith("^"):
+            hs = note_headings.get(target_name)
+            if hs is not None and norm_head(anchor) not in hs:
+                warn(r, f"wikilink anchor [[{target}#{anchor}]] has no matching heading")
 
     # --- code-fence parity ---
     fences = sum(1 for ln in text.splitlines() if FENCE_RE.match(ln))

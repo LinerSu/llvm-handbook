@@ -18,7 +18,7 @@ verified_on: 2026-06-29
 > **Prerequisites:** [[llvm-basics]]
 
 > [!abstract] Why this note exists
-> **One** small program, carried through the whole pipeline, so the vault doesn't mint a fresh example per concept. Every IR block below is **real `clang` output**, not hand-written. Other notes link to the anchors here (e.g. `[[running-example#3-after-mem2reg--loop-opts--o1]]`) and show only the slice they need. *Convention: reuse this example; extend it only when a concept genuinely needs more — and add that extension [below](#7-sanctioned-extensions), not in scattered notes.*
+> **One** small program, carried through the whole pipeline, so the vault doesn't mint a fresh example per concept. Every IR block below is **real `clang` output**, not hand-written. Other notes link to the anchors here (e.g. `[[running-example#3. After mem2reg and loop opts]]`) and show only the slice they need. *Convention: reuse this example; extend it only when a concept genuinely needs more — and add that extension under [[#7. Sanctioned extensions]], not in scattered notes.*
 
 > [!tip] Reproduce it yourself
 > ```bash
@@ -85,7 +85,7 @@ A scaled array reduction plus a caller that pins `k = 4`. Small, but it exercise
 
 This stage grounds: the **object model** (Module→Function→BasicBlock→Instruction, [[llvm-basics]]); the **CFG** `entry→for.cond→for.body→for.inc→for.cond` with the back-edge ([[control-flow-graph]], [[loop-info]]); **GEP** for `a[i]` ([[getelementptr]]); and the *input* to mem2reg — every variable is an `alloca` with explicit `load`/`store`.
 
-## 3. After mem2reg + loop opts (`-O1`)
+## 3. After mem2reg and loop opts
 
 > [!example]+ `accumulate` at `-O1` (SSA, no allocas)
 > ```llvm
