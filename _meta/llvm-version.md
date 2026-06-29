@@ -5,6 +5,7 @@ tags: [meta, rulebook]
 llvm_stable: "22.1.8"
 llvm_series: "22.1.x"
 llvm_dev: "23.x"
+llvm_git_tag: "llvmorg-22.1.8"
 as_of: 2026-06-28
 source: "https://github.com/llvm/llvm-project/releases"
 ---
@@ -37,6 +38,22 @@ source: "https://github.com/llvm/llvm-project/releases"
 ```dataview
 TABLE status, verified_on FROM #version-sensitive SORT file.name ASC
 ```
+
+## Source checkout (submodule) — for confirmation
+
+Tier-1 verification ([[source-hierarchy]]) is the LLVM source itself. The vault pins it as a git submodule at **`.llvm-project`** (dot-prefixed so Obsidian doesn't index it), checked out at the tag in `llvm_git_tag` above. The submodule **pointer** is committed (tiny); the multi-hundred-MB working tree is **opt-in** — only present after you populate it, and excluded from Obsidian.
+
+- **Populate (on demand, for grep):**
+  `git submodule update --init --depth 1 .llvm-project`
+  (configured shallow + sparse — limited to `llvm/lib`, `llvm/include`, `mlir/lib`, `mlir/include`, `clang/lib`).
+- **Free the disk again:** `git submodule deinit .llvm-project`.
+- **Bump to a new LLVM release** (keeps the vault in lock-step):
+  1. `cd .llvm-project && git fetch --depth 1 origin tag <new-tag> && git checkout <new-tag> && cd ..`
+  2. update `llvm_stable` / `llvm_git_tag` / `as_of` above and re-verify the table below.
+  3. commit the moved submodule pointer + this note together.
+
+> [!warning] iCloud
+> This vault lives in iCloud. Populating the submodule lands its files in the synced folder; prefer populating on a **non-iCloud clone**, or `deinit` when done. The committed pointer alone syncs no source.
 
 ## Auto-update
 
