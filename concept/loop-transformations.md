@@ -9,7 +9,7 @@ implements:
   - { ecosystem: llvm, src: "llvm/lib/Transforms/Vectorize/" }
 docs: "Passes ↗ https://llvm.org/docs/Passes.html"
 prereqs: [loop-info, ssa-form]
-related: [pointer-alias-analysis, memory-ssa]
+related: [pointer-alias-analysis, memory-ssa, loop-invariant-code-motion]
 tags: [kind/transform, status/verified]
 status: verified
 verified_on: 2026-06-28
@@ -18,7 +18,7 @@ verified_on: 2026-06-28
 # Loop Transformations
 
 > 🧭 **Concept** · `concept · optimization · llvm` · Index [[LLVM.MOC]]
-> **Prerequisites:** [[loop-info]], [[ssa-form]] · **Enabled by:** [[pointer-alias-analysis]], [[memory-ssa]] · Chapter: [[Loop-Optimization.MOC]]
+> **Prerequisites:** [[loop-info]], [[ssa-form]] · **Enabled by:** [[pointer-alias-analysis]], [[memory-ssa]] · **Hoisting:** [[loop-invariant-code-motion]] · Chapter: [[Loop-Optimization.MOC]]
 
 > [!abstract] Chapter map
 > The transforms that rewrite loops once they're in canonical form ([[loop-info]]): **unrolling, peeling/splitting, LICM, vectorization, fission, fusion** — each a *legality test* (dependence analysis) plus a *rewrite*.

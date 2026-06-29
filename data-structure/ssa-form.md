@@ -7,7 +7,7 @@ concepts: [ssa]
 src: "llvm/lib/Transforms/Utils/ (mem2reg, SSAUpdater)"
 docs: "LangRef — phi ↗ https://llvm.org/docs/LangRef.html#phi-instruction"
 prereqs: [llvm-basics]
-related: [memory-ssa, value-numbering, loop-info]
+related: [memory-ssa, value-numbering, loop-info, mem2reg]
 tags: [kind/data-structure, status/verified]
 status: verified
 verified_on: 2026-06-28
@@ -16,7 +16,7 @@ verified_on: 2026-06-28
 # SSA Form
 
 > 🧭 **Data structure** · `data-structure · ir · general+llvm` · Index [[LLVM.MOC]]
-> **Prerequisites:** [[llvm-basics]] · **Lifts to memory:** [[memory-ssa]] · **Used by:** [[value-numbering]], [[loop-info]]
+> **Prerequisites:** [[llvm-basics]] · **Lifts to memory:** [[memory-ssa]] · **Built by:** [[mem2reg]] · **Used by:** [[value-numbering]], [[loop-info]]
 
 > [!abstract] Chapter map
 > 1. **SSA**: every value assigned once; **def-use / use-def** chains; the **φ** function at merges.

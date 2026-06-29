@@ -8,7 +8,7 @@ implements:
   - { ecosystem: llvm, src: "llvm/lib/Transforms/InstCombine/" }
 docs: "Passes — instcombine ↗ https://llvm.org/docs/Passes.html"
 prereqs: [llvm-basics, ssa-form]
-related: [value-numbering]
+related: [value-numbering, visitor-pattern]
 tags: [kind/transform, status/verified]
 status: verified
 verified_on: 2026-06-28
@@ -17,7 +17,7 @@ verified_on: 2026-06-28
 # Instruction Combining
 
 > 🧭 **Concept** · `concept · optimization · llvm` · Index [[LLVM.MOC]]
-> **Prerequisites:** [[llvm-basics]], [[ssa-form]] · **Contrast:** [[value-numbering]]
+> **Prerequisites:** [[llvm-basics]], [[ssa-form]] · **Contrast:** [[value-numbering]] · **Mechanism:** [[visitor-pattern]]
 
 > [!abstract] Chapter map
 > The **peephole / canonicalization** pass: rewrite small instruction patterns into fewer, simpler, more *canonical* ones — **without touching the CFG** — driven by a worklist.
@@ -69,7 +69,7 @@ verified_on: 2026-06-28
 > ![InstComb_img00.png](attachments/InstComb_img00.png)
 
 > [!warning] What instcombine is *not*
-> It's local **canonicalization/peephole**, not redundancy elimination across blocks. It deliberately leaves CFG-changing and cross-block CSE work to other passes ([[value-numbering|GVN]], `simplifycfg`). Canonical forms it produces, though, make *those* passes far more effective.
+> It's local **canonicalization/peephole**, not redundancy elimination across blocks. It deliberately leaves CFG-changing and cross-block CSE work to other passes ([[value-numbering|GVN]], [[reassociation]], [[simplifycfg]]). Canonical forms it produces, though, make *those* passes far more effective.
 
 > [!quote] Sources
 > - **Source:** [`llvm/lib/Transforms/InstCombine/`](https://github.com/llvm/llvm-project/tree/main/llvm/lib/Transforms/InstCombine)

@@ -8,7 +8,7 @@ implements:
   - { ecosystem: llvm, src: "llvm/lib/Transforms/Scalar/GVN.cpp" }
 docs: "Passes — gvn ↗ https://llvm.org/docs/Passes.html"
 prereqs: [ssa-form]
-related: [instruction-combining]
+related: [instruction-combining, llvm-gvn, early-cse]
 tags: [kind/transform, status/verified]
 status: verified
 verified_on: 2026-06-28
@@ -17,7 +17,7 @@ verified_on: 2026-06-28
 # Value Numbering
 
 > 🧭 **Concept** · `concept · optimization · general+llvm` · Index [[LLVM.MOC]]
-> **Prerequisites:** [[ssa-form]] · **Contrast:** [[instruction-combining]]
+> **Prerequisites:** [[ssa-form]] · **Contrast:** [[instruction-combining]] · **Implementation:** [[llvm-gvn]] · **Cheap form:** [[early-cse]]
 
 > [!abstract] Chapter map
 > 1. **Value numbering** — give equivalent computations the same *number*, then reuse.

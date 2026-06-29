@@ -47,7 +47,7 @@ verified_on: 2026-06-28
 > 2. **Instruction scheduling** — order instructions to hide latency / exploit instruction-level parallelism (pre- and post-register-allocation schedulers). → deep dive: [[instruction-scheduling]].
 > 3. **SSA-based machine optimizations** — peephole, machine CSE, etc., while MIR virtual registers are still in SSA.
 > 4. **Register allocation** — map virtual registers to physical registers, inserting **spill** code when they don't fit. This **eliminates φ** (takes MIR out of SSA). Allocators: **Greedy** (default at `-O1+`), **Basic**, **Fast** (`-O0`), **PBQP**. → deep dive: [[register-allocation]].
-> 5. **Prologue/epilogue insertion** — finalize the stack frame (saved registers, frame pointer, stack adjustment).
+> 5. **Prologue/epilogue insertion** — finalize the stack frame (saved registers, frame pointer, stack adjustment). → [[shrink-wrapping]] moves these to the smallest region that needs the frame.
 > 6. **Late / post-RA passes** — post-RA scheduling, peephole, branch folding.
 > 7. **Code emission** — lower `MachineInstr` → `MCInst` and emit assembly (`.s`) or an object file (`.o`) through the **MC** layer.
 

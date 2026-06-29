@@ -4,7 +4,7 @@ A personal, evolving set of notes on LLVM — its IR, passes, analyses, data str
 
 ## Read it in Obsidian
 
-These notes are an [Obsidian](https://obsidian.md) vault. They use `[[wikilinks]]`, callouts, tags, embedded diagrams, and inline queries, so plain Markdown viewers (including GitHub's renderer) will show the raw syntax rather than the intended result. For the real reading experience:
+These notes are an [Obsidian](https://obsidian.md) vault. They use wikilinks, callouts, tags, embedded diagrams, and inline queries, so plain Markdown viewers (including GitHub's renderer) will show the raw syntax rather than the intended result. For the real reading experience:
 
 1. Clone or download this repository.
 2. In Obsidian: **Open folder as vault** → select the cloned folder.

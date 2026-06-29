@@ -10,7 +10,7 @@ implements:
 docs: "CodeGenerator — instruction selection ↗ https://llvm.org/docs/CodeGenerator.html"
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §8.9–8.11"
 prereqs: [code-generation-overview]
-related: [register-allocation, three-address-code]
+related: [register-allocation, three-address-code, visitor-pattern]
 tags: [kind/concept, status/verified, version-sensitive]
 status: verified
 verified_on: 2026-06-28

@@ -47,7 +47,7 @@ verified_on: 2026-06-28
 
 ## 4. Limitations
 
-Inlining trades **code size and compile time** for speed, so the threshold matters; over-inlining bloats I-cache and slows builds. It can't inline through an **unresolved indirect/virtual call** without [devirtualization] first, and recursive SCCs are inlined only to a bounded depth.
+Inlining trades **code size and compile time** for speed, so the threshold matters; over-inlining bloats I-cache and slows builds. It can't inline through an **unresolved indirect/virtual call** without [[devirtualization]] first, and recursive SCCs are inlined only to a bounded depth. When full inlining is too costly, [[function-specialization]] clones a specialized copy instead; tail calls reuse the caller's frame ([[tail-call-optimization]]).
 
 > [!summary] The one thing to remember
 > Inlining = paste the callee into the caller, mainly to **expose it to the caller's context** for further optimization. LLVM does it **bottom-up over call-graph SCCs**, deciding per call site by **legality → mandatory → `InlineCost` vs threshold**.

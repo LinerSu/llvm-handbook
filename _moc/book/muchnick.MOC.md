@@ -23,14 +23,14 @@ verified_on: 2026-06-28
 | 8 | Data-flow analysis (iterative; control-tree/interval) | [[data-flow-analysis]], [[dataflow-foundations]] |
 | 9 | Dependence analysis & dependence graphs | [[dependence-analysis]] |
 | 10 | Alias analysis | [[pointer-alias-analysis]] |
-| 12 | Early optimizations (value numbering, SCCP, copy/const prop) | [[value-numbering]], [[data-flow-analysis]], [[instruction-combining]] |
+| 12 | Early optimizations (**SROA**, **reassociation**, value numbering, **SCCP**) | [[scalar-replacement-of-aggregates]], [[reassociation]], [[value-numbering]], [[sparse-conditional-constant-propagation]] |
 | 13 | Redundancy elimination (**PRE**, CSE, LICM, hoisting) | [[partial-redundancy-elimination]], [[value-numbering]], [[loop-transformations]] |
-| 14 | Loop optimizations (induction vars, **strength reduction**) | [[induction-variables-and-strength-reduction]], [[scalar-evolution]], [[loop-transformations]] |
-| 15 | Procedure optimizations (integration / in-lining, tail calls) | [[inlining]] |
+| 14 | Loop optimizations (induction vars, **strength reduction**, **unswitching**) | [[induction-variables-and-strength-reduction]], [[loop-unswitching]], [[scalar-evolution]], [[loop-transformations]] |
+| 15 | Procedure optimizations (in-lining, **tail calls**, **shrink wrapping**) | [[inlining]], [[tail-call-optimization]], [[shrink-wrapping]] |
 | 16 | Register allocation (graph coloring) | [[register-allocation]] |
 | 17 | Code scheduling (list scheduling, software pipelining) | [[instruction-scheduling]] |
-| 18 | Control-flow & low-level optimizations (DCE, branch opts) | [[instruction-combining]], [[control-flow-graph]] |
-| 19 | Interprocedural analysis & optimization | [[call-graph]], [[inlining]], [[pointer-alias-analysis]] |
+| 18 | Control-flow & low-level optimizations (DCE, CFG cleanup, **jump threading**, if-conversion) | [[dead-code-elimination]], [[simplifycfg]], [[jump-threading]], [[if-conversion]], [[instruction-combining]] |
+| 19 | Interprocedural analysis & optimization (IPSCCP, specialization, **devirt**, **DAE/GlobalDCE**) | [[ipsccp]], [[function-specialization]], [[devirtualization]], [[interprocedural-dead-code-elimination]], [[call-graph]], [[inlining]], [[pointer-alias-analysis]] |
 | 20 | Optimization for the memory hierarchy (tiling, scalar replacement) | [[polyhedral-model]], [[loop-transformations]] |
 
 ## 📚 Where Muchnick is the *better* read

@@ -112,7 +112,7 @@ Compact (no temporary names), but **fragile**: move row (1) and every `(1)` refe
 
 ## 3. SSA — the canonical 3AC form, and how LLVM computes it
 
-LLVM's 3AC is always in **[[ssa-form|SSA]]**: each value is assigned once, and **φ-functions** merge values where control flow joins. Front ends don't emit φ directly; they emit *memory* for locals and let a pass build SSA.
+LLVM's 3AC is always in **[[ssa-form|SSA]]**: each value is assigned once, and **φ-functions** merge values where control flow joins. Front ends don't emit φ directly; they emit *memory* for locals and let a pass build SSA (struct/array locals are first split by [[scalar-replacement-of-aggregates|SROA]]).
 
 > [!example]+ How SSA is computed — `mem2reg`, worked
 > Source:

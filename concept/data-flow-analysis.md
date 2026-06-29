@@ -10,7 +10,7 @@ implements:
   - { ecosystem: mlir, src: "mlir/include/mlir/Analysis/DataFlow/" }
 docs: "doxygen — SparsePropagation ↗ https://llvm.org/doxygen/SparsePropagation_8h_source.html"
 prereqs: [control-flow-graph]
-related: [value-numbering, pointer-alias-analysis, dominator-tree]
+related: [value-numbering, pointer-alias-analysis, dominator-tree, lazy-value-info]
 tags: [kind/analysis, status/verified]
 status: verified
 verified_on: 2026-06-28
@@ -19,7 +19,7 @@ verified_on: 2026-06-28
 # Data-Flow Analysis
 
 > 🧭 **Concept** · `concept · analysis · general+llvm+mlir` · Index [[LLVM.MOC]]
-> **Prerequisites:** [[control-flow-graph]] · **Feeds:** [[value-numbering]], [[pointer-alias-analysis]]
+> **Prerequisites:** [[control-flow-graph]] · **Feeds:** [[value-numbering]], [[pointer-alias-analysis]] · **On-demand ranges:** [[lazy-value-info]]
 
 > [!abstract] Chapter map
 > The program-analysis backbone, as the arc *theory → algorithm → LLVM/MLIR → use → frontier*: a monotone-framework definition, the worklist that solves it, how LLVM and MLIR realize it, where it pays off, and where it runs out of road.
@@ -74,7 +74,7 @@ flowchart BT
 
 ### 4. In LLVM and MLIR
 
-- **SCCP** — Sparse Conditional Constant Propagation (Wegman & Zadeck): lattice `undef → constant → overdefined`, tracking block reachability simultaneously. `Transforms/Scalar/SCCP.cpp` (+ `Utils/SCCPSolver.cpp`).
+- **SCCP** — Sparse Conditional Constant Propagation (Wegman & Zadeck): lattice `undef → constant → overdefined`, tracking block reachability simultaneously. `Transforms/Scalar/SCCP.cpp` (+ `Utils/SCCPSolver.cpp`). → [[sparse-conditional-constant-propagation]]
 - **Generic sparse solver** — `SparsePropagation.h` exposes `AbstractLatticeFunction`; a client supplies the lattice and merge. Used by e.g. `CalledValuePropagation`.
 - **Range/value facts** — `LazyValueInfo`, `ConstraintElimination`, known/demanded bits (`ValueTracking`).
 - **Liveness** — `LiveVariables` / `LiveIntervals` in `lib/CodeGen` (backward, may), the input to register allocation ([[code-generation-overview]]).

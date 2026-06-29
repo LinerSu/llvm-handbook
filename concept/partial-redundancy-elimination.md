@@ -9,7 +9,7 @@ implements:
 docs: "GVN load elimination ↗ https://blog.llvm.org/2009/12/introduction-to-load-elimination-in-gvn.html"
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §9.5"
 prereqs: [value-numbering, data-flow-analysis]
-related: [value-numbering, memory-ssa]
+related: [value-numbering, memory-ssa, llvm-gvn]
 tags: [kind/transform, status/verified]
 status: verified
 verified_on: 2026-06-28
@@ -18,7 +18,7 @@ verified_on: 2026-06-28
 # Partial-Redundancy Elimination (PRE)
 
 > 🧭 **Concept** · `concept · optimization · general+llvm` · Index [[LLVM.MOC]] · see also [[dragon-book-ch9.MOC|Dragon Ch.9]]
-> **Prerequisites:** [[value-numbering]], [[data-flow-analysis]] · **In LLVM:** lives inside the GVN pass
+> **Prerequisites:** [[value-numbering]], [[data-flow-analysis]] · **In LLVM:** [[llvm-gvn|the GVN pass]]
 
 > [!abstract] Chapter map
 > A computation is **partially redundant** if it is already available on *some* paths to a point but not all. PRE makes it **fully** redundant by inserting it on the missing paths, then deletes the now-redundant copy — effectively hoisting each computation to its earliest profitable point (lazy code motion). LLVM realizes this mainly as **load PRE** inside its `GVN` pass.
@@ -45,7 +45,7 @@ This is **lazy code motion** (Knoop–Rüthing–Steffen): place each computatio
 ## 2. In LLVM — load PRE inside GVN
 
 > [!info] What LLVM actually does
-> LLVM's **`GVN`** pass performs PRE primarily for **loads** ("load PRE"). Using [[memory-ssa|memory dependence]], when a loaded value is available on some predecessors of a block but not all, GVN **inserts the load on the missing edge** to make it fully available, then eliminates the redundant load.
+> LLVM's **`GVN`** pass (engineering detail: [[llvm-gvn]]) performs PRE primarily for **loads** ("load PRE"). Using [[memory-ssa|memory dependence]], when a loaded value is available on some predecessors of a block but not all, GVN **inserts the load on the missing edge** to make it fully available, then eliminates the redundant load.
 > - It is **guarded**: GVN will not insert a load on a path where it didn't already occur (no new faults), and it **won't grow code** — so e.g. **critical edges block load PRE** unless they can be split safely.
 > - Scalar PRE in GVN is more limited; the full value-based **GVN-PRE** algorithm (VanDrunen–Hosking) exists in LLVM but is **not enabled by default**.
 

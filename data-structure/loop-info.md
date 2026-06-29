@@ -138,7 +138,7 @@ The fix: for any value live across the loop boundary, insert a single-entry ("lo
 
 > [!tip] Why LCSSA pays off (the practical win)
 > - **All outside users are in one place** — just scan the exit-block φ's instead of chasing every def-use chain.
-> - **Cheap loop cloning** (e.g. `simple-loop-unswitch`): only the loop-closing φ's need rewiring after duplicating the loop.
+> - **Cheap loop cloning** (e.g. [[loop-unswitching|`simple-loop-unswitch`]]): only the loop-closing φ's need rewiring after duplicating the loop.
 > - **Cleaner `SCEV`**: each loop-variant value splits into an in-loop instruction and an exit φ, so every expression lives in at most one loop. The redundant φ's are cleaned up later by `-instcombine`.
 
 > [!tip] Sibling canonical form — **Loop Simplify Form** (`-loop-simplify`)
