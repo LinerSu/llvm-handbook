@@ -80,7 +80,7 @@ verified_on: 2026-06-28
 > ```llvm
 > define void @_Z1mbb(i8 %r, i8 %y) {
 > entry:
->   %l      = alloca i8, align 11
+>   %l      = alloca i8, align 1
 >   %0      = load i8, ptr %y.addr, align 1
 >   %tobool = trunc i8 %0 to i1
 >   br i1 %tobool, label %lor.end, label %lor.rhs
@@ -96,7 +96,7 @@ verified_on: 2026-06-28
 > ```
 
 > [!tip] Minimal SSA
-> Insert as **few** φ's as possible: place a φ for $v$ exactly at the **[[dominator-tree|dominance frontier]]** of $v$'s definitions (Cytron et al.). This is what SSA-construction / `mem2reg` does.
+> Insert as **few** φ's as possible: place a φ for $v$ exactly at the **iterated [[dominator-tree|dominance frontier]]** of $v$'s definitions (Cytron et al.). This is what SSA-construction / `mem2reg` does.
 
 > [!quote] Sources
 > - [LangRef — `phi` instruction](https://llvm.org/docs/LangRef.html#phi-instruction)

@@ -54,7 +54,7 @@ In the polyhedral model, tiling is one affine reshaping of the iteration polytop
 ## 3. Limits & reality
 
 > [!warning] Affine-only, and not in the default pipeline
-> The model applies **only to affine** loop nests (SCoPs); data-dependent bounds, pointer chasing, and irregular control fall outside it. Polly is **not in the default `-O2/-O3` pipeline** — it's opt-in (`-O3 -polly`). In practice most of LLVM's locality/parallelism wins come from the simpler loop passes and the **vectorizer** ([[loop-transformations]]); Polly is the heavyweight option when affine restructuring pays off. This is also the bridge to your relational numerical domains — **polyhedra** as an abstract domain show up here as the iteration-space representation.
+> The model applies **only to affine** loop nests (SCoPs); data-dependent bounds, pointer chasing, and irregular control fall outside it. Polly is **not in the default `-O2/-O3` pipeline** — it's opt-in (`-O3 -mllvm -polly`). In practice most of LLVM's locality/parallelism wins come from the simpler loop passes and the **vectorizer** ([[loop-transformations]]); Polly is the heavyweight option when affine restructuring pays off. This is also the bridge to your relational numerical domains — **polyhedra** as an abstract domain show up here as the iteration-space representation.
 
 > [!summary] The one thing to remember
 > Affine loop nests are integer polyhedra; transformations are affine reschedulings chosen for locality + parallelism, legal iff they preserve [[dependence-analysis|dependences]]. LLVM's realization is **Polly** (ISL-backed, on SCoPs), opt-in rather than default.

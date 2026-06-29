@@ -77,7 +77,7 @@ flowchart TD
 
 > [!info] Consumers
 > - **SSA construction / `mem2reg`** — φ placement via dominance frontiers.
-> - **[[value-numbering|GVN]]** — processes blocks in dominator-tree order with a scoped table, so definitions are numbered before uses.
+> - **[[value-numbering|GVN]]** — processes blocks in reverse post-order with a global leader table, using the dominator tree for dominance queries (the scoped-hash-table-over-the-dominator-tree approach is `EarlyCSE`).
 > - **[[loop-transformations#7. Loop-invariant code motion (LICM)|LICM]]** — legality needs the definition to dominate all uses and the block to dominate loop exits.
 > - **[[loop-info|LoopInfo / LCSSA]]** — the header dominates the loop; LCSSA closing-φ placement uses dominance frontiers.
 

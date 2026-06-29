@@ -49,7 +49,7 @@ GVN is scheduled in the **function simplification pipeline at `-O2`/`-O3`** (not
 ## 4. How it's built
 
 > [!info] Core data structures
-> - **`GVNPass::ValueTable`** — the value-number map: hashes expressions to numbers and exposes `lookup_or_add` for instructions, loads, calls, and φ-nodes; a `NextValueNumber` counter mints fresh numbers.
+> - **`GVNPass::ValueTable`** — the value-number map: hashes expressions to numbers and exposes `lookupOrAdd` for instructions, loads, calls, and φ-nodes; a `NextValueNumber` counter mints fresh numbers.
 > - **A leader table** — for each value number, the available "leader" instruction in the current scope, used to pick the replacement.
 > - **[[dominator-tree|DominatorTree]]** — GVN walks in dominator order so a definition is numbered before its uses (the DVNT order from [[value-numbering]]).
 > - **Memory dependence** — load PRE needs to know whether a load is available on each predecessor: classic `GVN` uses **`MemoryDependenceResults`** (MemDep); the rewrite `NewGVN` uses **[[memory-ssa|MemorySSA]]** instead.

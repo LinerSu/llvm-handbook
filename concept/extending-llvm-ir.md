@@ -76,7 +76,7 @@ verified_on: 2026-06-28
 >   ret i32 undef
 > }
 > ```
-> `%a` is passed ==by value== (the callee gets a copy). The `byval` attribute cannot generally be discarded — it changes the ABI. Other common ones: `noalias`, `nocapture`, `nonnull`, `readonly`, `sret`. ([LangRef — parameter attributes](https://llvm.org/docs/LangRef.html#parameter-attributes))
+> `%a` is passed ==by value== (the callee gets a copy). The `byval` attribute cannot generally be discarded — it changes the ABI. Other common ones: `noalias`, `captures(none)` (the modern replacement for the legacy `nocapture`, since LLVM 21), `nonnull`, `readonly`, `sret`. ([LangRef — parameter attributes](https://llvm.org/docs/LangRef.html#parameter-attributes))
 
 ### 5. Metadata
 

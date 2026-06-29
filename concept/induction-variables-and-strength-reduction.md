@@ -46,7 +46,7 @@ for (i = 0; i < n; i++) { sum += *p; p += 4; }   // multiply → add
 ## 2. In LLVM — IndVarSimplify then LSR
 
 > [!info] A two-pass division of labor
-> - **`IndVarSimplify`** uses SCEV to **canonicalize** induction variables: unify them to one canonical IV, **expose the trip count**, **widen** narrow IVs to the native width, and **rewrite exit values** to closed forms. It *prepares* loops — e.g. turning `for (i=0;i<n;i+=2) … p[i]` into a unit-stride `for (i=0;i!=n;++i) … p[i*2]`.
+> - **`IndVarSimplify`** uses SCEV to **canonicalize** induction variables: **expose the trip count**, **widen** narrow IVs to the native width, and **rewrite exit values** to closed forms. It *prepares* loops — e.g. turning `for (i=0;i<n;i+=2) … p[i]` into a unit-stride `for (i=0;i!=n;++i) … p[i*2]`.
 > - **`LoopStrengthReduce` (LSR)** then **strength-reduces** the SCEV expressions — replacing the `i*2`/`base + i·w` computations with minimal-cost IVs and **targeting the machine's addressing modes** (so `a[i]` becomes a single incremented pointer/scaled-index).
 
 > [!warning] Why they're paired

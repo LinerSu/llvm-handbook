@@ -22,7 +22,7 @@ verified_on: 2026-06-28
 > The lattice-theoretic skeleton every concrete [[data-flow-analysis|dataflow analysis]] hangs on: a **lattice** of facts, a **monotone** transfer function, a **meet/join**, and the guarantee that **iteration reaches a fixpoint**. This is the "why it works (and terminates)" layer — tool-agnostic, then connected to how LLVM uses it.
 
 > [!info] The framework
-> A monotone dataflow framework is $(L, \sqsubseteq, \sqcap, F)$: a **lattice** $L$ of facts ordered by $\sqsubseteq$ (more precise $\sqsubseteq$ less precise), a **meet** $\sqcap$ (combine facts arriving from several edges), and a set $F$ of **monotone** transfer functions $f_b : L \to L$ (one per block). The analysis solves the equations $\mathrm{out}[b] = f_b(\mathrm{in}[b])$, $\mathrm{in}[b] = \bigsqcap_{p \to b} \mathrm{out}[p]$.
+> A monotone dataflow framework is $(L, \sqsubseteq, \sqcap, F)$: a **lattice** $L$ of facts ordered by $\sqsubseteq$ (less precise $\sqsubseteq$ more precise), a **meet** $\sqcap$ (combine facts arriving from several edges), and a set $F$ of **monotone** transfer functions $f_b : L \to L$ (one per block). The analysis solves the equations $\mathrm{out}[b] = f_b(\mathrm{in}[b])$, $\mathrm{in}[b] = \bigsqcap_{p \to b} \mathrm{out}[p]$.
 
 ---
 

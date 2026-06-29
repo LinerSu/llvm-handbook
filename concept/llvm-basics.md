@@ -88,7 +88,7 @@ verified_on: 2026-06-28
 > - RISC **three-address code**;
 > - an **infinite virtual register set** in [[ssa-form|SSA form]];
 > - simple low-level **control flow** constructs;
-> - **load/store** with typed pointers (no implicit memory access — see [[getelementptr]]);
+> - **load/store** with opaque pointers (no implicit memory access — see [[getelementptr]]);
 > - things like calling conventions are explicit via `call`/`ret` with explicit arguments.
 
 > [!info] Three equivalent forms of the same IR
@@ -125,7 +125,7 @@ verified_on: 2026-06-28
 > - **Global variable** — a region of memory allocated at **compile time** (not run time); must be initialized; has [linkage](https://llvm.org/docs/LangRef.html#linkage) controlling cross-TU visibility.
 > - **Function** — a named chunk of executable code (C++ functions *and* methods → LLVM Functions). Has a **calling convention** (how params/returns are passed): `ccc` (C convention, OS-dependent), `fastcc` (as fast as possible, e.g. params in registers). Also has linkage.
 > - **BasicBlock** — a contiguous, single-entry/single-exit chunk of instructions (the CFG node).
-> - **Instruction** — a single operation, abstraction roughly RISC machine code (integer add, FP divide, store…). e.g. `alloca` (stack-allocate), `align` (alignment hint), `store` (write through a pointer), `call` (pass args into a callee).
+> - **Instruction** — a single operation, abstraction roughly RISC machine code (integer add, FP divide, store…). e.g. `alloca` (stack-allocate), `store` (write through a pointer), `call` (pass args into a callee).
 
 > [!info] Special: inline assembly, and "User / Use"
 > - **Inline assembly** — embed target ASM inside IR; modeled as `InlineAsm` Values used as the callee of a `call`. Unique like constants.

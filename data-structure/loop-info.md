@@ -88,7 +88,7 @@ Your notes, made precise — the anatomy of a loop:
 > ![Loops_img04.png](attachments/Loops_img04.png)
 
 > [!warning] A cycle in the CFG is **not** always a loop
-> If no single header dominates the whole cycle, the control flow is ==irreducible== and there is no natural loop — only a *cycle*. All these loop properties are (re)established by the **LoopSimplify** pass.
+> If no single header dominates the whole cycle, the control flow is ==irreducible== and there is no natural loop — only a *cycle*. Such irreducible cycles can be turned into natural loops (by inserting a single header) by the **FixIrreducible** pass — *not* by LoopSimplify, which only canonicalizes loops that are already natural.
 
 ---
 

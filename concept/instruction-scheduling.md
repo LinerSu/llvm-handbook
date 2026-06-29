@@ -45,7 +45,7 @@ flowchart TD
 ## 2. Global scheduling and MachineScheduler
 
 > [!info] What LLVM runs
-> LLVM's **`MachineScheduler`** is used by almost all targets. It builds a dependence DAG over a scheduling **region** (often larger than one block — *global* scheduling) and orders it to balance **two competing goals**: maximize ILP / hide latency, *and* **minimize register pressure** (it tracks live ranges to avoid causing spills — the direct tension with [[register-allocation]]). It runs **pre-RA** (the important one) and again **post-RA**. (The older per-block `SelectionDAG` scheduler still runs when GlobalISel/MachineScheduler don't.)
+> LLVM's **`MachineScheduler`** is used by almost all targets. It builds a dependence DAG over a scheduling **region** (a portion of a single basic block — *local/regional* scheduling) and orders it to balance **two competing goals**: maximize ILP / hide latency, *and* **minimize register pressure** (it tracks live ranges to avoid causing spills — the direct tension with [[register-allocation]]). It runs **pre-RA** (the important one) and again **post-RA**. (The older per-block `SelectionDAG` scheduler still runs when GlobalISel/MachineScheduler don't.)
 
 ## 3. Software pipelining (loops)
 

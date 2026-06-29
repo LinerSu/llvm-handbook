@@ -60,7 +60,7 @@ flowchart BT
 ```
 
 > [!info] MFP vs. MOP
-> The iterative solution (**Maximal Fixed Point**) is *sound but possibly less precise* than the ideal **Meet-Over-all-Paths** solution. **MFP = MOP iff the transfer functions are distributive** (Kildall 1973); for non-distributive analyses (e.g. constant propagation) MFP $<$ MOP in precision.
+> The iterative solution (**Maximal Fixed Point**) is *sound but possibly less precise* than the ideal **Meet-Over-all-Paths** solution. **MFP = MOP if the transfer functions are distributive** (sufficient, not necessary) (Kildall 1973); for non-distributive analyses (e.g. constant propagation) MFP $<$ MOP in precision.
 
 > [!tip] As abstract interpretation
 > A dataflow analysis *is* an abstract interpretation over a particular abstract domain; soundness = the abstract transfer over-approximates the concrete one through a Galois connection (Cousot & Cousot 1977). This is the bridge to relational numerical domains (intervals, octagons, polyhedra); the lattice/fixpoint theory is in [[dataflow-foundations]].

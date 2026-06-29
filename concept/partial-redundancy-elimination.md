@@ -47,14 +47,14 @@ This is **lazy code motion** (Knoop–Rüthing–Steffen): place each computatio
 > [!info] What LLVM actually does
 > LLVM's **`GVN`** pass (engineering detail: [[llvm-gvn]]) performs PRE primarily for **loads** ("load PRE"). Using [[memory-ssa|memory dependence]], when a loaded value is available on some predecessors of a block but not all, GVN **inserts the load on the missing edge** to make it fully available, then eliminates the redundant load.
 > - It is **guarded**: GVN will not insert a load on a path where it didn't already occur (no new faults), and it **won't grow code** — so e.g. **critical edges block load PRE** unless they can be split safely.
-> - Scalar PRE in GVN is more limited; the full value-based **GVN-PRE** algorithm (VanDrunen–Hosking) exists in LLVM but is **not enabled by default**.
+> - Scalar PRE in GVN is more limited; the full value-based **GVN-PRE** algorithm (VanDrunen–Hosking) is **not implemented in upstream LLVM** (it was only prototyped externally, never merged).
 
 ## 3. Why it matters
 
 PRE removes redundancies that plain [[value-numbering|GVN/CSE]] can't — especially **loads hoisted out of the common path** and computations partially redundant across `if`/loop structure — without ever adding work to a path that didn't have it. It pairs with [[memory-ssa|Memory SSA]] (to know a load is available) and alias analysis (to know it isn't clobbered).
 
 > [!summary] The one thing to remember
-> PRE = "make a partially-redundant computation fully redundant by inserting it on the missing paths, then delete it." In LLVM this is mostly **load PRE in the GVN pass**, carefully guarded so it never adds a fault or grows code; full value-based GVN-PRE exists but is off by default.
+> PRE = "make a partially-redundant computation fully redundant by inserting it on the missing paths, then delete it." In LLVM this is mostly **load PRE in the GVN pass**, carefully guarded so it never adds a fault or grows code; full value-based GVN-PRE is not implemented in upstream LLVM.
 
 > [!quote] Further reading
 > - **Also in:** Muchnick *Advanced Compiler Design & Impl.* §13.3 — partial-redundancy elimination (the canonical algorithmic treatment).
