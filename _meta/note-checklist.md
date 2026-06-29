@@ -26,4 +26,4 @@ Run this after writing or updating **any** vault note, as a matter of course —
 11. Each heading carries its point; the story is consistent across the note (and its chapter); the note is right-sized — cut redundancy, add only where a reader would be lost.
 
 > [!tip] Automation
-> Checks 1–4 are mechanical — the shell sweep in [[chapter-bridge-pipeline]] step 6 runs them across the vault. Checks 5–10 are judgment; do them per note. This is the manual form of the `vault-lint` + verify jobs in the blueprint.
+> Checks 1–4 (plus the frontmatter contract in 6 and classification in 7) are mechanical and **implemented** as `vault-lint` — run `python3 _meta/vault-lint.py` before finishing any session; fix every ERROR, triage WARNs. Checks 5, 8–11 are judgment; do them per note. The linter is the session-level safety net referenced by [[chapter-bridge-pipeline]] §Automation and the root `CLAUDE.md` contract.
