@@ -1,0 +1,34 @@
+name: vault-lint
+
+# Mechanical consistency gate for the vault (see _meta/vault-lint.py and CLAUDE.md).
+# Fails the build on ERRORs (bad frontmatter, invalid axis values, broken links,
+# unbalanced fences); WARNs (MOC gaps, style nits) are printed but don't fail.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vault-lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (no submodules — LLVM source is opt-in, not needed to lint)
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run vault-lint
+        run: python3 _meta/vault-lint.py

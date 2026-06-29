@@ -26,6 +26,8 @@ python3 _meta/vault-lint.py
 
 Fix every **ERROR** it reports; triage **WARN**s. This is the mechanical half of `_meta/note-checklist.md` (the judgment half — correctness, right-sizing — is still on you). The linter is the already-planned `vault-lint` job from `_meta/chapter-bridge-pipeline.md` §Automation; it is the safety net that keeps the vault consistent across sessions, so **do not skip it**.
 
+**CI runs the same check on every push and PR** (`.github/workflows/vault-lint.yml`), so an unfixed ERROR will fail the build. Run it locally first — don't rely on CI to catch what you could fix before committing.
+
 ## Inspecting LLVM source (tier-1 confirmation)
 
 To verify an LLVM claim against the source itself (`_meta/source-hierarchy.md` tier 1):
