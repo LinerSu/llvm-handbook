@@ -41,7 +41,7 @@ implementation/    How things are built in the LLVM codebase
 application/       Worked examples and end-to-end uses
 ```
 
-Start at `Home.md` or any `_moc/` map and follow the links.
+**Where to start reading:** open `Home.md` and follow the **📖 Reading path** at the top — an ordered, book-style curriculum. Chapter 0 is [`application/running-example.md`](application/running-example.md): one small program walked through the whole pipeline (front-end IR → SSA → optimized → inlined), which every later chapter zooms into. The folders are storage by *facet*; the reading order lives in that path and the MOCs, **not** the directory tree.
 
 ## How these notes were made
 
