@@ -12,3 +12,6 @@ _wtest.tmp
 .obsidian/workspace-mobile.json
 .obsidian/cache
 .trash/
+
+# Community plugin binaries (readers install via Obsidian; see README)
+.obsidian/plugins/
