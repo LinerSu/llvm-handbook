@@ -9,7 +9,7 @@ implements:
 src: "llvm/include/llvm/IR/InstVisitor.h"
 docs: "InstVisitor doxygen ↗ https://llvm.org/doxygen/classllvm_1_1InstVisitor.html"
 prereqs: [llvm-basics]
-related: [instruction-combining, instruction-selection, extending-llvm-ir]
+related: [instruction-combining, instruction-selection, extending-llvm-ir, ast-traversal]
 tags: [kind/concept, status/verified]
 status: verified
 verified_on: 2026-06-28
@@ -128,7 +128,7 @@ LLVM uses `InstVisitor` wherever a pass must act per-opcode:
 - `PtrUseVisitor` — a specialized visitor for walking the uses of a pointer (used by [[scalar-replacement-of-aggregates|SROA]]).
 
 > [!note] Cross-ecosystem cousins
-> The same idea appears as **Clang `RecursiveASTVisitor`** (CRTP visitor over the AST) and, in **MLIR**, as `TypeSwitch` / op `dyn_cast` dispatch rather than a single visitor base — a deliberate divergence worth its own note if we add the MLIR ecosystem.
+> The same idea appears over the **Clang AST** as `RecursiveASTVisitor` / AST matchers — its own note: [[ast-traversal|AST Traversal]] (the AST-side counterpart of this IR-side note). In **MLIR** it's `TypeSwitch` / op `dyn_cast` dispatch rather than a single visitor base — a deliberate divergence worth its own note if we add the MLIR ecosystem.
 
 ## 7. Limitations
 

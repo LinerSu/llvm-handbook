@@ -6,7 +6,7 @@ ecosystem: [general, llvm, clang]
 concepts: [type-checking, type-systems]
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §6.3, §6.5"
 prereqs: [llvm-basics]
-related: [unification, extending-llvm-ir, getelementptr]
+related: [unification, extending-llvm-ir, getelementptr, source-level-analysis, clang-ast]
 tags: [kind/concept, status/verified]
 status: verified
 verified_on: 2026-06-28
@@ -64,7 +64,7 @@ LLVM's **verifier** enforces that the IR is well-typed *structurally*: operand t
 ## 5. Where source type-checking lives
 
 > [!tip] The boundary
-> Type-checking **rules**, **conversions**, **overload resolution**, and **inference** are the **front end's** job — in the LLVM world, **Clang `Sema`**. By the time IR is produced, the operator and callee are fixed and every conversion is an explicit cast. Polymorphic **type inference** (ML/Hindley–Milner, and the inference in Rust/Swift) solves type-equality constraints by **[[unification]]** — the very algorithm that also powers Steensgaard/DSA alias analysis. So in this vault, "type checking" is a `frontend`/`clang` topic that *produces* the typed IR the rest of the notes analyze.
+> Type-checking **rules**, **conversions**, **overload resolution**, and **inference** are the **front end's** job — in the LLVM world, **Clang `Sema`**. By the time IR is produced, the operator and callee are fixed and every conversion is an explicit cast. Polymorphic **type inference** (ML/Hindley–Milner, and the inference in Rust/Swift) solves type-equality constraints by **[[unification]]** — the very algorithm that also powers Steensgaard/DSA alias analysis. So in this vault, "type checking" is a `frontend`/`clang` topic that *produces* the typed IR the rest of the notes analyze. `Sema` is also where **security-relevant type attributes** are enforced — e.g. `-fbounds-safety`'s `__counted_by` (carried on the [[clang-ast|AST]] as a `CountAttributedType`) — part of the broader front-end analysis layer surveyed in [[source-level-analysis]].
 
 > [!summary] The one thing to remember
 > LLVM keeps a **typed, structurally-verified IR** with explicit casts — but the real **type-checking** (rules, conversions, overloading, inference) is the **front end's** job (Clang `Sema`). LLVM assumes well-typed input and never re-checks source semantics.

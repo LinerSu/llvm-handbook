@@ -10,7 +10,7 @@ data_structures: [dominator-tree]
 src: "llvm/lib/Transforms/Scalar/CorrelatedValuePropagation.cpp"
 docs: "CorrelatedValuePropagation doxygen ↗ https://llvm.org/doxygen/CorrelatedValuePropagation_8cpp.html"
 prereqs: [lazy-value-info]
-related: [lazy-value-info, sparse-conditional-constant-propagation, instruction-combining]
+related: [lazy-value-info, sparse-conditional-constant-propagation, instruction-combining, constraint-elimination]
 tags: [kind/transform, status/verified]
 status: verified
 verified_on: 2026-06-28

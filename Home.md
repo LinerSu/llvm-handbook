@@ -26,12 +26,16 @@ The vault is one book spanning **theory → algorithm → LLVM → real-world us
 5. **Data-flow analysis** → [[Dataflow-Analysis.MOC]] — lattices, the worklist, SCCP: the analysis backbone. *(after 2)*
 
 **Part III — The classic optimizations** *(after 3–5)*
-6. **Memory** → [[Memory-Optimization.MOC]] · **Redundancy** → [[Redundancy-Elimination.MOC]] · **Constant/value propagation** → [[Constant-Propagation.MOC]] · **Dead code** → [[Dead-Code-Elimination.MOC]] · **CFG cleanup** → [[Control-Flow.MOC]] · **Peephole** → [[instruction-combining]]
+6. **Memory** → [[Memory-Optimization.MOC]] · **Redundancy** → [[Redundancy-Elimination.MOC]] · **Constant/value propagation** → [[Constant-Propagation.MOC]] · **Dead code** → [[Dead-Code-Elimination.MOC]] · **CFG cleanup** → [[Control-Flow.MOC]] · **Peephole** → [[instruction-combining]] · **Value-range & constraints** → [[Range-Analysis.MOC|Value-Range & Constraint Reasoning]]
 7. **Interprocedural** → [[Interprocedural-Analysis.MOC]] — inlining, devirtualization, IPSCCP.
 8. **Alias analysis** → [[pointer-alias-analysis]] — the legality currency for memory optimizations.
 
 **Part IV — Backend (real-world output)**
 9. **Code generation** → [[Code-Generation.MOC]] — instruction selection → scheduling → register allocation → emission.
+
+**Cross-cutting — the *other* level (front end)** → [[Source-Level-Analysis.MOC|Front-End & Source-Level Analysis]] — most of this book analyzes LLVM IR; this chapter covers analysis on the Clang **AST/CFG** *before* lowering (the [[clang-static-analyzer|Static Analyzer]], the [[clang-dataflow-framework|dataflow framework]]) and *when* source-level beats IR-level. *(read after 2 & 5)*
+
+**Cross-cutting — security** → [[Memory-Safety-Hardening.MOC|Memory Safety & C/C++ Hardening]] — the features/analyses that eliminate whole classes of memory-safety bugs: bounds ([[fbounds-safety]], [[safe-buffers]]), lifetime ([[lifetime-safety]]), type ([[typed-allocators]]), control-flow ([[pointer-authentication]]), and scaling them ([[interprocedural-summaries]], [[scalable-static-analysis]]).
 
 **Reference shelf** — theory: [[dataflow-foundations]], [[polyhedral-model]]; textbook crosswalks: [[muchnick.MOC|Muchnick]] · [[dragon-book-ch9.MOC|Dragon Book Ch.9]] (and Ch.6/8/10/11/12).
 

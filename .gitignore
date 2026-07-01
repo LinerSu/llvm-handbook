@@ -15,3 +15,5 @@ _wtest.tmp
 
 # Community plugin binaries (readers install via Obsidian; see README)
 .obsidian/plugins/
+
+user/
