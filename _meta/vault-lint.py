@@ -19,7 +19,7 @@ import os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FACETS = ["theory", "concept", "algorithm", "data-structure", "implementation", "application"]
-SKIP_DIRS = {".git", ".obsidian"}
+SKIP_DIRS = {".git", ".obsidian", "user"}  # skip gitignored local-only dirs — not vault content
 # repo-level docs that are intentionally plain Markdown (not vault notes)
 ROOT_DOC_IGNORE = {"README", "CLAUDE", "LICENSE"}
 REQUIRED_KEYS = ["title", "facet", "stage", "ecosystem", "concepts", "status", "tags"]

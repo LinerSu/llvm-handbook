@@ -15,7 +15,7 @@ status: draft
 > Optimization that crosses function boundaries. The arc *the call graph as the substrate → inlining (the enabler) → specializing and devirtualizing calls → propagating facts and pruning across calls → tail calls*.
 
 ## 1. Substrate
-The [[call-graph|Call Graph]] is what interprocedural passes traverse (bottom-up over SCCs in the CGSCC pipeline).
+The [[call-graph|Call Graph]] is what interprocedural passes traverse (bottom-up over SCCs in the CGSCC pipeline). The scalable way to cross function boundaries without re-analyzing per calling context is **summaries** → **[[interprocedural-summaries|Summary-Based (Compositional) Analysis]]** *(concept · analysis)* — the compositional technique behind LTO and whole-program tooling.
 
 ## 2. The enabler — inlining
 Replacing a call with the callee body; the single most important IPO because it exposes intraprocedural opportunities everywhere else. → **[[inlining|Inlining]]**.
