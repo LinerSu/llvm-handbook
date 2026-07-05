@@ -9,7 +9,7 @@ implements:
 src: "clang/lib/Sema/SemaBoundsSafety.cpp"
 docs: "Clang — -fbounds-safety ↗ https://clang.llvm.org/docs/BoundsSafety.html"
 prereqs: [clang-ast, getelementptr]
-related: [constraint-elimination, safe-buffers, clang-ast]
+related: [constraint-elimination, safe-buffers, clang-ast, fbounds-safety-bottlenecks]
 tags: [kind/pass, status/verified, version-sensitive]
 status: verified
 verified_on: 2026-07-01
@@ -86,7 +86,17 @@ Two enforcement axes cover the space between them:
 
 Together: an out-of-bounds access is either a **build error** or a **deterministic trap** — never a silent memory-corruption primitive. That is the security claim (an OOB becomes a crash, not an exploit), at the cost of the checks the middle-end couldn't remove.
 
-## 6. Limitations & version notes
+## 6. The program-analysis reading
+
+Read through an abstract-interpretation lens, `-fbounds-safety` is a **hybrid (gradual) verification system** — the same obligation set split by what the optimizer can prove:
+
+- **Refinement / dependent types.** `int *__counted_by(n)` is a value-dependent refinement `{ p | len(p) == n }`: the pointer and the integer `n` are bound by an invariant. The `CountAttributedType` sugar node (§2) is where that predicate rides, while staying canonically equal to the bare pointer so the ABI is unperturbed.
+- **A proof-obligation calculus.** Each dereference `p[i]` generates a verification condition `0 ≤ i ∧ i < n`; each narrowing conversion generates a materialization VC; each correlated update must re-establish `len(p) == n` (the paired-assignment rule, §2).
+- **Static discharge vs. dynamic residue.** VCs the [[constraint-elimination|middle-end]] proves cost nothing; the rest compile to a compare-and-`llvm.ubsantrap` (§3). **Precision is monotone**: better static reasoning removes runtime checks, never safety — the *fail-closed* invariant (§5).
+
+This is why the design's cost profile is what it is: because the bound is a **runtime value** rather than a static fact, discharging `i < n` is a numeric + alias problem the optimizer must win case by case. Where and why it loses — and the levers that would recover it — is the companion note **[[fbounds-safety-bottlenecks|precision & performance bottlenecks]]**.
+
+## 7. Limitations & version notes
 
 > [!warning] Experimental and C-only
 > - **Experimental / upstreaming.** The extension is gated by **`-fexperimental-bounds-safety`** (`LangOpts BoundsSafety`, **default off**; `clang/include/clang/Options/Options.td`, help text "experimental bounds safety extension for C"). It is being landed incrementally — the annotation surface and lowering available at any given tag depend on the release. **`version-sensitive`** → [[llvm-version]].

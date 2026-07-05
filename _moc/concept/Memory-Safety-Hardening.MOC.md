@@ -18,7 +18,8 @@ status: draft
 You cannot rewrite the ocean of existing C/C++, so you **harden it**: restrict the language to a checkable subset, express invariants as annotations (assume/guarantee, like types), and fall back to runtime checks where static proof is undecidable. Each mechanism below targets one *class* of bug.
 
 ## 2. Spatial (bounds) safety
-- **[[fbounds-safety|-fbounds-safety]]** — a C language extension: bounds annotations (`__counted_by`…) as [[clang-ast|AST]] type attributes + inserted runtime traps *(implementation · frontend)*.
+- **[[fbounds-safety|-fbounds-safety]]** — a C language extension: bounds annotations (`__counted_by`…) as [[clang-ast|AST]] type attributes + inserted runtime traps; read as hybrid refinement-type verification *(implementation · frontend)*.
+  - the cost side → **[[fbounds-safety-bottlenecks|precision & performance bottlenecks]]** — why checks survive (bounds are *values*, not facts) and the three levers that recover them *(implementation · analysis)*.
 - **[[safe-buffers|C++ Safe Buffers]]** — `-Wunsafe-buffer-usage` gadget analysis + hardened libc++ (`std::span`) *(implementation · analysis)*.
 - backed by **[[constraint-elimination|ConstraintElimination]]** — the middle-end pass that removes the redundant inserted checks (Fourier–Motzkin over dominating conditions) *(implementation · optimization)*.
 
