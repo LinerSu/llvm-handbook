@@ -53,14 +53,19 @@ flowchart BT
   K1["const −1"]
   K0["const 0"]
   K2["const 1 …"]
-  TOP["⊤ overdefined (NAC)"]
+  TOP["⊤ overdefined (NAC — not a constant)"]
   BOT --> K1 --> TOP
   BOT --> K0 --> TOP
   BOT --> K2 --> TOP
 ```
 
+> [!question] Predict first
+> `%p = phi i32 [ 0, %then ], [ 1, %else ]` — two different constants meet at a join point. Using the figure, what lattice value does `%p` get, and why is that answer still *sound* even though it forgets both constants?
+>
+> ⊤ (overdefined). Soundness only demands covering every real execution; ⊤ covers all of them. What is lost is precision, not correctness — the trade the rest of this note keeps returning to.
+
 > [!info] MFP vs. MOP
-> The iterative solution (**Maximal Fixed Point**) is *sound but possibly less precise* than the ideal **Meet-Over-all-Paths** solution. **MFP = MOP if the transfer functions are distributive** (sufficient, not necessary) (Kildall 1973); for non-distributive analyses (e.g. constant propagation) MFP $<$ MOP in precision.
+> The iterative solution (**Maximal Fixed Point**) is *sound but possibly less precise* than the ideal **Meet-Over-all-Paths** solution. **MFP = MOP if the transfer functions are distributive** (sufficient, not necessary) (Kildall 1973); for non-distributive analyses (e.g. constant propagation) MFP $<$ MOP in precision. *Classic loss: one path sets `x=1, y=2`, the other `x=2, y=1`; every path has `x+y == 3`, but joining first drives both `x` and `y` to ⊤, so MFP misses the constant MOP would keep.*
 
 > [!tip] As abstract interpretation
 > A dataflow analysis *is* an abstract interpretation over a particular abstract domain; soundness = the abstract transfer over-approximates the concrete one through a Galois connection (Cousot & Cousot 1977). This is the bridge to relational numerical domains (intervals, octagons, polyhedra); the lattice/fixpoint theory is in [[dataflow-foundations]].
@@ -68,13 +73,25 @@ flowchart BT
 ### 3. Algorithm
 
 > [!info] Worklist iteration
-> Initialize each point to ⊥ (or ⊤), push all blocks on a worklist; pop a block, apply its transfer function, and if its out-fact changed, push its CFG successors (forward) or predecessors (backward). Iterate to fixpoint.
+> Initialize each point to the *optimistic* value — the identity of the combining operator: ⊥ when paths are combined with join (the figure's "nothing known yet" starting value), dually ⊤ when they are combined with meet, refining downward — and push all blocks on a worklist; pop a block, apply its transfer function, and if its out-fact changed, push its CFG successors (forward) or predecessors (backward). Iterate to fixpoint.
 > - **Forward** (reaching defs, constant prop) vs **backward** (liveness, very-busy expressions).
 > - **May** (join $=\cup$, "on some path") vs **must** (meet $=\cap$, "on all paths").
 
+> [!figure]+ Animation — worklist iteration to fixpoint on [[running-example|the running example]]
+> ![data-flow-analysis-worklist.gif](attachments/data-flow-analysis-worklist.gif)
+> Constant propagation solved block-by-block on the pre-mem2reg CFG: watch `i=0` meet `i=1` across the back edge and rise to overdefined (NAC), with the loop re-queued until the third visit to `for.cond` changes nothing — the fixpoint. (Regenerate: `_meta/anim/storyboards/data-flow-analysis-worklist.json`.)
+
+> [!example] Three worklist steps on the running example
+> Run the figure's constant lattice over `accumulate` after mem2reg and loop canonicalization ([[running-example#3. After mem2reg and loop opts]]), SCCP-style — the worklist holds SSA *values* and pushes their users (§4 explains why that is called *sparse*):
+> 1. `%sum.05 = phi i32 [ 0, %for.body.preheader ], [ %add, %for.body ]` — first visit: only the preheader edge is executable yet, so the φ ignores the back-edge operand and joins only `0`: **const 0**. Its user `%add` goes on the worklist.
+> 2. `%add = add nsw i32 %mul, %sum.05` — `%mul` multiplies a value loaded from memory by the unknown argument `%k`, so `%mul` is **⊤ (overdefined)**; add(⊤, const 0) = ⊤, and `%add`'s users (both φs) are pushed.
+> 3. The exit branch tests against `%wide.trip.count`, derived from the unknown argument `%n`, so the condition is overdefined and *both* successors — including the back edge — become executable; `%sum.05` is revisited: join(const 0, ⊤) = **⊤**. Each value can only climb ⊥ → const → ⊤, so it is revisited at most twice — finite height is exactly what forces termination.
+>
+> Contrast `caller` ([[running-example#4. Interprocedural — inlining and constant folding]]): inlining substitutes the literal `4` for `%k`, so the multiplier's lattice value is **const 4** on every path — it never climbs — and the fact pays off as `mul → shl`.
+
 ### 4. In LLVM and MLIR
 
-- **SCCP** — Sparse Conditional Constant Propagation (Wegman & Zadeck): lattice `undef → constant → overdefined`, tracking block reachability simultaneously. `Transforms/Scalar/SCCP.cpp` (+ `Utils/SCCPSolver.cpp`). → [[sparse-conditional-constant-propagation]]
+- **SCCP** — Sparse Conditional Constant Propagation (Wegman & Zadeck). *Sparse* = propagate along SSA def–use edges, revisiting only the users of a value whose fact changed, instead of pushing whole block states around the CFG (§3's dense scheme). Lattice `undef → constant → overdefined`, tracking block reachability simultaneously. `Transforms/Scalar/SCCP.cpp` (+ `Utils/SCCPSolver.cpp`). → [[sparse-conditional-constant-propagation]]
 - **Generic sparse solver** — `SparsePropagation.h` exposes `AbstractLatticeFunction`; a client supplies the lattice and merge. Used by e.g. `CalledValuePropagation`.
 - **Range/value facts** — `LazyValueInfo`, `ConstraintElimination`, known/demanded bits (`ValueTracking`).
 - **Liveness** — `LiveVariables` / `LiveIntervals` in `lib/CodeGen` (backward, may), the input to register allocation ([[code-generation-overview]]).

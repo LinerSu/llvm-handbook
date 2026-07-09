@@ -17,8 +17,8 @@ Cross-session queue and record for the note-improvement loops (see `.claude/work
 | data-structure/ssa-form.md | ssa-form-phi-placement.gif (pilot, hand-authored) | pass (5 applied: why-care, use-def scoping, predict-first, DF intuition, phi-edge dominance) | yes | 2026-07-09 | — |
 | concept/mem2reg.md | mem2reg-promotion.gif | pass (3 applied: glosses, predict-first, §3 trace) | yes | 2026-07-09 | — |
 | data-structure/dominator-tree.md | dominator-tree-idom-build.gif | pass (5 applied: predict-first, DF check-on-figure, iterated gloss, running-example DF trace, EarlyCSE contrast) | yes | 2026-07-09 | — |
-| concept/data-flow-analysis.md | queued | queued | queued | — | — |
-| theory/dataflow-foundations.md | queued | queued | queued | — | — |
+| concept/data-flow-analysis.md | data-flow-analysis-worklist.gif | pass (6 applied: SCCP trace, predict-first, init clarification, sparse gloss, MFP-loss example, NAC expansion) | yes | 2026-07-09 | — |
+| theory/dataflow-foundations.md | dataflow-foundations-lattice-climb.gif | pass (5 applied: meet example, height definition, backward form, collecting-semantics gloss, non-distributivity example) | yes | 2026-07-09 | — |
 | concept/register-allocation.md | queued | queued | queued | — | — |
 | concept/instruction-scheduling.md | queued | queued | queued | — | — |
 | concept/partial-redundancy-elimination.md | queued | queued | queued | — | — |

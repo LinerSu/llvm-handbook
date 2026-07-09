@@ -1,0 +1,81 @@
+{
+  "id": "dataflow-foundations-lattice-climb",
+  "title": "Why iteration terminates — facts climb a finite-height lattice",
+  "canvas": { "cols": 3, "rows": 3, "cell": [230, 112], "margin": 28 },
+  "defaults": { "step_ms": 1700, "hold_ms": 3800 },
+  "summary_caption": "Monotone transfers only push facts up, and height 2 caps every fact at 2 moves - so the fixpoint (MFP) must arrive. Infinite-height domains (intervals) need widening.",
+  "nodes": [
+    { "id": "top",   "at": [1, 0], "label": "TOP\noverdefined",     "shape": "box" },
+    { "id": "c0",    "at": [0, 1], "label": "0",                    "shape": "box" },
+    { "id": "c1",    "at": [1, 1], "label": "1",                    "shape": "box" },
+    { "id": "cdots", "at": [2, 1], "label": "...\nother constants", "shape": "box" },
+    { "id": "bot",   "at": [1, 2], "label": "BOTTOM\nno info yet",  "shape": "box" }
+  ],
+  "edges": [
+    { "from": "bot", "to": "c0" },
+    { "from": "bot", "to": "c1" },
+    { "from": "bot", "to": "cdots" },
+    { "from": "c0",  "to": "top" },
+    { "from": "c1",  "to": "top" },
+    { "from": "cdots", "to": "top" }
+  ],
+  "frames": [
+    {
+      "caption": "Section 1's lattice as the constant lattice: bottom = no info yet, one element per constant, top = overdefined. We watch the running example's loop-header facts i and sum.",
+      "nodes": { "bot": "active", "cdots": "dim" },
+      "badges": [
+        { "node": "bot", "text": "i,sum @cond", "style": "normal" }
+      ]
+    },
+    {
+      "caption": "First worklist pass: entry sets i=0 and sum=0; the back edge still carries bottom, and merging with bottom changes nothing. Both header facts climb to the constant 0 - move 1 of at most 2.",
+      "nodes": { "bot": "normal", "c0": "active" },
+      "edges": { "bot->c0": "active" },
+      "clear_badges": true,
+      "badges": [
+        { "node": "c0", "text": "i,sum @cond", "style": "new" }
+      ]
+    },
+    {
+      "caption": "Around the loop: a[i]*k is unknown, so for.body makes sum overdefined, and for.inc computes i=1. The back edge hands {i=1, sum=top} to the header and re-queues it.",
+      "nodes": { "c0": "normal", "c1": "active", "top": "active" },
+      "edges": { "bot->c0": "normal" },
+      "clear_badges": true,
+      "badges": [
+        { "node": "c0", "text": "i,sum @cond", "style": "normal" }
+      ]
+    },
+    {
+      "caption": "Header, second visit: i arrives as 0 from entry but 1 from the back edge - no single constant covers both, so the merge is overdefined. i@cond takes move 2 of 2: it can never move again.",
+      "nodes": { "c1": "normal", "top": "active" },
+      "edges": { "c0->top": "active", "c1->top": "active" },
+      "clear_badges": true,
+      "badges": [
+        { "node": "top", "text": "i@cond",   "style": "new" },
+        { "node": "c0",  "text": "sum@cond", "style": "normal" }
+      ]
+    },
+    {
+      "caption": "Same merge for sum: 0 from entry meets overdefined from around the loop, so sum@cond climbs to the top as well. Both header facts have exhausted their chains.",
+      "nodes": { "top": "active" },
+      "clear_badges": true,
+      "badges": [
+        { "node": "top", "text": "i,sum @cond", "style": "new" }
+      ]
+    },
+    {
+      "caption": "One more lap: the loop blocks re-run with the new header facts, and the next header merge recomputes exactly what is stored - nothing changes, the worklist drains: the fixpoint (MFP).",
+      "nodes": { "top": "done" },
+      "edges": { "c0->top": "normal", "c1->top": "normal" },
+      "clear_badges": true,
+      "badges": [
+        { "node": "top", "text": "i,sum @cond", "style": "done" }
+      ]
+    },
+    {
+      "caption": "No luck involved: monotone transfers only move facts UP, and the chain bottom-0-top has 2 steps, so each fact changes at most twice. Infinite-height domains (intervals) need widening.",
+      "nodes": { "bot": "done", "c0": "done" },
+      "edges": { "bot->c0": "done", "c0->top": "done" }
+    }
+  ]
+}
