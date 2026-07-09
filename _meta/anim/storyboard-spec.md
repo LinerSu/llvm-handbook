@@ -32,8 +32,11 @@ A **storyboard** is a JSON file in `_meta/anim/storyboards/` that declaratively 
   ],
   "edges": [
     { "from": "entry", "to": "cond" },
-    { "from": "inc", "to": "cond", "curve": "left", "label": "back edge" }
+    { "from": "inc", "to": "cond", "curve": "left", "label": "back edge" },
+    { "from": "a", "to": "b", "arrow": false }
     // curve: none | left | right  ('left' bulges to the left of travel direction)
+    // arrow: default true; false draws an undirected line (symmetric relations
+    //        like interference edges — never draw those with arrowheads)
   ],
   "frames": [
     {

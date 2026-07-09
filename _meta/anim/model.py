@@ -50,6 +50,7 @@ class Edge:
     dst: str
     curve: str = "none"
     label: str = ""
+    arrow: bool = True  # False = undirected line (e.g. interference edges)
 
     @property
     def key(self):
@@ -155,7 +156,9 @@ def _parse_edges(raw, node_ids):
             _require(e[k] in node_ids, "%s.%s: unknown node '%s'" % (where, k, e[k]))
         curve = e.get("curve", "none")
         _require(curve in CURVES, "%s.curve: '%s' not one of %s" % (where, curve, CURVES))
-        edge = Edge(src=e["from"], dst=e["to"], curve=curve, label=str(e.get("label", "")))
+        arrow = e.get("arrow", True)
+        _require(isinstance(arrow, bool), "%s.arrow: must be a boolean" % where)
+        edge = Edge(src=e["from"], dst=e["to"], curve=curve, label=str(e.get("label", "")), arrow=arrow)
         _require(edge.key not in seen, "%s: duplicate edge '%s'" % (where, edge.key))
         seen.add(edge.key)
         edges.append(edge)

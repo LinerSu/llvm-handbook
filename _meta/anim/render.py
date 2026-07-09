@@ -139,7 +139,7 @@ def _render_one(sb, state, caption, step_text, frame_idx):
         if e.curve == "none":
             p0 = D.border_point(b0, shapes[e.src], c1)
             p1 = D.border_point(b1, shapes[e.dst], c0)
-            anchor = D.straight_arrow(d, p0, p1, style)
+            anchor = D.straight_arrow(d, p0, p1, style, arrow=e.arrow)
         else:
             # aim start/end slightly toward the bulge side so the curve leaves the border cleanly
             side = e.curve
@@ -148,7 +148,7 @@ def _render_one(sb, state, caption, step_text, frame_idx):
             mid = ((c0[0] + c1[0]) / 2 + perp[0] * 0.3, (c0[1] + c1[1]) / 2 + perp[1] * 0.3)
             p0 = D.border_point(b0, shapes[e.src], mid)
             p1 = D.border_point(b1, shapes[e.dst], mid)
-            anchor = D.curved_arrow(d, p0, p1, side, style)
+            anchor = D.curved_arrow(d, p0, p1, side, style, arrow=e.arrow)
         if e.label:
             D.edge_label(d, anchor, e.label, D.font(*F_EDGE))
 
@@ -190,14 +190,14 @@ def render_frames(sb):
     _check_glyphs(sb)
     state = _State(sb)
     frames, durations = [], []
-    total = len(sb.frames)
+    total = len(sb.frames) + (1 if sb.summary_caption else 0)
     for i, f in enumerate(sb.frames):
         state.apply(f)
         img = _render_one(sb, state, f.caption, "%d/%d" % (i + 1, total), i)
         frames.append(img)
         durations.append(f.duration_ms if f.duration_ms else sb.step_ms)
     if sb.summary_caption:
-        img = _render_one(sb, state, sb.summary_caption, "%d/%d" % (total, total), total)
+        img = _render_one(sb, state, sb.summary_caption, "%d/%d" % (total, total), len(sb.frames))
         frames.append(img)
         durations.append(sb.hold_ms)
     else:

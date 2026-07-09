@@ -1,0 +1,78 @@
+{
+  "id": "register-allocation-coloring-spill",
+  "title": "Graph coloring: build, color, spill, retry",
+  "canvas": { "cols": 3, "rows": 2, "cell": [180, 96], "margin": 24 },
+  "defaults": { "step_ms": 1600, "hold_ms": 3600 },
+  "summary_caption": "Chaitin-Briggs: build, color, spill, repeat. LLVM's Greedy allocator instead splits and evicts live intervals (Section 2).",
+  "nodes": [
+    { "id": "a", "at": [1, 0], "label": "a", "shape": "rounded" },
+    { "id": "d", "at": [2, 0], "label": "d", "shape": "rounded" },
+    { "id": "b", "at": [0, 1], "label": "b", "shape": "rounded" },
+    { "id": "c", "at": [2, 1], "label": "c", "shape": "rounded" }
+  ],
+  "edges": [
+    { "from": "a", "to": "b", "arrow": false },
+    { "from": "a", "to": "c", "arrow": false },
+    { "from": "b", "to": "c", "arrow": false }
+  ],
+  "frames": [
+    {
+      "caption": "Four live ranges from the Section 1 figure — a, b, c, d — competing for k = 3 registers.",
+      "edges": { "a->b": "dim", "a->c": "dim", "b->c": "dim" }
+    },
+    {
+      "caption": "Build: liveness shows a, b, c live at the same time, so an interference edge joins each pair.",
+      "nodes": { "a": "active", "b": "active", "c": "active" },
+      "edges": { "a->b": "active", "a->c": "active", "b->c": "active" }
+    },
+    {
+      "caption": "d never overlaps another value — no edges. The graph is fully built; now color it.",
+      "nodes": { "a": "normal", "b": "normal", "c": "normal", "d": "active" },
+      "edges": { "a->b": "normal", "a->c": "normal", "b->c": "normal" }
+    },
+    {
+      "caption": "Select: color a first. No neighbor is colored yet, so a takes R0.",
+      "nodes": { "a": "done", "d": "normal" },
+      "set_labels": { "a": "a : R0" }
+    },
+    {
+      "caption": "b shares an edge with a, so R0 is blocked — b takes R1.",
+      "nodes": { "b": "done" },
+      "edges": { "a->b": "active" },
+      "set_labels": { "b": "b : R1" }
+    },
+    {
+      "caption": "c touches both a and b: R0 and R1 blocked, c takes R2. The triangle needs all 3 registers.",
+      "nodes": { "c": "done" },
+      "edges": { "a->b": "done", "a->c": "active", "b->c": "active" },
+      "set_labels": { "c": "c : R2" }
+    },
+    {
+      "caption": "d interferes with nothing, so it reuses R0. A 3-coloring found — no spills needed.",
+      "nodes": { "d": "done" },
+      "edges": { "a->c": "done", "b->c": "done" },
+      "set_labels": { "d": "d : R0" },
+      "duration_ms": 2200
+    },
+    {
+      "caption": "Rewind with only k = 2 registers: the a-b-c triangle has no 2-coloring. Coloring fails.",
+      "nodes": { "a": "error", "b": "error", "c": "error", "d": "dim" },
+      "edges": { "a->b": "error", "a->c": "error", "b->c": "error" },
+      "set_labels": { "a": "a", "b": "b", "c": "c", "d": "d" },
+      "duration_ms": 2200
+    },
+    {
+      "caption": "Spill: c gets a stack slot (store after def, reload before uses) and leaves the graph.",
+      "nodes": { "a": "normal", "b": "normal", "c": "dim" },
+      "edges": { "a->b": "normal", "a->c": "dim", "b->c": "dim" },
+      "set_labels": { "c": "c : spilled" },
+      "badges": [ { "node": "c", "text": "spill", "style": "error" } ]
+    },
+    {
+      "caption": "Retry: only a and b interfere now. a takes R0, b takes R1, d reuses R0 — success with 2.",
+      "nodes": { "a": "done", "b": "done", "d": "done" },
+      "edges": { "a->b": "done" },
+      "set_labels": { "a": "a : R0", "b": "b : R1", "d": "d : R0" }
+    }
+  ]
+}

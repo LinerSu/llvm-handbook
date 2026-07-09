@@ -19,8 +19,8 @@ Cross-session queue and record for the note-improvement loops (see `.claude/work
 | data-structure/dominator-tree.md | dominator-tree-idom-build.gif | pass (5 applied: predict-first, DF check-on-figure, iterated gloss, running-example DF trace, EarlyCSE contrast) | yes | 2026-07-09 | — |
 | concept/data-flow-analysis.md | data-flow-analysis-worklist.gif | pass (6 applied: SCCP trace, predict-first, init clarification, sparse gloss, MFP-loss example, NAC expansion) | yes | 2026-07-09 | — |
 | theory/dataflow-foundations.md | dataflow-foundations-lattice-climb.gif | pass (5 applied: meet example, height definition, backward form, collecting-semantics gloss, non-distributivity example) | yes | 2026-07-09 | — |
-| concept/register-allocation.md | queued | queued | queued | — | — |
-| concept/instruction-scheduling.md | queued | queued | queued | — | — |
+| concept/register-allocation.md | register-allocation-coloring-spill.gif | pass (5 applied: ext-asm worked example, predict-first, MIR gloss, spill-weight gloss, two-address example) | yes | 2026-07-09 | — |
+| concept/instruction-scheduling.md | instruction-scheduling-list-schedule.gif | pass (5 applied: loop-body schedule table, predict-first, pre/post-RA expansion, SDAG-fallback reword, latency gloss) | yes | 2026-07-09 | — |
 | concept/partial-redundancy-elimination.md | queued | queued | queued | — | — |
 | concept/sparse-conditional-constant-propagation.md | queued | queued | queued | — | — |
 | concept/value-numbering.md | queued | queued | queued | — | — |

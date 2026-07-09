@@ -142,14 +142,15 @@ def _arrowhead(d, tip, tangent, color, size=11):
     d.polygon([tip, p1, p2], fill=color)
 
 
-def straight_arrow(d, p0, p1, style_name):
+def straight_arrow(d, p0, p1, style_name, arrow=True):
     color, width = EDGE_STYLES[style_name]
     d.line([p0, p1], fill=color, width=width)
-    _arrowhead(d, p1, (p1[0] - p0[0], p1[1] - p0[1]), color)
+    if arrow:
+        _arrowhead(d, p1, (p1[0] - p0[0], p1[1] - p0[1]), color)
     return ((p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2)  # label anchor
 
 
-def curved_arrow(d, p0, p1, side, style_name, bend=0.45):
+def curved_arrow(d, p0, p1, side, style_name, bend=0.45, arrow=True):
     """Quadratic bezier from p0 to p1 bulging to `side` ('left'/'right' of travel)."""
     color, width = EDGE_STYLES[style_name]
     dx, dy = p1[0] - p0[0], p1[1] - p0[1]
@@ -166,7 +167,8 @@ def curved_arrow(d, p0, p1, side, style_name, bend=0.45):
         y = (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * ctrl[1] + t ** 2 * p1[1]
         pts.append((x, y))
     d.line(pts, fill=color, width=width, joint="curve")
-    _arrowhead(d, pts[-1], (pts[-1][0] - pts[-2][0], pts[-1][1] - pts[-2][1]), color)
+    if arrow:
+        _arrowhead(d, pts[-1], (pts[-1][0] - pts[-2][0], pts[-1][1] - pts[-2][1]), color)
     return pts[steps // 2]  # label anchor at t=0.5
 
 

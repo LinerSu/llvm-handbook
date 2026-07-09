@@ -1,0 +1,73 @@
+{
+  "id": "instruction-scheduling-list-schedule",
+  "title": "List scheduling the c = a + b dependence DAG",
+  "canvas": { "cols": 5, "rows": 4, "cell": [150, 92], "margin": 24 },
+  "defaults": { "step_ms": 1600, "hold_ms": 3600 },
+  "summary_caption": "List scheduling: each cycle, issue the highest-priority ready node. Overlapping the two independent loads hid a cycle of load latency.",
+  "nodes": [
+    { "id": "lda", "at": [1, 0], "label": "ld a", "shape": "box" },
+    { "id": "ldb", "at": [3, 0], "label": "ld b", "shape": "box" },
+    { "id": "add", "at": [2, 1], "label": "add", "shape": "box" },
+    { "id": "st",  "at": [2, 2], "label": "st c", "shape": "box" },
+    { "id": "c0", "at": [0, 3], "label": "cycle 0\n?", "shape": "rounded" },
+    { "id": "c1", "at": [1, 3], "label": "cycle 1\n?", "shape": "rounded" },
+    { "id": "c2", "at": [2, 3], "label": "cycle 2\n?", "shape": "rounded" },
+    { "id": "c3", "at": [3, 3], "label": "cycle 3\n?", "shape": "rounded" },
+    { "id": "c4", "at": [4, 3], "label": "cycle 4\n?", "shape": "rounded" }
+  ],
+  "edges": [
+    { "from": "lda", "to": "add" },
+    { "from": "ldb", "to": "add" },
+    { "from": "add", "to": "st" }
+  ],
+  "frames": [
+    {
+      "caption": "The dependence DAG for c = a + b (note section 1): the add needs both loads, the store needs the add. Assume loads take 2 cycles, add and store 1.",
+      "nodes": { "c0": "dim", "c1": "dim", "c2": "dim", "c3": "dim", "c4": "dim" }
+    },
+    {
+      "caption": "Ready set = nodes with no unscheduled predecessors: ld a and ld b. The add and store must wait for their operands.",
+      "nodes": { "lda": "active", "ldb": "active", "add": "dim", "st": "dim" }
+    },
+    {
+      "caption": "Cycle 0 — pick by priority (critical-path length; the loads tie): issue ld a. Its 2-cycle latency means the result arrives at cycle 2.",
+      "nodes": { "lda": "done", "c0": "new" },
+      "set_labels": { "c0": "cycle 0\nld a" },
+      "badges": [ { "node": "lda", "text": "c0", "style": "done" } ]
+    },
+    {
+      "caption": "Cycle 1 — ld a is still in flight, but ld b is independent and ready: issue it now instead of idling. This is latency hiding.",
+      "nodes": { "ldb": "done", "c1": "new" },
+      "set_labels": { "c1": "cycle 1\nld b" },
+      "badges": [ { "node": "ldb", "text": "c1", "style": "done" } ]
+    },
+    {
+      "caption": "Cycle 2 — add is the only candidate, but ld b's result only lands at cycle 3. Nothing is ready: the scheduler stalls one cycle.",
+      "nodes": { "add": "active", "c0": "done", "c1": "done", "c2": "error" },
+      "set_labels": { "c2": "cycle 2\nstall" },
+      "badges": [ { "node": "add", "text": "waits", "style": "error" } ]
+    },
+    {
+      "caption": "Cycle 3 — both operands have arrived: issue the add. The store becomes the next ready node.",
+      "nodes": { "add": "done", "st": "active", "c2": "dim", "c3": "new" },
+      "set_labels": { "c3": "cycle 3\nadd" },
+      "clear_badges": true,
+      "badges": [
+        { "node": "lda", "text": "c0", "style": "done" },
+        { "node": "ldb", "text": "c1", "style": "done" },
+        { "node": "add", "text": "c3", "style": "done" }
+      ]
+    },
+    {
+      "caption": "Cycle 4 — the add's result is ready: issue st c. The DAG is fully scheduled in 5 cycles.",
+      "nodes": { "st": "done", "c3": "done", "c4": "new" },
+      "set_labels": { "c4": "cycle 4\nst c" },
+      "badges": [ { "node": "st", "text": "c4", "style": "done" } ]
+    },
+    {
+      "caption": "Payoff: had ld b waited for ld a to finish, it would issue at cycle 2 and the store at cycle 5 — 6 cycles. Overlapping the loads saved one.",
+      "nodes": { "c0": "active", "c1": "active", "c4": "done" },
+      "duration_ms": 2600
+    }
+  ]
+}
