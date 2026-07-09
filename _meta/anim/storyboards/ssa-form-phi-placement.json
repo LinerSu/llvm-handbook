@@ -1,0 +1,62 @@
+{
+  "id": "ssa-form-phi-placement",
+  "title": "φ placement via dominance frontiers (running example, sum)",
+  "canvas": { "cols": 3, "rows": 4, "cell": [230, 110], "margin": 24 },
+  "defaults": { "step_ms": 1700, "hold_ms": 4200 },
+  "summary_caption": "Minimal SSA: one φ, exactly at the iterated DF — the %sum φ that mem2reg builds (running-example §3).",
+  "nodes": [
+    { "id": "entry", "at": [1, 0], "label": "entry\nsum = 0", "shape": "box" },
+    { "id": "cond",  "at": [1, 1], "label": "for.cond\ni < n ?", "shape": "rounded" },
+    { "id": "body",  "at": [0, 2], "label": "for.body\nsum = sum + a[i]", "shape": "box" },
+    { "id": "inc",   "at": [1, 3], "label": "for.inc\ni = i + 1", "shape": "box" },
+    { "id": "end",   "at": [2, 2], "label": "for.end\nreturn sum", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "entry", "to": "cond" },
+    { "from": "cond",  "to": "body", "label": "T" },
+    { "from": "cond",  "to": "end",  "label": "F" },
+    { "from": "body",  "to": "inc" },
+    { "from": "inc",   "to": "cond", "label": "back edge" }
+  ],
+  "frames": [
+    {
+      "caption": "Before mem2reg: sum lives in a stack slot — every write is a store, every read a load.",
+      "duration_ms": 2000
+    },
+    {
+      "caption": "sum has two definitions: entry (sum = 0) and for.body (sum = sum + a[i]).",
+      "nodes": { "entry": "active", "body": "active" }
+    },
+    {
+      "caption": "Which blocks do both defs reach? for.body dominates for.inc — no merge yet…",
+      "nodes": { "entry": "done", "body": "done", "inc": "active" },
+      "edges": { "body->inc": "active" }
+    },
+    {
+      "caption": "…but not for.cond: entry reaches it too. So DF(for.body) = {for.cond} — a merge of two defs.",
+      "nodes": { "cond": "active" },
+      "edges": { "inc->cond": "active", "entry->cond": "active" }
+    },
+    {
+      "caption": "Insert a φ for sum at the dominance frontier: for.cond picks a value per incoming edge.",
+      "nodes": { "cond": "new", "inc": "done" },
+      "badges": [ { "node": "cond", "text": "+φ", "style": "new" } ],
+      "duration_ms": 2200
+    },
+    {
+      "caption": "Iterate: the φ is itself a def of sum. DF(for.cond) = {for.cond} — φ already there. Fixpoint.",
+      "edges": { "inc->cond": "normal", "entry->cond": "normal" }
+    },
+    {
+      "caption": "Rename: every def gets a fresh name; each use reads its nearest dominating def.",
+      "nodes": { "entry": "done", "cond": "done", "body": "done", "inc": "done", "end": "done" },
+      "set_labels": {
+        "entry": "entry\nsum0 = 0",
+        "cond": "for.cond\nsum1 = φ(sum0, sum2)",
+        "body": "for.body\nsum2 = sum1 + a[i]",
+        "end": "for.end\nreturn sum1"
+      },
+      "duration_ms": 2600
+    }
+  ]
+}

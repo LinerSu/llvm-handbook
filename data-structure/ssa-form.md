@@ -95,6 +95,10 @@ verified_on: 2026-06-28
 > [!tip] Minimal SSA
 > Insert as **few** φ's as possible: place a φ for $v$ exactly at the **iterated [[dominator-tree|dominance frontier]]** of $v$'s definitions (Cytron et al.). This is what SSA-construction / `mem2reg` does.
 
+> [!figure]+ Animation — φ placement for `sum` on [[running-example|the running example]]
+> ![ssa-form-phi-placement.gif](attachments/ssa-form-phi-placement.gif)
+> The two defs of `sum` (entry, `for.body`) meet at `for.cond` — its dominance frontier — so exactly one φ is inserted there, then renaming yields the `%sum` φ of [[running-example#3. After mem2reg and loop opts|running-example §3]]. (Regenerate: `_meta/anim/storyboards/ssa-form-phi-placement.json`.)
+
 > [!quote] Sources
 > - [LangRef — `phi` instruction](https://llvm.org/docs/LangRef.html#phi-instruction)
 > - Cytron et al., *Efficiently Computing Static Single Assignment Form and the Control Dependence Graph* (TOPLAS 1991).
