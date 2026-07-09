@@ -14,9 +14,9 @@ Cross-session queue and record for the note-improvement loops (see `.claude/work
 
 | note | gif | pedagogy | expert-verified | date | commit |
 |---|---|---|---|---|---|
-| data-structure/ssa-form.md | ssa-form-phi-placement.gif (pilot, hand-authored) | queued | queued | 2026-07-09 | — |
+| data-structure/ssa-form.md | ssa-form-phi-placement.gif (pilot, hand-authored) | pass (5 applied: why-care, use-def scoping, predict-first, DF intuition, phi-edge dominance) | yes | 2026-07-09 | — |
 | concept/mem2reg.md | mem2reg-promotion.gif | pass (3 applied: glosses, predict-first, §3 trace) | yes | 2026-07-09 | — |
-| data-structure/dominator-tree.md | queued | queued | queued | — | — |
+| data-structure/dominator-tree.md | dominator-tree-idom-build.gif | pass (5 applied: predict-first, DF check-on-figure, iterated gloss, running-example DF trace, EarlyCSE contrast) | yes | 2026-07-09 | — |
 | concept/data-flow-analysis.md | queued | queued | queued | — | — |
 | theory/dataflow-foundations.md | queued | queued | queued | — | — |
 | concept/register-allocation.md | queued | queued | queued | — | — |
