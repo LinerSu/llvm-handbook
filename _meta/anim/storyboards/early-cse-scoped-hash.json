@@ -1,0 +1,86 @@
+{
+  "id": "early-cse-scoped-hash",
+  "title": "EarlyCSE — one walk, one scoped hash table",
+  "canvas": { "cols": 3, "rows": 4, "cell": [250, 110], "margin": 24 },
+  "defaults": { "step_ms": 1700, "hold_ms": 3800 },
+  "summary_caption": "One walk, one scoped hash table: the duplicate add and the redundant load are gone. EarlyCSE pre-cleans cheaply so GVN can spend its budget on the hard cases.",
+  "nodes": [
+    { "id": "i1",    "at": [0, 0], "label": "%a = add i32 %x, %y",   "shape": "box" },
+    { "id": "i2",    "at": [0, 1], "label": "%b = add i32 %x, %y",   "shape": "box" },
+    { "id": "i3",    "at": [0, 2], "label": "%p = load i32, ptr %q", "shape": "box" },
+    { "id": "i4",    "at": [0, 3], "label": "%r = load i32, ptr %q", "shape": "box" },
+    { "id": "thead", "at": [2, 0], "label": "scoped hash table\n(scope of this block)", "shape": "rounded" },
+    { "id": "t1",    "at": [2, 1], "label": "(empty slot)", "shape": "box" },
+    { "id": "t2",    "at": [2, 2], "label": "(empty slot)", "shape": "box" },
+    { "id": "mg",    "at": [2, 3], "label": "MemorySSA\nmem gen = g0", "shape": "rounded" }
+  ],
+  "edges": [
+    { "from": "i1", "to": "i2" },
+    { "from": "i2", "to": "i3" },
+    { "from": "i3", "to": "i4" },
+    { "from": "i1", "to": "t1" },
+    { "from": "i2", "to": "t1" },
+    { "from": "i3", "to": "t2" },
+    { "from": "i4", "to": "t2" }
+  ],
+  "frames": [
+    {
+      "caption": "EarlyCSE walks the dominator tree. Entering this block pushes a fresh scope onto the hash table; instructions are then visited in order.",
+      "nodes": { "t1": "dim", "t2": "dim", "thead": "new", "mg": "dim" },
+      "edges": { "i1->t1": "dim", "i2->t1": "dim", "i3->t2": "dim", "i4->t2": "dim" },
+      "badges": [ { "node": "thead", "text": "push", "style": "new" } ]
+    },
+    {
+      "caption": "%a = add %x, %y: the key (add, %x, %y, i32) is not in the table — a miss. Insert it: this add is now available as %a.",
+      "nodes": { "i1": "active", "t1": "new" },
+      "edges": { "i1->t1": "active" },
+      "set_labels": { "t1": "(add, %x, %y)\n→ avail: %a" },
+      "badges": [ { "node": "i1", "text": "miss", "style": "new" } ],
+      "clear_badges": true
+    },
+    {
+      "caption": "%b computes the SAME key — a hit. Every use of %b is rewritten to %a, and the duplicate add is erased.",
+      "nodes": { "i1": "done", "i2": "active", "t1": "active" },
+      "edges": { "i1->t1": "dim", "i2->t1": "active" },
+      "badges": [ { "node": "i2", "text": "hit", "style": "active" } ],
+      "clear_badges": true
+    },
+    {
+      "caption": "After the rewrite only one add remains. The table did NOT grow: hits reuse the existing value, only misses insert.",
+      "nodes": { "i2": "dim", "t1": "normal" },
+      "edges": { "i2->t1": "dim" },
+      "set_labels": { "i2": "(erased — use %a)" },
+      "clear_badges": true
+    },
+    {
+      "caption": "%p loads %q. Loads get a memory-aware key: the address plus the current memory generation (g0) — any clobbering store would bump it. Miss — insert.",
+      "nodes": { "i3": "active", "t2": "new", "mg": "normal" },
+      "edges": { "i3->t2": "active" },
+      "set_labels": { "t2": "(load %q @ g0)\n→ avail: %p" },
+      "badges": [ { "node": "i3", "text": "miss", "style": "new" } ],
+      "clear_badges": true
+    },
+    {
+      "caption": "%r loads %q again. Clobber check first: no store has happened since %p, so the memory generation is still g0 — the entry is safe.",
+      "nodes": { "i3": "done", "i4": "active", "t2": "active", "mg": "active" },
+      "edges": { "i3->t2": "dim", "i4->t2": "active" },
+      "badges": [ { "node": "mg", "text": "still g0", "style": "done" } ],
+      "clear_badges": true
+    },
+    {
+      "caption": "Same address, same memory state: a hit. %r is replaced by %p and erased — a redundant load removed with none of GVN's machinery.",
+      "nodes": { "i4": "dim", "t2": "active", "mg": "normal" },
+      "edges": { "i4->t2": "dim" },
+      "set_labels": { "i4": "(erased — use %p)" },
+      "badges": [ { "node": "t2", "text": "hit", "style": "active" } ],
+      "clear_badges": true
+    },
+    {
+      "caption": "Block done. When the DFS leaves it, the scope pops: both entries are discarded, so availability never leaks into blocks this one does not dominate.",
+      "nodes": { "i1": "done", "i3": "done", "t1": "dim", "t2": "dim", "thead": "active", "mg": "dim" },
+      "set_labels": { "t1": "(popped)", "t2": "(popped)" },
+      "badges": [ { "node": "thead", "text": "pop", "style": "active" } ],
+      "clear_badges": true
+    }
+  ]
+}

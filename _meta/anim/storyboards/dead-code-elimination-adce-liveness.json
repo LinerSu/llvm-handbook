@@ -1,0 +1,101 @@
+{
+  "id": "dead-code-elimination-adce-liveness",
+  "title": "ADCE: assume dead, prove live, sweep",
+  "canvas": { "cols": 4, "rows": 4, "cell": [200, 95], "margin": 24 },
+  "defaults": { "step_ms": 2000, "hold_ms": 4200 },
+  "summary_caption": "Liveness spreads backward from effects; what it never reaches — even a self-feeding φ-cycle — is swept.",
+  "nodes": [
+    { "id": "ret",     "at": [0, 0], "label": "ret %sum.0.lcssa", "shape": "box" },
+    { "id": "add",     "at": [0, 1], "label": "%add = add\n%mul, %sum.05", "shape": "box" },
+    { "id": "sumphi",  "at": [1, 1], "label": "%sum.05 =\nφ(0, %add)", "shape": "box" },
+    { "id": "mul",     "at": [0, 2], "label": "%mul = mul\n%0, %k", "shape": "box" },
+    { "id": "load",    "at": [0, 3], "label": "%0 = load\na[%indvars.iv]", "shape": "box" },
+    { "id": "wiv",     "at": [2, 3], "label": "%indvars.iv =\nφ(0, %iv.next)", "shape": "box" },
+    { "id": "wivnext", "at": [2, 2], "label": "%iv.next = add\n%indvars.iv, 1", "shape": "box" },
+    { "id": "br",      "at": [2, 0], "label": "%exitcond = icmp\nbr i1 %exitcond", "shape": "box" },
+    { "id": "cmp",     "at": [3, 0], "label": "%cmp = icmp slt\n%i, %n (old)", "shape": "box" },
+    { "id": "iphi",    "at": [3, 1], "label": "%i = φ(0, %inc)\nold i32 IV", "shape": "box" },
+    { "id": "inc",     "at": [3, 2], "label": "%inc = add %i, 1", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "ret", "to": "add", "label": "needs" },
+    { "from": "add", "to": "mul" },
+    { "from": "add", "to": "sumphi", "curve": "left" },
+    { "from": "sumphi", "to": "add", "curve": "left" },
+    { "from": "mul", "to": "load" },
+    { "from": "load", "to": "wiv" },
+    { "from": "wiv", "to": "wivnext", "curve": "left" },
+    { "from": "wivnext", "to": "wiv", "curve": "left" },
+    { "from": "br", "to": "wivnext" },
+    { "from": "sumphi", "to": "br", "label": "control dep", "curve": "left" },
+    { "from": "cmp", "to": "iphi" },
+    { "from": "iphi", "to": "inc", "curve": "left" },
+    { "from": "inc", "to": "iphi", "curve": "left" }
+  ],
+  "frames": [
+    {
+      "caption": "Running example, mid-pipeline: the IV was widened to i64 and LFTR swapped the exit test — the old i32 counter is orphaned.",
+      "edges": { "sumphi->br": "hidden" },
+      "duration_ms": 2600
+    },
+    {
+      "caption": "ADCE is optimistic: assume every instruction is dead until proven live — grey means presumed dead.",
+      "nodes": { "ret": "dim", "add": "dim", "sumphi": "dim", "mul": "dim", "load": "dim", "wiv": "dim", "wivnext": "dim", "br": "dim", "cmp": "dim", "iphi": "dim", "inc": "dim" },
+      "edges": { "ret->add": "dim", "add->mul": "dim", "add->sumphi": "dim", "sumphi->add": "dim", "mul->load": "dim", "load->wiv": "dim", "wiv->wivnext": "dim", "wivnext->wiv": "dim", "br->wivnext": "dim", "cmp->iphi": "dim", "iphi->inc": "dim", "inc->iphi": "dim" }
+    },
+    {
+      "caption": "Seed the worklist with effects: the ret hands a value to the caller — mark it live.",
+      "nodes": { "ret": "active" },
+      "badges": [ { "node": "ret", "text": "seed", "style": "new" } ]
+    },
+    {
+      "caption": "Liveness flows to operands: the returned value needs %add.",
+      "nodes": { "ret": "done", "add": "active" },
+      "edges": { "ret->add": "active" }
+    },
+    {
+      "caption": "%add needs %mul and the sum φ — the reduction φ-cycle is reached from the ret, so it lives.",
+      "nodes": { "add": "done", "mul": "active", "sumphi": "active" },
+      "edges": { "add->mul": "active", "add->sumphi": "active", "sumphi->add": "active" }
+    },
+    {
+      "caption": "%mul needs the loaded array element — the load is live too.",
+      "nodes": { "mul": "done", "sumphi": "done", "load": "active" },
+      "edges": { "mul->load": "active" }
+    },
+    {
+      "caption": "The load's address needs the wide IV: that φ-cycle is also reached, so the i64 counter lives.",
+      "nodes": { "load": "done", "wiv": "active", "wivnext": "active" },
+      "edges": { "load->wiv": "active", "wiv->wivnext": "active", "wivnext->wiv": "active" }
+    },
+    {
+      "caption": "Control dependence: the live φs merge correctly only if the loop branch runs — branch and its icmp go live.",
+      "nodes": { "wiv": "done", "wivnext": "done", "br": "active" },
+      "edges": { "sumphi->br": "new", "br->wivnext": "active" },
+      "badges": [ { "node": "br", "text": "control dep", "style": "new" } ]
+    },
+    {
+      "caption": "Nothing live ever reaches the old counter: LFTR took %cmp's only use, so no live edge points right.",
+      "nodes": { "br": "done" },
+      "badges": [ { "node": "cmp", "text": "0 uses", "style": "dim" } ]
+    },
+    {
+      "caption": "Trivial DCE would stall on the cycle — %i and %inc still use each other. Optimism doesn't care about uses.",
+      "nodes": { "iphi": "error", "inc": "error" },
+      "edges": { "iphi->inc": "error", "inc->iphi": "error" },
+      "badges": [ { "node": "iphi", "text": "cycle", "style": "error" } ],
+      "duration_ms": 2600
+    },
+    {
+      "caption": "Sweep: everything never marked live is deleted — the old test and both halves of the dead cycle vanish.",
+      "nodes": { "cmp": "hidden", "iphi": "hidden", "inc": "hidden" },
+      "edges": { "cmp->iphi": "hidden", "iphi->inc": "hidden", "inc->iphi": "hidden" },
+      "clear_badges": true,
+      "duration_ms": 2600
+    },
+    {
+      "caption": "What remains is exactly the running example's -O1 loop: one wide IV, the reduction, and the LFTR exit test.",
+      "nodes": { "br": "done" }
+    }
+  ]
+}

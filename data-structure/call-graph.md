@@ -29,17 +29,19 @@ verified_on: 2026-06-28
 
 ## 1. SCCs and bottom-up order
 
-**Figure — a call graph; `{b, c}` is an SCC (mutual recursion).** The CGSCC pass manager visits SCCs in **post-order (bottom-up)**: leaves first, callers last.
+**Figure — CGSCC post-order: leaf SCC first, callers last.**
 
 ```mermaid
 flowchart TD
-  main["main"] --> a["a"]
-  a --> b["b"]
-  b --> c["c"]
-  c --> b
+  main["③ main"] --> a["② a"]
+  a --> b
+  subgraph scc ["① SCC {b, c}"]
+    b["b"] --> c["c"]
+    c --> b
+  end
 ```
 
-Processing bottom-up means that when a pass looks at a call `f → g`, **`g` has already been optimized** as much as possible — so the caller sees the cleanest possible callee. This is exactly why [[inlining]] runs here.
+Bottom-up ⇒ at a call `f → g`, ==`g` has already been optimized== as much as possible — exactly why [[inlining]] runs here.
 
 ## 2. In LLVM
 
@@ -48,9 +50,16 @@ Processing bottom-up means that when a pass looks at a call `f → g`, **`g` has
 > - **`LazyCallGraph`** — built lazily and updated incrementally; used by the new pass manager.
 > - The **CGSCC pass manager** runs passes over `LazyCallGraph::SCC` in bottom-up order and **updates the graph on the fly** (inlining creates and removes edges, which can split or merge SCCs). Interprocedural passes — inlining, argument promotion, function-attribute inference (`nounwind`, `readonly`, …) — are CGSCC or module passes.
 
+> [!tip]- See it on the running example
+> ```bash
+> clang -O0 -emit-llvm -S -Xclang -disable-O0-optnone runex.c -o runex.ll   # [[running-example]]
+> opt -passes=print-callgraph-sccs -disable-output runex.ll   # SCCs in bottom-up (post-)order
+> ```
+> `caller → accumulate` ⇒ the leaf SCC `{accumulate}` prints first. `print-callgraph` / `dot-callgraph` dump the raw graph.
+
 ## 3. Why it matters
 
-The call graph is the substrate for **all interprocedural reasoning**: bottom-up traversal for [[inlining]]; SCC handling for recursion; and it's the scaffold on which interprocedural [[pointer-alias-analysis|alias analysis]] (e.g. DSA's bottom-up/top-down phases) propagates summaries between caller and callee.
+Beyond the inlining order of §1, the graph is the scaffold for interprocedural [[pointer-alias-analysis|alias analysis]]: DSA's bottom-up/top-down phases propagate summaries between caller and callee over it.
 
 > [!summary] The one thing to remember
 > The call graph (`CallGraph` / `LazyCallGraph`) is functions-as-nodes, calls-as-edges; LLVM's **CGSCC pass manager** walks its SCCs **bottom-up** so callees are optimized before callers — the enabling order for inlining and interprocedural analysis.

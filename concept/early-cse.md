@@ -56,11 +56,16 @@ sources:
 > %p = load i32, ptr %q
 > %r = load i32, ptr %q   ; no clobber between -> replaced by %p
 > ```
+> Reproduce: wrap the snippet in a `define` that keeps `%b` and `%r` alive (e.g. sum everything into the `ret`), then `opt -passes='early-cse<memssa>' -S ex.ll` (plain `early-cse` = the non-MemorySSA variant). Without uses, EarlyCSE just deletes all four lines as trivially dead.
+
+> [!figure]+ Animation — one walk, one scoped table
+> ![early-cse-scoped-hash.gif](attachments/early-cse-scoped-hash.gif)
+> Misses insert into the scoped hash table; hits erase the duplicate `add` and the redundant `load` (same address, memory generation unchanged); the scope pops on exit — availability never outlives dominance. (Regenerate: `_meta/anim/storyboards/early-cse-scoped-hash.json`.)
 
 ## 4. In LLVM
 
 > [!info] Where it lives
-> [`Transforms/Scalar/EarlyCSE.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/EarlyCSE.cpp). Runs multiple times in the pipeline (very early, and again after inlining), at `-O1+`. Think of it as the broom that sweeps obvious redundancy so [[instruction-combining|InstCombine]] and [[llvm-gvn|GVN]] spend their budget on the hard cases.
+> [`Transforms/Scalar/EarlyCSE.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/EarlyCSE.cpp). Runs multiple times in the pipeline (very early, and again after inlining) at `-O1+` — cheap sweeps so [[instruction-combining|InstCombine]] and [[llvm-gvn|GVN]] spend their budget on the hard cases.
 
 > [!summary] The one thing to remember
 > EarlyCSE = cheap CSE via a **scoped hash table over the dominator tree** (+ MemorySSA for redundant loads / dead stores). Fast and local; it pre-cleans for the expensive [[llvm-gvn|GVN]].
