@@ -1,0 +1,108 @@
+{
+  "id": "pointer-alias-analysis-dsa-local",
+  "title": "DSA local phase: unification builds the points-to graph (running example)",
+  "canvas": { "cols": 5, "rows": 3, "cell": [160, 100], "margin": 24 },
+  "defaults": { "step_ms": 1900, "hold_ms": 4600 },
+  "summary_caption": "Allocas mint S nodes; every load, store and GEP unifies cells. Disjoint nodes prove NoAlias (a[i] vs sum's slot) — a shared node only ever means MAY.",
+  "nodes": [
+    { "id": "aaddr", "at": [0, 0], "label": "%a.addr\nptr", "shape": "rounded" },
+    { "id": "a", "at": [1, 0], "label": "%a\nptr formal", "shape": "rounded" },
+    { "id": "r2", "at": [2, 0], "label": "%2\nptr", "shape": "rounded" },
+    { "id": "aidx", "at": [3, 0], "label": "%arrayidx\nptr", "shape": "rounded" },
+    { "id": "sum", "at": [4, 0], "label": "%sum\nptr", "shape": "rounded" },
+    { "id": "nsa", "at": [0, 2], "label": "NSa stack slot\n[S]", "shape": "box" },
+    { "id": "na", "at": [1, 2], "label": "Na\nvoid", "shape": "box" },
+    { "id": "n2", "at": [2, 2], "label": "N2\nvoid", "shape": "box" },
+    { "id": "nx", "at": [3, 2], "label": "Nx\nvoid", "shape": "box" },
+    { "id": "nsum", "at": [4, 2], "label": "NSsum stack\n[S]", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "aaddr", "to": "nsa" },
+    { "from": "a", "to": "na" },
+    { "from": "r2", "to": "n2" },
+    { "from": "aidx", "to": "nx" },
+    { "from": "sum", "to": "nsum" },
+    { "from": "nsa", "to": "na" },
+    { "from": "r2", "to": "na" },
+    { "from": "aidx", "to": "na" }
+  ],
+  "frames": [
+    {
+      "caption": "accumulate before mem2reg (running example): registers on top, memory nodes below. InitGraph gives %a, %2 and %arrayidx fresh empty nodes.",
+      "nodes": { "nsa": "hidden", "nsum": "hidden" },
+      "edges": { "aaddr->nsa": "hidden", "sum->nsum": "hidden", "nsa->na": "hidden", "r2->na": "hidden", "aidx->na": "hidden" },
+      "duration_ms": 2600
+    },
+    {
+      "caption": "entry: %a.addr = alloca ptr and %sum = alloca i32 create two stack-object nodes, flagged S.",
+      "nodes": { "nsa": "new", "nsum": "new" },
+      "edges": { "aaddr->nsa": "new", "sum->nsum": "new" },
+      "badges": [
+        { "node": "nsa", "text": "+S", "style": "new" },
+        { "node": "nsum", "text": "+S", "style": "new" }
+      ]
+    },
+    {
+      "caption": "entry: store ptr %a, ptr %a.addr writes the slot: NSa gains M, and its cell gets its single out-edge, pointing at Na.",
+      "nodes": { "nsa": "active", "nsum": "normal" },
+      "edges": { "aaddr->nsa": "normal", "sum->nsum": "normal", "nsa->na": "new" },
+      "set_labels": { "nsa": "NSa stack slot\n[S,M]" },
+      "clear_badges": true,
+      "badges": [ { "node": "nsa", "text": "+M", "style": "new" } ]
+    },
+    {
+      "caption": "for.body: %2 = load ptr, ptr %a.addr. mergeCells unifies %2's node with the slot's target: N2 is absorbed into Na (the read also sets R on NSa).",
+      "nodes": { "nsa": "normal", "na": "active", "n2": "dim" },
+      "edges": { "nsa->na": "normal", "r2->n2": "dim", "r2->na": "new" },
+      "set_labels": { "nsa": "NSa stack slot\n[S,M,R]", "n2": "N2\nmerged into Na" },
+      "clear_badges": true,
+      "badges": [ { "node": "na", "text": "merge", "style": "new" } ],
+      "duration_ms": 2700
+    },
+    {
+      "caption": "%arrayidx = getelementptr i32, ptr %2, i64 %idxprom: the element cell is merged too, so Nx joins Na. Every a[i] lands in ONE node (allocation-site abstraction).",
+      "nodes": { "nx": "dim" },
+      "edges": { "r2->na": "normal", "aidx->nx": "dim", "aidx->na": "new" },
+      "set_labels": { "na": "Na\nint (all a[i])", "nx": "Nx\nmerged into Na" },
+      "clear_badges": true,
+      "badges": [ { "node": "na", "text": "merge", "style": "new" } ],
+      "duration_ms": 2700
+    },
+    {
+      "caption": "%4 = load i32, ptr %arrayidx reads the array: Na gains R. The i32 result gets no node — only pointer values are tracked.",
+      "edges": { "aidx->na": "normal" },
+      "set_labels": { "na": "Na\nint (all a[i])\n[R]" },
+      "clear_badges": true,
+      "badges": [ { "node": "na", "text": "+R", "style": "new" } ]
+    },
+    {
+      "caption": "sum's slot sees only scalar traffic (store i32 0, load %6, store %add): NSsum collects M and R but never grows an out-edge.",
+      "nodes": { "na": "normal", "nsum": "active" },
+      "set_labels": { "nsum": "NSsum stack\n[S,M,R]" },
+      "clear_badges": true,
+      "badges": [ { "node": "nsum", "text": "+M,R", "style": "new" } ]
+    },
+    {
+      "caption": "MarkCompleteNodes: Na is reachable from formal %a, so it stays incomplete until BU/TD add caller info. The two non-escaping allocas are complete.",
+      "nodes": { "nsum": "done", "nsa": "done" },
+      "set_labels": { "na": "Na\nint (all a[i])\n[R] incomplete" },
+      "clear_badges": true,
+      "badges": [ { "node": "na", "text": "incomplete", "style": "error" } ],
+      "duration_ms": 2700
+    },
+    {
+      "caption": "Query alias(%arrayidx, %sum): they reach two different nodes and NSsum is complete — NoAlias. The a[i] loads can never touch sum's slot: what mem2reg and LICM need.",
+      "nodes": { "aidx": "active", "sum": "active", "aaddr": "dim", "a": "dim", "r2": "dim" },
+      "clear_badges": true,
+      "badges": [ { "node": "aidx", "text": "NoAlias", "style": "done" } ],
+      "duration_ms": 2700
+    },
+    {
+      "caption": "Query alias(%2, %arrayidx) — a[0] versus a[i]: one shared node, so the answer is MayAlias. Unification never proves must; one node just means MAY touch.",
+      "nodes": { "r2": "active", "sum": "dim" },
+      "clear_badges": true,
+      "badges": [ { "node": "na", "text": "MayAlias", "style": "error" } ],
+      "duration_ms": 2700
+    }
+  ]
+}

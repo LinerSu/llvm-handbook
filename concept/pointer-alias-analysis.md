@@ -42,8 +42,6 @@ verified_on: 2026-06-28
 
 > [!note] The core question
 > Given two pointers, **do they point to the same memory?**
-> - Do they *always* point to **different** locations?
-> - Do they *always* point to the **same** location?
 
 > [!info] Three possible answers
 > | Result | Meaning |
@@ -52,7 +50,7 @@ verified_on: 2026-06-28
 > | **NoAlias** | always different memory |
 > | **MayAlias** | can't prove either way (very common!) |
 >
-> Must/No are crisp in many statements, but **MayAlias happens a lot** — and conservative passes must assume the worst when they get it.
+> On **MayAlias**, passes must assume the worst.
 
 > [!example]+ Why `may alias` is unavoidable
 > ```c
@@ -82,6 +80,7 @@ verified_on: 2026-06-28
 > - `alias(LocA, LocB)` → `NoAlias` / `MayAlias` / `PartialAlias` / `MustAlias`.
 > - `getModRefInfo(I, Loc)` → does instruction `I` **Mod**ify / **Ref**erence `Loc`?
 > - Providers are chained: `basic-aa`, `tbaa` (type-based, via `!tbaa` [[extending-llvm-ir#5. Metadata|metadata]]), `scev-aa`, `globals-aa`, … each refines the others. ([AliasAnalysis doc](https://llvm.org/docs/AliasAnalysis.html))
+> - **Try it** on the [[running-example]]: `clang -O1 -emit-llvm -S -fno-discard-value-names runex.c -o - | opt -passes=aa-eval -print-all-alias-modref-info -disable-output` → pairwise `alias` results for every pointer pair, per function (Mod/Ref rows appear only for call sites — none remain here after [[inlining]]).
 
 #### Data-Structure Analysis (DSA)
 
@@ -104,12 +103,8 @@ verified_on: 2026-06-28
 > ![PTA_img02.png](attachments/PTA_img02.png)
 > ![PTA_img03.png](attachments/PTA_img03.png)
 
-> [!note] The graph ⟨N, E, V, C⟩
-> Each **node** represents a (possibly infinite) **set** of memory objects; distinct nodes represent **disjoint** sets.
-> *Why a set, not one object?* Because of aliasing, unification may **merge** two nodes into one — which also keeps the graph finite (bounded nodes).
-
-> [!info] Node types, flags, and cells
-> **Node** $n \in N$ — a set of memory objects, tagged by origin and state:
+> [!info] The graph ⟨N, E, V, C⟩ — nodes, flags, and cells
+> **Node** $n \in N$ — a (possibly infinite) **set** of memory objects; distinct nodes = **disjoint** sets. Unification **merges** aliasing nodes ⇒ the graph stays finite. Tagged by origin and state:
 >
 > | Node type | Flag | Meaning |
 > |---|---|---|
@@ -190,13 +185,27 @@ verified_on: 2026-06-28
 > ```
 > After Local, the graph has **no caller/callee info** — arguments and return are left incomplete.
 
+> [!figure]+ Animation — the Local phase on [[running-example|the running example]]
+> ![pointer-alias-analysis-dsa-local.gif](attachments/pointer-alias-analysis-dsa-local.gif)
+> Replayed on the pre-mem2reg IR: the allocas mint `S` nodes, the pointer load and GEP unify `N2`/`Nx` into `Na`, flags accrue, and the finished graph proves `a[i]` can never touch `sum`'s slot (NoAlias) while `a[0]` vs `a[i]` stays MayAlias. (Regenerate: `_meta/anim/storyboards/pointer-alias-analysis-dsa-local.json`.)
+
 > [!warning] Why context-sensitivity costs
 > Full context-sensitivity is potentially **exponential** (a node with $n$ out-edges whose targets each have $n$ out-edges…). DSA controls this by only **cloning arguments/parameters and return/pass values** during the two interprocedural phases.
 
 > [!info] Interprocedural phases — Bottom-Up then Top-Down
-> - **Bottom-Up (BU):** clone the *callee* graph into the *caller* and merge formals↔actuals + returns — removes incompleteness for the **caller**.
-> - **Top-Down (TD):** clone the *caller* graph into the *callee* — removes incompleteness for the **callee**.
-> - Both operate over **SCCs of the [[call-graph]]** (recursion handled per strongly-connected component).
+> Both phases walk **SCCs of the [[call-graph]]** (recursion handled per SCC): **BU** visits callees first (post-order), **TD** visits callers first (reverse post-order).
+
+**Cloning direction per phase** — a two-function call graph, `main` calls `f`:
+
+```mermaid
+flowchart TB
+    Gmain["G_main — caller graph (after Local: params/returns incomplete)"]
+    Gf["G_f — callee graph (after Local: params/returns incomplete)"]
+    Gf -- "BU: clone G_f into G_main, merge formals/actuals + return, caller complete" --> Gmain
+    Gmain -- "TD: clone G_main into G_f, merge formals/actuals, callee complete" --> Gf
+```
+
+*Read: **Local** leaves every per-function graph incomplete at params/returns; **BU** copies callee effects up (callers become complete), then **TD** copies calling context down (callees become complete).*
 
 > [!example]- Call-resolution pseudocode — expand
 > ```text

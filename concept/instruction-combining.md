@@ -38,7 +38,7 @@ verified_on: 2026-06-28
 ### 1. Instruction combination
 
 > [!note] Definition
-> Combine instructions into **fewer, simpler, and more canonical** instructions. ==It does **not** modify the CFG.== **Goal:** avoid redundant computation — if the semantics allow a simpler way to get the same result, use it. In LLVM, `instcombine` is a **function-level** transform pass that rewrites/folds instructions one at a time.
+> In LLVM, `instcombine` is a **function-level** transform pass that rewrites/folds instructions one at a time into **fewer, simpler, more canonical** ones. ==It does **not** modify the CFG.==
 
 > [!example]+ Fold a chain of adds
 > **Input** (two sequential adds):
@@ -50,29 +50,23 @@ verified_on: 2026-06-28
 > ```llvm
 > %Z = add i32 %X, 2
 > ```
+>
+> Try it: wrap in a function, then `opt -passes=instcombine -S chain.ll`
 
 > [!info] How it works — a worklist algorithm
-> Two cooperating worklists drive it to a fixed point:
->
-> **1. Prepare (block) worklist** — the set of blocks to process.
-> - start with `W = {entry}`;
-> - **prune unreachable blocks** so dead instructions never enter the list;
-> - iterate until no blocks remain.
->
-> **2. Instruction worklist** — the instructions found by the prepare phase; repeatedly apply:
+> **Seed:** one sweep over blocks reachable from `entry`; unreachable code never enters the list. Then repeatedly pop an instruction and apply:
 >
 > | Step | What it does |
 > |---|---|
 > | **Fold** | if a binary operator has a constant operand, move it to the **right-hand side** (canonical form), then constant-fold |
 > | **Rewrite** | bitwise ops with constant operands are grouped so **shifts** come first, then `or`, then `and`, then `xor`; compares are canonicalized toward strict, unsigned predicates (e.g. `ule x,7` → `ult x,8`; signed → unsigned when the sign is known) |
->
-> Each rewrite can expose new opportunities, so changed instructions and their users are pushed back on the worklist.
 
-> [!figure]+ Figure — instcombine worklist
-> ![InstComb_img00.png](attachments/InstComb_img00.png)
+> [!figure]+ Animation — the worklist running the add-chain example to a fixed point
+> ![instruction-combining-worklist.gif](attachments/instruction-combining-worklist.gif)
+> Each rewrite can expose new opportunities, so changed instructions and their users are pushed back on the worklist — the fixed point arrives when no pattern fires. (Regenerate: `_meta/anim/storyboards/instruction-combining-worklist.json`.)
 
 > [!warning] What instcombine is *not*
-> It's local **canonicalization/peephole**, not redundancy elimination across blocks. It deliberately leaves CFG-changing and cross-block CSE work to other passes ([[value-numbering|GVN]], [[reassociation]], [[simplifycfg]]). Canonical forms it produces, though, make *those* passes far more effective.
+> CFG rewriting is deliberately left to [[simplifycfg]], cross-block redundancy elimination to [[value-numbering|GVN]], and expression re-ordering to [[reassociation]] — instcombine's canonical forms make *those* passes far more effective.
 
 > [!quote] Sources
 > - **Source:** [`llvm/lib/Transforms/InstCombine/`](https://github.com/llvm/llvm-project/tree/main/llvm/lib/Transforms/InstCombine)
