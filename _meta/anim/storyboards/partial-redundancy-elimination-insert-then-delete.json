@@ -1,0 +1,67 @@
+{
+  "id": "partial-redundancy-elimination-insert-then-delete",
+  "title": "PRE: insert on the missing path, then delete at the merge",
+  "canvas": { "cols": 3, "rows": 3, "cell": [230, 110], "margin": 24 },
+  "defaults": { "step_ms": 1600, "hold_ms": 3600 },
+  "summary_caption": "PRE = insert x + y on the path that lacked it, then reuse t at the merge - no path got longer.",
+  "nodes": [
+    { "id": "entry", "at": [1, 0], "label": "entry\nbranch on cond", "shape": "diamond" },
+    { "id": "left",  "at": [0, 1], "label": "left\nt = x + y", "shape": "box" },
+    { "id": "right", "at": [2, 1], "label": "right\n(no x + y)", "shape": "box" },
+    { "id": "merge", "at": [1, 2], "label": "merge\n... = x + y", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "entry", "to": "left",  "label": "cond" },
+    { "from": "entry", "to": "right", "label": "else" },
+    { "from": "left",  "to": "merge" },
+    { "from": "right", "to": "merge" }
+  ],
+  "frames": [
+    {
+      "caption": "The note's figure: x + y is computed in left, and again at merge.",
+      "nodes": { "left": "active", "merge": "active" }
+    },
+    {
+      "caption": "Walk the left path: x + y is already available when we reach merge.",
+      "nodes": { "left": "done", "merge": "normal", "entry": "normal", "right": "dim" },
+      "edges": { "entry->left": "done", "left->merge": "done" },
+      "badges": [ { "node": "left", "text": "avail", "style": "done" } ]
+    },
+    {
+      "caption": "Walk the right path: no x + y anywhere - merge recomputes it here.",
+      "nodes": { "right": "error", "left": "done" },
+      "edges": { "entry->left": "normal", "left->merge": "normal", "entry->right": "active", "right->merge": "active" },
+      "badges": [ { "node": "right", "text": "missing", "style": "error" } ]
+    },
+    {
+      "caption": "So x + y at merge is PARTIALLY redundant: available on some predecessors, not all.",
+      "nodes": { "merge": "active", "right": "error" },
+      "edges": { "entry->right": "normal", "right->merge": "normal" },
+      "badges": [ { "node": "merge", "text": "partial", "style": "active" } ]
+    },
+    {
+      "caption": "PRE inserts t = x + y on the missing path (right) - a path that already ran anyway.",
+      "nodes": { "right": "new", "merge": "normal" },
+      "set_labels": { "right": "right\nt = x + y  (inserted)" },
+      "clear_badges": true,
+      "badges": [ { "node": "right", "text": "+insert", "style": "new" } ]
+    },
+    {
+      "caption": "Now x + y reaches merge on EVERY predecessor - the redundancy is full.",
+      "nodes": { "left": "done", "right": "done" },
+      "edges": { "left->merge": "done", "right->merge": "done" },
+      "badges": [ { "node": "merge", "text": "full", "style": "done" } ]
+    },
+    {
+      "caption": "Delete the recomputation at merge: replace x + y with a reuse of t.",
+      "nodes": { "merge": "new" },
+      "set_labels": { "merge": "merge\nreuse t  (was x+y)" },
+      "clear_badges": true
+    },
+    {
+      "caption": "Result: every path computes x + y exactly once - the left path stopped computing it twice.",
+      "nodes": { "entry": "done", "left": "done", "right": "done", "merge": "done" },
+      "edges": { "entry->left": "done", "entry->right": "done", "left->merge": "done", "right->merge": "done" }
+    }
+  ]
+}

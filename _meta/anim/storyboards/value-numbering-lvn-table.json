@@ -1,0 +1,78 @@
+{
+  "id": "value-numbering-lvn-table",
+  "title": "Local value numbering — table build",
+  "canvas": { "cols": 3, "rows": 4, "cell": [240, 110], "margin": 24 },
+  "defaults": { "step_ms": 1700, "hold_ms": 3800 },
+  "summary_caption": "Same key, same number: repeated (+, x0, y0) became copies of one leader. LVN is per block — GVN scopes this table over the dominator tree.",
+  "nodes": [
+    { "id": "i1",    "at": [0, 0], "label": "a0 = x0 + y0", "shape": "box" },
+    { "id": "i2",    "at": [0, 1], "label": "b1 = x0 + y0", "shape": "box" },
+    { "id": "i3",    "at": [0, 2], "label": "a1 = 17",      "shape": "box" },
+    { "id": "i4",    "at": [0, 3], "label": "c1 = x0 + y0", "shape": "box" },
+    { "id": "thead", "at": [2, 0], "label": "VN table\nkey → #, leader", "shape": "rounded" },
+    { "id": "t1",    "at": [2, 1], "label": "(empty slot)", "shape": "box" },
+    { "id": "t2",    "at": [2, 2], "label": "(empty slot)", "shape": "box" },
+    { "id": "v2n",   "at": [2, 3], "label": "var2num\n(empty)", "shape": "rounded" }
+  ],
+  "edges": [
+    { "from": "i1", "to": "i2" },
+    { "from": "i2", "to": "i3" },
+    { "from": "i3", "to": "i4" },
+    { "from": "i1", "to": "t1" },
+    { "from": "i2", "to": "t1" },
+    { "from": "i3", "to": "t2" },
+    { "from": "i4", "to": "t1" }
+  ],
+  "frames": [
+    {
+      "caption": "One SSA basic block, walked top-down. Each expression gets a key: (opcode, value numbers of its operands). Table starts empty.",
+      "nodes": { "t1": "dim", "t2": "dim", "thead": "new", "v2n": "dim" },
+      "edges": { "i1->t1": "dim", "i2->t1": "dim", "i3->t2": "dim", "i4->t1": "dim" }
+    },
+    {
+      "caption": "a0 = x0 + y0: key (+, x0, y0) is not in the table — a MISS. Insert value #1 with leader a0, and record var2num[a0] = #1.",
+      "nodes": { "i1": "active", "t1": "new", "v2n": "normal" },
+      "edges": { "i1->t1": "active" },
+      "set_labels": { "t1": "(+, x0, y0)\n→ #1, leader a0", "v2n": "var2num\na0 = #1" },
+      "badges": [ { "node": "i1", "text": "miss", "style": "new" } ]
+    },
+    {
+      "caption": "b1 = x0 + y0: the SAME key — a HIT on value #1. b1 is redundant: rewrite it as a copy of the leader, a0.",
+      "nodes": { "i1": "done", "i2": "active", "t1": "active" },
+      "edges": { "i1->t1": "dim", "i2->t1": "active" },
+      "set_labels": { "i2": "b1 = a0  ; copy", "v2n": "var2num\na0=#1 b1=#1" },
+      "badges": [ { "node": "i2", "text": "hit #1", "style": "active" } ],
+      "clear_badges": true
+    },
+    {
+      "caption": "a1 = 17: constant 17 is a new key — a miss. Insert value #2 with leader a1.",
+      "nodes": { "i2": "done", "i3": "active", "t1": "normal", "t2": "new" },
+      "edges": { "i2->t1": "dim", "i3->t2": "active" },
+      "set_labels": { "t2": "(const 17)\n→ #2, leader a1", "v2n": "var2num\na0=#1 b1=#1\na1=#2" },
+      "badges": [ { "node": "i3", "text": "miss", "style": "new" } ],
+      "clear_badges": true
+    },
+    {
+      "caption": "The SSA payoff: source variable a was just overwritten, yet entry #1 stays valid — its leader is the SSA name a0, which nothing can clobber.",
+      "nodes": { "i3": "done", "t1": "active" },
+      "edges": { "i3->t2": "dim" },
+      "badges": [ { "node": "t1", "text": "valid", "style": "done" } ],
+      "clear_badges": true,
+      "duration_ms": 2400
+    },
+    {
+      "caption": "c1 = x0 + y0: key (+, x0, y0) again — HIT on value #1. Rewrite c1 as a copy of a0. Without SSA renaming this reuse would be wrong.",
+      "nodes": { "i4": "active", "t1": "active" },
+      "edges": { "i4->t1": "active" },
+      "set_labels": { "i4": "c1 = a0  ; copy", "v2n": "var2num\na0=#1 b1=#1\na1=#2 c1=#1" },
+      "badges": [ { "node": "i4", "text": "hit #1", "style": "active" } ],
+      "clear_badges": true
+    },
+    {
+      "caption": "Done: x0 + y0 was computed three times, now once. Two adds became copies — copy propagation cleans those up next.",
+      "nodes": { "i1": "done", "i2": "done", "i3": "done", "i4": "done", "t1": "done", "t2": "done", "v2n": "done" },
+      "edges": { "i4->t1": "dim" },
+      "clear_badges": true
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "id": "sccp-edge-kill",
+  "title": "SCCP: a constant branch kills an edge, the φ never sees it",
+  "canvas": { "cols": 3, "rows": 3, "cell": [240, 100], "margin": 24 },
+  "defaults": { "step_ms": 1900, "hold_ms": 4200 },
+  "summary_caption": "Constants and edge executability, one fixpoint: kill the edge, and the φ meets only what can actually flow.",
+  "nodes": [
+    { "id": "entry", "at": [1, 0], "label": "entry\ng = 1", "shape": "box" },
+    { "id": "then",  "at": [0, 1], "label": "then\nx1 = 5", "shape": "box" },
+    { "id": "else",  "at": [2, 1], "label": "else\nx2 = read()", "shape": "box" },
+    { "id": "merge", "at": [1, 2], "label": "merge\nx = φ(x1, x2)", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "entry", "to": "then", "label": "if g" },
+    { "from": "entry", "to": "else", "label": "else" },
+    { "from": "then",  "to": "merge" },
+    { "from": "else",  "to": "merge" }
+  ],
+  "frames": [
+    {
+      "caption": "Plain const-prop meets both arms of the φ: 5 meets unknown — x is overdefined.",
+      "duration_ms": 2200
+    },
+    {
+      "caption": "SCCP: g is the constant 1, so the branch takes only one way — the else edge is never executable.",
+      "nodes": { "entry": "active" },
+      "edges": { "entry->else": "error" },
+      "badges": [ { "node": "entry", "text": "g = 1", "style": "done" } ]
+    },
+    {
+      "caption": "Everything the dead edge fed goes dark: x2 = read() is never evaluated.",
+      "nodes": { "entry": "done", "else": "dim", "then": "active" },
+      "edges": { "entry->else": "dim", "else->merge": "dim", "entry->then": "active" }
+    },
+    {
+      "caption": "The φ meets only the incoming values whose edges are executable: just x1 = 5.",
+      "nodes": { "then": "done", "merge": "new" },
+      "edges": { "entry->then": "done", "then->merge": "active" },
+      "set_labels": { "merge": "merge\nx = 5" },
+      "badges": [ { "node": "merge", "text": "const 5", "style": "new" } ],
+      "duration_ms": 2400
+    }
+  ]
+}

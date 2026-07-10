@@ -28,9 +28,9 @@ verified_on: 2026-06-28
 ## 1. The idea
 
 > [!note] Partial vs. full redundancy
-> *Fully* redundant: the value is already computed on **every** path to the use (plain CSE/GVN removes it). *Partially* redundant: computed on **some** paths only. PRE **inserts** the computation on the paths that lack it, turning partial into full redundancy, then removes the redundant evaluation.
+> *Fully* redundant — available on **every** path to the use ⇒ plain CSE/GVN deletes it. *Partially* redundant — on **some** paths only ⇒ PRE's job (figure below).
 
-**Figure — `x+y` is computed on the left path and again at the merge (partial redundancy).** Inserting `x+y` on the right path makes it available on *all* predecessors of the merge, so the merge's computation becomes fully redundant and is replaced by a reuse.
+**Figure — inserting `x+y` on the right path ⇒ the merge's copy is now *fully* redundant ⇒ replaced by reuse of `t`.**
 
 ```mermaid
 flowchart TD
@@ -42,6 +42,10 @@ flowchart TD
 
 This is **lazy code motion** (Knoop–Rüthing–Steffen): place each computation as late as possible while still removing the redundancy, which also avoids lengthening any path.
 
+> [!figure]+ Animation — insert, then delete
+> ![partial-redundancy-elimination-insert-then-delete.gif](attachments/partial-redundancy-elimination-insert-then-delete.gif)
+> PRE walks each path into the merge, finds `x + y` available on the left but missing on the right, inserts it there, then deletes the merge's now fully-redundant recomputation — no path ends up computing `x + y` twice. (Regenerate: `_meta/anim/storyboards/partial-redundancy-elimination-insert-then-delete.json`.)
+
 ## 2. In LLVM — load PRE inside GVN
 
 > [!info] What LLVM actually does
@@ -49,9 +53,27 @@ This is **lazy code motion** (Knoop–Rüthing–Steffen): place each computatio
 > - It is **guarded**: GVN will not insert a load on a path where it didn't already occur (no new faults), and it **won't grow code** — so e.g. **critical edges block load PRE** unless they can be split safely.
 > - Scalar PRE in GVN is more limited; the full value-based **GVN-PRE** algorithm (VanDrunen–Hosking) is **not implemented in upstream LLVM** (it was only prototyped externally, never merged).
 
+> [!example]- See load PRE fire (click to expand)
+> The upstream regression test [`Transforms/GVN/PRE/pre-load.ll`](https://github.com/llvm/llvm-project/blob/llvmorg-22.1.8/llvm/test/Transforms/GVN/PRE/pre-load.ll) (`test1`) is exactly the diamond above with loads:
+> ```llvm
+> define i32 @test1(ptr %p, i1 %C) {
+> block1:
+>   br i1 %C, label %block2, label %block3
+> block2:
+>   br label %block4          ; no load on this path
+> block3:
+>   store i32 0, ptr %p       ; the value of %p is known here
+>   br label %block4
+> block4:
+>   %PRE = load i32, ptr %p   ; partially redundant
+>   ret i32 %PRE
+> }
+> ```
+> `opt -passes=gvn -S pre-load.ll` ⇒ a `%PRE.pre = load …` appears in `block2` (the path that lacked it) and `block4`'s load becomes `phi i32 [ 0, %block3 ], [ %PRE.pre, %block2 ]` — insert on the missing edge, then reuse.
+
 ## 3. Why it matters
 
-PRE removes redundancies that plain [[value-numbering|GVN/CSE]] can't — especially **loads hoisted out of the common path** and computations partially redundant across `if`/loop structure — without ever adding work to a path that didn't have it. It pairs with **memory-dependence analysis** (`MemoryDependenceResults` — what default GVN uses to find an available load) and alias analysis (to know it isn't clobbered); MemorySSA-based GVN is opt-in (it's what `NewGVN` uses).
+PRE removes redundancies that plain [[value-numbering|GVN/CSE]] can't — especially **loads hoisted out of the common path** and computations partially redundant across `if`/loop structure — without ever adding work to a path that didn't have it. Alias analysis tells GVN the load isn't clobbered; the opt-in `NewGVN` uses MemorySSA instead of `MemoryDependenceResults`.
 
 > [!summary] The one thing to remember
 > PRE = "make a partially-redundant computation fully redundant by inserting it on the missing paths, then delete it." In LLVM this is mostly **load PRE in the GVN pass**, carefully guarded so it never adds a fault or grows code; full value-based GVN-PRE is not implemented in upstream LLVM.
