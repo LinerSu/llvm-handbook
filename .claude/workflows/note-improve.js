@@ -1,7 +1,7 @@
 export const meta = {
   name: 'note-improve',
   description: 'Pedagogy reviewer + LLVM-expert verifier panel on ≤3 notes; report structured, expert-approved improvement proposals (never edits files)',
-  whenToUse: 'Per-batch understanding/pedagogy pass of the improvement loop (see _meta/improvement-ledger.md). args: { base: "<abs repo root>", notes: ["<relpath>", ...] } — max 3 notes per run. The main session applies approved fixes, runs vault-lint, updates the ledger.',
+  whenToUse: 'Per-batch understanding/pedagogy pass of the improvement loop (see _meta/improvement-ledger.md). args: { base: "<abs repo root>", notes: ["<relpath>", ...], persona?: "student" } — max 3 notes per run. Default persona is a first-time learner (tends to ADD scaffolding); persona "student" is a compilers-course CS student (tends to CUT words and swap prose for visuals). The main session applies approved fixes, runs vault-lint, updates the ledger.',
   phases: [
     { title: 'Pedagogy', detail: 'one learner-persona reviewer per note' },
     { title: 'Expert verify', detail: 'one skeptical LLVM expert per note with proposals' },
@@ -84,6 +84,36 @@ PROPOSALS
 
 Return ONLY the structured object.`
 
+const studentPrompt = (abs, rel) => `You are reviewing ONE study note as a CS student who has TAKEN a compilers course and has some LLVM background (you know SSA, CFGs, basic passes; you read IR fine). You are studying from this vault and want it to teach you FASTER.
+
+Note file (read it with Read): ${abs}
+(vault-relative note id: ${rel})
+
+CONTEXT
+- This vault is a "living book" on LLVM. House rules (do not propose violating them): note arc definition → theory/algorithm → in-LLVM worked example → uses → limits; house callouts per _meta/callout-legend.md; Mermaid for static structure; animated GIFs (via _meta/anim storyboards) for step-by-step processes; worked examples reuse application/running-example.md.
+- Several notes already carry an animation in a [!figure] callout — treat those as load-bearing, not decoration.
+
+YOUR REVIEW BIAS — this is the whole point:
+- The default failure mode of study notes is TOO MANY WORDS. Prefer proposals that make the note SHORTER or shift weight from prose to a visual. The note's net word count should go DOWN or stay flat after your proposals; only add text when something is genuinely missing for a reader at YOUR level (not a beginner's level — the beginner pass already ran).
+- kind=tighten: cut redundancy, throat-clearing, repeated framing, over-hedged sentences, explanations of things any compilers student knows (what a CFG is, what a pass is). Give exact old_string → shorter new_string.
+- kind=add_diagram: a paragraph that narrates structure or a step sequence in prose is a candidate to be REPLACED (not supplemented) by a Mermaid diagram or an animated GIF. Describe precisely what the visual should show and WHICH sentences it replaces or shortens. Do not draw it yourself.
+- kind=clarify/reorder: only when a sentence is confusing at your level, or information is ordered so you must jump around. Rewrites must not be longer than the original.
+- Also flag (kind=add_worked_step, sparingly): a spot where you, as a student, would want ONE reproduce-it-yourself command (clang/opt one-liner) instead of three sentences of description.
+- Compress with Obsidian affordances, not prose: parallel facts → a table; contrasts → a two-column table; asides → a collapsed callout ([!info]- / [!example]-); use ==highlight==, inline \`code\`, and arrows/symbols (→, ⇒, ≤) instead of connective sentences. Raw HTML (<details>, <sub>) only when markdown genuinely can't do it.
+- Video (rare, max 1 per note): if a well-known, high-quality talk/lecture exists for exactly this topic (e.g. an LLVM Developers' Meeting tutorial on YouTube), propose adding ONE link in the [!quote] footer — verify the exact title + URL with WebSearch first (load it via ToolSearch if needed) and put the URL in proposal_text. Never propose a link you did not verify.
+
+WHAT NOT TO REPORT
+- Style/formatting/links/frontmatter (the linter owns those); factual review (a separate pass owns that).
+- Cuts that would remove a correctness qualifier, a version caveat, a citation, or a [!danger] marker.
+- Rewording that is merely different, not shorter or clearer.
+
+PROPOSALS
+- 2–6 with the highest payoff. For each: location_quote VERBATIM, the problem AT YOUR LEVEL, concrete proposal_text.
+- fix_class = "low_risk_autofix" ONLY for a self-contained textual replacement with a VERBATIM unique old_string and complete new_string. Structural moves and visual replacements = "judgment_call" (old_string="", new_string="").
+- If the note is already tight and well-illustrated, return { "clarity_ok": true, "proposals": [] }.
+
+Return ONLY the structured object.`
+
 const expertPrompt = (abs, rel, proposals) => `You are a skeptical expert in LLVM and compiler theory. A pedagogy reviewer proposed changes to ONE study note; you must verify them TECHNICALLY before they can be applied.
 
 Note file (read it with Read): ${abs}
@@ -114,10 +144,11 @@ const BASE = A && A.base
 const NOTES = A && A.notes
 if (!BASE || !Array.isArray(NOTES)) throw new Error('args must be { base, notes: [...] }; got: ' + typeof args)
 if (NOTES.length > 3) throw new Error('max 3 notes per run (small batches — see _meta/improvement-ledger.md); got ' + NOTES.length)
+const PERSONA = (A && A.persona) === 'student' ? studentPrompt : pedagogyPrompt
 
 const perNote = (await pipeline(
   NOTES,
-  (rel) => agent(pedagogyPrompt(`${BASE}/${rel}`, rel), { label: `pedagogy:${rel}`, phase: 'Pedagogy', schema: PROPOSALS }),
+  (rel) => agent(PERSONA(`${BASE}/${rel}`, rel), { label: `pedagogy:${rel}`, phase: 'Pedagogy', schema: PROPOSALS }),
   async (review, rel) => {
     if (!review) return null
     const proposals = review.proposals || []
