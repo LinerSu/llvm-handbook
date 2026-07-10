@@ -1,0 +1,79 @@
+{
+  "id": "induction-variables-and-strength-reduction-pointer-iv",
+  "title": "Strength reduction + LFTR: a[i] on a running pointer",
+  "canvas": { "cols": 3, "rows": 4, "cell": [240, 126], "margin": 24 },
+  "defaults": { "step_ms": 1600, "hold_ms": 3600 },
+  "summary_caption": "Multiply traded for one add per iteration, and LFTR retired the counter. In LLVM: IndVarSimplify canonicalizes, LSR strength-reduces.",
+  "nodes": [
+    { "id": "pre",   "at": [1, 0], "label": "pre:\ni = 0", "shape": "box" },
+    { "id": "cond",  "at": [1, 1], "label": "i < n ?", "shape": "diamond" },
+    { "id": "exit",  "at": [2, 2], "label": "for.end:\nret sum", "shape": "rounded" },
+    { "id": "body",  "at": [0, 2], "label": "for.body:\nt = a + i*4\nsum += *t", "shape": "box" },
+    { "id": "latch", "at": [1, 3], "label": "for.inc:\ni = i + 1", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "pre",   "to": "cond" },
+    { "from": "cond",  "to": "body", "label": "true" },
+    { "from": "cond",  "to": "exit", "label": "false" },
+    { "from": "body",  "to": "latch" },
+    { "from": "latch", "to": "cond", "label": "back edge" }
+  ],
+  "frames": [
+    {
+      "caption": "The loop from §1: every iteration recomputes the address t = a + i*4 — a multiply just to reach a[i].",
+      "nodes": { "body": "active" }
+    },
+    {
+      "caption": "SCEV first: i starts at 0 and steps by 1 each trip around the back edge — the add-recurrence {0,+,1}. A basic IV.",
+      "nodes": { "body": "normal", "pre": "active", "latch": "active" },
+      "edges": { "latch->cond": "active" },
+      "badges": [ { "node": "cond", "text": "i:{0,+,1}", "style": "active" } ]
+    },
+    {
+      "caption": "And t = a + i*4 steps by 4 whenever i steps by 1: SCEV {a,+,4}. A derived IV — currently paid for with a multiply.",
+      "nodes": { "pre": "normal", "latch": "normal", "body": "active" },
+      "edges": { "latch->cond": "normal" },
+      "badges": [ { "node": "body", "text": "t:{a,+,4}", "style": "active" } ]
+    },
+    {
+      "caption": "Strength reduction, step 1: materialize {a,+,4} as its own variable. Insert p = a in the preheader.",
+      "nodes": { "body": "normal", "pre": "new" },
+      "set_labels": { "pre": "pre:\ni = 0\np = a" },
+      "badges": [ { "node": "pre", "text": "+p", "style": "new" } ]
+    },
+    {
+      "caption": "Step 2: keep p in step. Insert p = p + 4 beside i = i + 1 — from now on p always equals a + i*4.",
+      "nodes": { "pre": "normal", "latch": "new" },
+      "set_labels": { "latch": "for.inc:\ni = i + 1\np = p + 4" },
+      "badges": [ { "node": "latch", "text": "+step", "style": "new" } ]
+    },
+    {
+      "caption": "Step 3: replace the use. The body loads straight through p — the per-iteration multiply is gone.",
+      "nodes": { "latch": "normal", "body": "new" },
+      "set_labels": { "body": "for.body:\nsum += *p" },
+      "clear_badges": true,
+      "badges": [ { "node": "body", "text": "mul gone", "style": "done" } ],
+      "duration_ms": 2000
+    },
+    {
+      "caption": "Only the exit test still reads i. LFTR, step 1: compute the bound in p-space once — pend = a + n*4.",
+      "nodes": { "body": "normal", "pre": "active" },
+      "set_labels": { "pre": "pre:\ni = 0\np = a\npend = a + n*4" },
+      "badges": [ { "node": "pre", "text": "+pend", "style": "new" } ]
+    },
+    {
+      "caption": "LFTR, step 2: retest against pend — p < pend replaces i < n. (LLVM goes further: icmp eq against the trip count.)",
+      "nodes": { "pre": "normal", "cond": "new" },
+      "set_labels": { "cond": "p < pend ?" },
+      "clear_badges": true,
+      "badges": [ { "node": "cond", "text": "LFTR", "style": "new" } ]
+    },
+    {
+      "caption": "Now nothing reads i: delete i = 0 and i = i + 1. The counter is dead — the loop runs on p alone.",
+      "nodes": { "cond": "done", "pre": "done", "latch": "done", "body": "done" },
+      "set_labels": { "pre": "pre:\np = a\npend = a + n*4", "latch": "for.inc:\np = p + 4" },
+      "clear_badges": true,
+      "duration_ms": 2400
+    }
+  ]
+}

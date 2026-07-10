@@ -1,0 +1,69 @@
+{
+  "id": "jump-threading-edge-clone",
+  "title": "Jump threading: thread the edge that already knows the branch",
+  "canvas": { "cols": 3, "rows": 3, "cell": [230, 110], "margin": 24 },
+  "defaults": { "step_ms": 2000, "hold_ms": 4200 },
+  "summary_caption": "Thread the edge that already decides the branch: clone the block onto it, jump straight to the answer — other predecessors keep the test.",
+  "nodes": [
+    { "id": "p",   "at": [0, 0], "label": "P\nx unknown", "shape": "box" },
+    { "id": "b1",  "at": [2, 0], "label": "B1\nhere x == 0", "shape": "box" },
+    { "id": "b2",  "at": [1, 1], "label": "B2\nc = (x == 0)\nbr c, T, F", "shape": "box" },
+    { "id": "b2c", "at": [2, 1], "label": "B2'\nc = (x == 0)", "shape": "box" },
+    { "id": "f",   "at": [0, 2], "label": "F", "shape": "box" },
+    { "id": "t",   "at": [1, 2], "label": "T", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "p",   "to": "b2" },
+    { "from": "b1",  "to": "b2" },
+    { "from": "b2",  "to": "t", "label": "true" },
+    { "from": "b2",  "to": "f", "label": "false" },
+    { "from": "b1",  "to": "b2c" },
+    { "from": "b2c", "to": "t" }
+  ],
+  "frames": [
+    {
+      "caption": "Setup: predecessors P and B1 both fall into B2, which computes c = (x == 0) and branches on it.",
+      "nodes": { "b2c": "hidden" },
+      "edges": { "b1->b2c": "hidden", "b2c->t": "hidden" },
+      "duration_ms": 2400
+    },
+    {
+      "caption": "B1 is only ever reached when x == 0 — LazyValueInfo proves that on the edge from B1, c is already true.",
+      "nodes": { "b1": "active" },
+      "edges": { "b1->b2": "active" },
+      "badges": [ { "node": "b1", "text": "c=true", "style": "done" } ]
+    },
+    {
+      "caption": "So B2's test is redundant for that path: flow entering from B1 must exit to T.",
+      "edges": { "b2->t": "active" }
+    },
+    {
+      "caption": "But P also enters B2, and there x is unknown — B2's branch cannot simply be folded.",
+      "nodes": { "p": "active" },
+      "edges": { "p->b2": "active" },
+      "badges": [ { "node": "b2", "text": "can't fold", "style": "error" } ]
+    },
+    {
+      "caption": "JumpThreading duplicates instead: it clones B2's body as B2', private to the threaded edge.",
+      "nodes": { "p": "normal", "b2c": "new" },
+      "edges": { "p->b2": "normal", "b2->t": "normal" },
+      "clear_badges": true,
+      "badges": [ { "node": "b2c", "text": "clone", "style": "new" } ]
+    },
+    {
+      "caption": "The conditional branch is not copied — the outcome is known here, so B2' gets an unconditional jump to T.",
+      "set_labels": { "b2c": "B2'\nc = (x == 0)\nbr T" },
+      "edges": { "b2c->t": "new" }
+    },
+    {
+      "caption": "Retarget the threaded edge: B1 now branches to B2'. Its old edge into B2 is gone — B2 loses a predecessor.",
+      "edges": { "b1->b2c": "new", "b1->b2": "dim" }
+    },
+    {
+      "caption": "Done: from B1 the flow runs straight to T, no test. P still takes the real branch in B2; the dead c in B2' is later cleanup's job.",
+      "nodes": { "b1": "done", "b2c": "done", "t": "done" },
+      "edges": { "b1->b2c": "done", "b2c->t": "done" },
+      "duration_ms": 2800
+    }
+  ]
+}
