@@ -22,7 +22,7 @@ verified_on: 2026-06-28
 > **Prerequisites:** [[ssa-form]], [[data-flow-analysis]] · **Cleans up after:** most other passes
 
 > [!abstract] Chapter map
-> Remove computations whose results are never used (and the control flow that only feeds them). LLVM ships three strengths: **DCE** (trivial), **ADCE** (aggressive — control-dependence-based, can delete dead branches/loops), and **BDCE** (bit-tracking — removes work whose result *bits* are all unused).
+> Remove computations whose results are never used (and the control flow that only feeds them). Three strengths: **DCE** (trivial) ⇒ **ADCE** (also dead branches/loops) ⇒ **BDCE** (dead result *bits*).
 
 ---
 
@@ -36,12 +36,33 @@ An instruction with **no uses** and **no side effects** is dead — delete it, a
 ## 2. ADCE — aggressive (optimistic)
 
 > [!info] Assume dead until proven live
-> Trivial DCE is *pessimistic* (keeps anything reachable). **ADCE** flips it: mark everything dead, then mark **live** only what has side effects (stores, calls, returns) and, transitively, whatever feeds a live instruction — using **control dependence** so it can also delete a **branch (or whole loop)** that only controls dead code. Anything still unmarked is removed.
+> Trivial DCE is *pessimistic* (keeps anything reachable). **ADCE** flips it: assume all dead, seed live = side effects (stores, calls, returns), propagate through operands **and control dependence**, delete the rest — including a **dead branch** (and, behind `-adce-remove-loops`, even a whole loop) that only controls dead code.
+
+**Try it:** save as `dead-phi.ll` — plain `dce` keeps the mutually-dead cycle (each value has a use: the other one); `adce` deletes it:
+
+```llvm
+define void @f(i1 %c) {
+entry:
+  br label %loop
+loop:
+  %a = phi i32 [ 0, %entry ], [ %b, %loop ]
+  %b = add i32 %a, 1
+  br i1 %c, label %loop, label %exit
+exit:
+  ret void
+}
+```
+
+`opt -passes=dce -S dead-phi.ll` (`%a`, `%b` both kept) vs `opt -passes=adce -S dead-phi.ll` (both gone — the loop skeleton itself stays; deleting the loop structure needs `-adce-remove-loops`).
+
+> [!figure]+ Animation — assume dead, prove live, sweep (on [[running-example|the running example]])
+> ![dead-code-elimination-adce-liveness.gif](attachments/dead-code-elimination-adce-liveness.gif)
+> Liveness spreads backward from the `ret` through operands and control dependence; the old i32 counter orphaned by IV widening — a self-feeding φ-cycle trivial DCE can't delete — is never reached, so the sweep removes it. (Regenerate: `_meta/anim/storyboards/dead-code-elimination-adce-liveness.json`.)
 
 ## 3. BDCE — bit-tracking
 
 > [!info] Demanded bits
-> **BDCE** uses **demanded-bits** analysis: if *no* use needs *any* bit of an instruction's result, the instruction is dead even though it technically has a use (e.g. a computation whose high bits are immediately masked off). It removes such instructions and simplifies operands whose upper bits don't matter.
+> **BDCE** uses **demanded-bits** analysis: if *no* use needs *any* bit of an instruction's result, the instruction is dead even though it technically has a use (e.g. an instruction that can only affect bit positions every downstream user discards — the in-tree test `Transforms/BDCE/basic.ll` removes calls whose results only feed bits an `ashr … 4` shifts away). It removes such instructions and simplifies operands whose upper bits don't matter.
 
 > [!summary] The one thing to remember
 > Dead code = results (or bits, or branches) that can't affect output. LLVM: **DCE** (no-use, no-side-effect), **ADCE** (optimistic + control-dependence, kills dead branches/loops), **BDCE** (demanded-bits). SSA use lists make the liveness check cheap; DCE runs constantly to clean up after other passes. Module-scope cleanup: [[interprocedural-dead-code-elimination]].
