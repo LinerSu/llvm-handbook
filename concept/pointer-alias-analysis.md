@@ -34,7 +34,7 @@ verified_on: 2026-06-28
 > | Points-to graph | **DSA graph** ⟨N, E, V, C⟩ |
 > | Allocation-site abstraction | one DSA node ≙ a (possibly infinite) *set* of objects |
 >
-> Alias analysis is the *enabler* under [[loop-transformations#7. Loop-invariant code motion (LICM)|LICM]], [[value-numbering|GVN]], DSE, and vectorization — they can only move/remove memory ops when AA proves non-interference.
+> Alias analysis is the *enabler* under [[loop-transformations#Loop-invariant code motion (LICM)|LICM]], [[value-numbering|GVN]], DSE, and vectorization — they can only move/remove memory ops when AA proves non-interference.
 
 ---
 

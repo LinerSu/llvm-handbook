@@ -37,7 +37,7 @@ verified_on: 2026-06-28
 
 ---
 
-### 5. Unrolling (unwinding)
+### Unrolling (unwinding)
 
 > [!note] Definition
 > Replicate the loop body $K$ times (a user-controllable factor):
@@ -104,7 +104,7 @@ verified_on: 2026-06-28
 
 ---
 
-### 6. Splitting
+### Splitting
 
 > [!note] Definition
 > Partition one loop into several smaller loops, each handling part of the iteration range. **Peeling** is the special case of pulling out the first (or last) few iterations. LLVM: peeling lives in the unroller (`LoopPeel`).
@@ -124,7 +124,7 @@ verified_on: 2026-06-28
 
 ---
 
-### 7. Loop-invariant code motion (LICM)
+### Loop-invariant code motion (LICM)
 
 > [!note] Definition
 > Move code that computes the **same value on every iteration** out of the loop (to the preheader), if doing so is legal. LLVM pass: `-licm`.
@@ -185,7 +185,7 @@ verified_on: 2026-06-28
 
 ---
 
-### 8. Vectorization
+### Vectorization
 
 > [!info] Quick primer
 > Replace scalar iterations with **SIMD** operations that process several elements at once. LLVM has two vectorizers:
@@ -202,7 +202,7 @@ verified_on: 2026-06-28
 
 ---
 
-### 9. Fission (distribution)
+### Fission (distribution)
 
 > [!note] Definition
 > Break one loop into multiple loops over the **same index range**, each holding a subset of the statements. LLVM: `LoopDistribute` (`-loop-distribute`); enabled at `-O2/-O3` or via `#pragma clang loop distribute(enable)`.
@@ -243,7 +243,7 @@ verified_on: 2026-06-28
 
 ---
 
-### 10. Fusion
+### Fusion
 
 > [!note] Definition
 > The inverse of fission: **merge adjacent loops** with the same iteration space into one body (a.k.a. jamming/merging). LLVM: `LoopFuse` (`-loop-fusion`).

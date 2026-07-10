@@ -91,7 +91,7 @@ Check it on the figure above: is `D ∈ DF(B)`? (1) `B` dominates a predecessor 
 > [!info] Consumers
 > - **SSA construction / `mem2reg`** — φ placement via dominance frontiers.
 > - **[[value-numbering|GVN]]** — processes blocks in reverse post-order with a global leader table, using the dominator tree for dominance queries. (A contrasting design: `EarlyCSE` instead walks the dominator tree itself, scoping its hash table to the current root-to-node path.)
-> - **[[loop-transformations#7. Loop-invariant code motion (LICM)|LICM]]** — legality needs the definition to dominate all uses and the block to dominate loop exits.
+> - **[[loop-transformations#Loop-invariant code motion (LICM)|LICM]]** — legality needs the definition to dominate all uses and the block to dominate loop exits.
 > - **[[loop-info|LoopInfo / LCSSA]]** — the header dominates the loop; LCSSA closing-φ placement uses dominance frontiers.
 
 > [!note] Post-dominators

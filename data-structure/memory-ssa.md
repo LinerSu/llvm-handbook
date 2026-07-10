@@ -99,14 +99,14 @@ graph TD
   D1 ==> U1["MemoryUse: load %p3"]
 ```
 
-==`MemoryUse(1)`== depends only on version **1**, skipping every def in the loop — exactly the fact that lets [[loop-transformations#7. Loop-invariant code motion (LICM)|LICM]] hoist the load.
+==`MemoryUse(1)`== depends only on version **1**, skipping every def in the loop — exactly the fact that lets [[loop-transformations#Loop-invariant code motion (LICM)|LICM]] hoist the load.
 
 > [!figure]+ Animation — version the memory, then walk for the clobber
 > ![memory-ssa-clobber-walk.gif](attachments/memory-ssa-clobber-walk.gif)
 > Memory SSA versions each store block by block (Defs 1–4, φs 5–6), then one alias-guided walk climbs past 4, φ5 and φ6 to prove nothing in the loop clobbers `%p3` — the load resolves to `MemoryUse(1)`. (Regenerate: `_meta/anim/storyboards/memory-ssa-clobber-walk.json`.)
 
 > [!tip] Where this gets used
-> Memory SSA powers memory-aware passes: LICM (is this load invariant?), GVN/DSE, and [[loop-transformations#9. Fission (distribution)|loop distribution]] — LICM and DSE, for example, query `MemorySSAWalker::getClobberingMemoryAccess(MA)`.
+> Memory SSA powers memory-aware passes: LICM (is this load invariant?), GVN/DSE, and [[loop-transformations#Fission (distribution)|loop distribution]] — LICM and DSE, for example, query `MemorySSAWalker::getClobberingMemoryAccess(MA)`.
 
 > [!quote] Sources
 > - [MemorySSA](https://llvm.org/docs/MemorySSA.html)
