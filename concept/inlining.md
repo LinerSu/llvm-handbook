@@ -35,18 +35,32 @@ verified_on: 2026-06-28
 > int square(int x) { return x * x; }
 > int f()          { return square(3); }
 > ```
-> Inlining `square` into `f` gives `return 3 * 3;` — and *then* constant folding makes it `return 9;`. The call overhead is gone, but the bigger payoff is that the callee's body is now optimized **in the caller's context**.
+> Inlining `square` into `f` gives `return 3 * 3;` ⇒ constant folding ⇒ `return 9;`.
 
 ## 2. In LLVM — a bottom-up CGSCC pass
 
 > [!info] How the Inliner runs
-> The Inliner is a **CGSCC pass**: it walks the [[call-graph]]'s SCCs **bottom-up** (post-order), so each callee has already been simplified before its callers are considered. After inlining a call, the callee's own call sites are added to a worklist and reconsidered, interleaved with the per-function simplification pipeline — a process of gradual refinement over the call graph.
+> The Inliner is a **CGSCC pass**: it walks the [[call-graph]]'s SCCs **bottom-up** (post-order), so each callee has already been simplified before its callers are considered. After inlining a call, the callee's own call sites are added to a worklist and reconsidered, interleaved with the per-function simplification pipeline.
+
+> [!figure]+ Animation — legality → cost → clone → fold, on [[running-example|the running example]]
+> ![inlining-clone-and-fold.gif](attachments/inlining-clone-and-fold.gif)
+> The Inliner reaches `caller` bottom-up, clears legality then `InlineCost` (with a bonus for the constant `k = 4`), clones `accumulate`'s blocks in with `.i` suffixes — and the now-visible constant lets InstCombine fold `mul %0, 4` into `shl %0, 2`, the caller-context payoff. (Regenerate: `_meta/anim/storyboards/inlining-clone-and-fold.json`.)
 
 ## 3. The decision: legality, then cost
 
 > [!info] Two steps
 > 1. **Legality + mandatory.** Some calls can't be inlined (varargs mismatches, incompatible attributes); some are forced by `alwaysinline` or forbidden by `noinline`.
-> 2. **Profitability** (only if legal and non-mandatory) — the **`InlineCost`** heuristic. It estimates the cost of the inlined body against a **threshold** (raised at `-O3`/for hot calls, lowered for size with `-Os`/`-Oz`), with **bonuses** for simplifications the inline would enable (e.g. a constant argument that folds away branches) and for **single-call-site / `internal`** callees (inlining then deletes the original).
+> 2. **Profitability** (only if legal and non-mandatory) — **`InlineCost`**: estimated cost of the inlined body vs a **threshold**.
+>
+> | knob | effect |
+> | --- | --- |
+> | `-O3` / hot call | threshold ↑ |
+> | `-Os` / `-Oz` (size) | threshold ↓ |
+> | constant arg → branches fold | cost bonus (simplification credited) |
+> | single call site + `internal` callee | bonus — inlining deletes the original |
+
+> [!example]- Watch the cost model decide
+> `clang -O2 -c -Rpass=inline -Rpass-missed=inline square.c` → one remark per call site, e.g. `'square' inlined into 'f' with (cost=-35, threshold=337)`. Make `square` `static` and the single-call-site bonus drops the cost to `-15035`.
 
 ## 4. Limitations
 

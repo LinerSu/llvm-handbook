@@ -1,0 +1,81 @@
+{
+  "id": "inlining-clone-and-fold",
+  "title": "Inlining: caller absorbs accumulate (running example §4)",
+  "canvas": { "cols": 3, "rows": 3, "cell": [250, 112], "margin": 24 },
+  "defaults": { "step_ms": 1800, "hold_ms": 4200 },
+  "summary_caption": "Inlining: legality, then InlineCost against a threshold, then clone with argument remap — bottom-up, so callees are simplified before their callers.",
+  "nodes": [
+    { "id": "callee", "at": [0, 1], "label": "accumulate(a, n, k)\nloop: sum += a[i] * k\nret sum", "shape": "rounded" },
+    { "id": "centry", "at": [2, 0], "label": "caller(a, n)\ncall accumulate(a, n, 4)\nret", "shape": "box" },
+    { "id": "pbody", "at": [2, 1], "label": "for.body.i (loop)\n%mul.i = mul %0, 4\n%add.i = sum + %mul.i", "shape": "box" },
+    { "id": "pexit", "at": [1, 2], "label": "accumulate.exit\nret sum", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "centry", "to": "callee", "label": "call" },
+    { "from": "centry", "to": "pbody", "label": "n > 0" },
+    { "from": "centry", "to": "pexit", "label": "n <= 0", "curve": "right" },
+    { "from": "pbody", "to": "pexit", "label": "exit" }
+  ],
+  "frames": [
+    {
+      "caption": "Running example, stage 4: caller passes the constant 4 as k. The Inliner must decide this call site.",
+      "nodes": { "pbody": "hidden", "pexit": "hidden" },
+      "edges": { "centry->pbody": "hidden", "centry->pexit": "hidden", "pbody->pexit": "hidden" },
+      "duration_ms": 2400
+    },
+    {
+      "caption": "The Inliner is a CGSCC pass over the call graph, bottom-up: the callee accumulate is visited and simplified first.",
+      "nodes": { "callee": "active" },
+      "badges": [ { "node": "callee", "text": "visited first", "style": "active" } ]
+    },
+    {
+      "caption": "Then caller. Its one call site is examined: should accumulate(a, n, 4) be inlined here?",
+      "nodes": { "callee": "done", "centry": "active" },
+      "edges": { "centry->callee": "active" },
+      "clear_badges": true,
+      "badges": [ { "node": "callee", "text": "simplified", "style": "done" } ]
+    },
+    {
+      "caption": "Step 1, legality and mandatory checks: no varargs mismatch, no noinline, no alwaysinline forcing it. Legal, so the cost model decides.",
+      "badges": [ { "node": "centry", "text": "legal", "style": "done" } ]
+    },
+    {
+      "caption": "Step 2, profitability: InlineCost tallies the body, minus a bonus because argument k = 4 is a constant that will fold code away. Under threshold: inline.",
+      "clear_badges": true,
+      "badges": [
+        { "node": "callee", "text": "simplified", "style": "done" },
+        { "node": "centry", "text": "inline!", "style": "new" }
+      ],
+      "duration_ms": 2400
+    },
+    {
+      "caption": "The call is replaced by a clone of the callee: blocks keep their names plus an .i suffix, and the ret turns into a branch to accumulate.exit.",
+      "nodes": { "pbody": "new", "pexit": "new" },
+      "edges": { "centry->callee": "hidden", "centry->pbody": "new", "centry->pexit": "new", "pbody->pexit": "new" },
+      "set_labels": { "centry": "caller entry\n%cmp.i: n > 0 ?" },
+      "clear_badges": true,
+      "badges": [ { "node": "centry", "text": "inlined", "style": "done" } ],
+      "duration_ms": 2600
+    },
+    {
+      "caption": "During cloning the value map rewired formal %k to the actual 4: compare the callee's mul by k with the clone's mul %0, 4.",
+      "nodes": { "pbody": "active" },
+      "badges": [ { "node": "pbody", "text": "%k→4", "style": "new" } ]
+    },
+    {
+      "caption": "The payoff of context: with 4 visible, InstCombine folds mul %0, 4 into shl %0, 2. No call boundary blocks the optimization.",
+      "set_labels": { "pbody": "for.body.i (loop)\n%mul.i = shl %0, 2\n%add.i = sum + %mul.i" },
+      "clear_badges": true,
+      "badges": [
+        { "node": "pbody", "text": "mul→shl", "style": "new" },
+        { "node": "centry", "text": "inlined", "style": "done" }
+      ],
+      "duration_ms": 2400
+    },
+    {
+      "caption": "Inlining added no new call sites to the worklist, so caller is done. accumulate itself survives: it is still externally visible.",
+      "nodes": { "centry": "done", "pbody": "done", "pexit": "done" },
+      "edges": { "centry->pbody": "done", "centry->pexit": "done", "pbody->pexit": "done" }
+    }
+  ]
+}
