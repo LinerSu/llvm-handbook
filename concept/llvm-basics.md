@@ -67,24 +67,28 @@ verified_on: 2026-06-28
 > [!figure]+ Figure — LLVM's three-phase architecture
 > ![basic_img00.png](attachments/basic_img00.png)
 
-- **Front ends** — one per source language. They *translate source → IR*, which "simplifies the job of the rest of the compiler, which doesn't want to deal with the full complexity of (say) C++ source."
-- **Optimizer** — **passes** that transform *IR → IR* (usually to optimize).
-- **Back ends** — one per target ISA (ARM, x86, SystemZ, …). An **ISA** defines the data types, registers, memory model, addressing modes, and I/O model of a processor family.
+- **Front ends** — one per source language: *source → IR*.
+- **Optimizer** — **passes**: *IR → IR*.
+- **Back ends** — one per target ISA (ARM, x86, SystemZ, …): *IR → machine code*.
 
 > [!figure]+ Figure — IR in the pipeline
 > ![basic_img01.png](attachments/basic_img01.png)
 
 > [!figure]- Figures — IR object model & worked examples (click to expand)
-> ![basic_img02.png](attachments/basic_img02.png)
 > ![basic_img03.png](attachments/basic_img03.png)
-> ![basic_img04.png](attachments/basic_img04.png)
+> *Source → three-address code: one temporary per intermediate result (→ [[three-address-code]]).*
 > ![basic_img05.png](attachments/basic_img05.png)
-> ![basic_img06.png](attachments/basic_img06.png)
+> *IR scopes: Module ⊃ Function ⊃ BasicBlock ⊃ Instruction.*
 > ![basic_img07.png](attachments/basic_img07.png)
+> *`store ptr %b1, ptr %b` — storing a pointer value to memory.*
 > ![basic_img08.png](attachments/basic_img08.png)
+> *A `call` with pointer-typed parameters — call sites are what link functions together.*
 > ![basic_img09.png](attachments/basic_img09.png)
+> *GEP: the first index steps by whole `%struct.ST`s (→ [[getelementptr]]).*
 > ![basic_img10.png](attachments/basic_img10.png)
+> *GEP: the second index selects field 2 at its byte offset.*
 > ![basic_img11.png](attachments/basic_img11.png)
+> *GEP through a 2-D array: outer index `0`, then row `5`.*
 
 > [!tip] What kind of IR is it?
 > A **strongly-typed, RISC-like** instruction set that abstracts the target away:
@@ -95,18 +99,15 @@ verified_on: 2026-06-28
 > - things like calling conventions are explicit via `call`/`ret` with explicit arguments.
 
 > [!info] Three equivalent forms of the same IR
-> | Form | Use |
-> |---|---|
-> | human-readable **assembly** (`.ll`) | reading/writing by hand |
-> | in-memory | what front ends build |
-> | dense **bitcode** (`.bc`) | serialization |
+> | Form | Use | Get it |
+> |---|---|---|
+> | human-readable **assembly** (`.ll`) | reading/writing by hand | `clang -S -emit-llvm f.c` |
+> | in-memory | what front ends build | any `Module*` in a pass |
+> | dense **bitcode** (`.bc`) | serialization | `clang -c -emit-llvm f.c` · `llvm-as`/`llvm-dis` convert |
 
 ---
 
 ### 4. LLVM IR
-
-> [!note] Well-formedness
-> A construct is **well-formed** if it conforms to both the *grammar* and the *semantic rules* of the language — analogous to a well-formed expression in a language standard.
 
 **Syntax — identifiers.** Two namespaces:
 
@@ -169,3 +170,4 @@ verified_on: 2026-06-28
 > [!quote] Sources
 > - [LLVM Language Reference](https://llvm.org/docs/LangRef.html) — identifiers, types, linkage, calling conventions, instructions.
 > - [The Often Misunderstood GEP Instruction](https://llvm.org/docs/GetElementPtr.html) → [[getelementptr]].
+> - 📺 [LLVM IR Tutorial — Phis, GEPs and other things, oh my! (V. Bridgers & F. Piovezan, 2019 EuroLLVM Developers' Meeting)](https://www.youtube.com/watch?v=m8G_S5LwlTo) — one talk covering exactly this note's scope.

@@ -31,7 +31,7 @@ The Clang **front end** turns source text into a typed [[clang-ast|AST]] in four
 
 **Lex → Parse → Sema → AST**  → (CodeGen / analysis)
 
-Its defining engineering trait: **parsing and semantic analysis are interleaved, not sequential passes.** There is no "build a raw parse tree, then walk it to type-check" phase. Instead the parser calls semantic-analysis *actions* the instant it recognizes a construct, and those actions build the AST node already checked. The class that implements semantic analysis says so in its own header: *"Sema — This implements semantic analysis and AST building for C"* (`clang/include/clang/Sema/Sema.h`).
+Defining trait: **parsing and semantic analysis are interleaved, not sequential passes** — no raw parse tree, no later type-check walk; each recognized construct triggers a `Sema` *action* that builds the node already checked. The class that implements semantic analysis says so in its own header: *"Sema — This implements semantic analysis and AST building for C"* (`clang/include/clang/Sema/Sema.h`).
 
 This realizes [[source-level-analysis|source-level analysis]] at its root: it is the machinery that produces the source-faithful tree everything else analyzes.
 
@@ -48,7 +48,7 @@ The output is the [[clang-ast|Clang AST]] — the typed, sugar-preserving, sourc
 The `Lexer` (`clang/include/clang/Lex/Lexer.h`) scans raw characters into `Token`s (`Token.h`); the `Preprocessor` (`Preprocessor.h`) sits on top, driving `#include` resolution and **macro expansion** so the parser sees a single, already-expanded token stream. Tokens, not characters, are the parser's alphabet.
 
 **(b) Parse — tokens → structure (`clang/lib/Parse`).**
-The `Parser` (`clang/include/clang/Parse/Parser.h`, `class Parser`) is a **hand-written recursive-descent parser** — the source comments say so directly (*"our recursive descent parser"*, `clang/lib/Parse/ParseStmt.cpp`). One method per grammar production, mutually recursive: `ParseDeclaration`, `ParseStatement`, `ParseExpression` / `ParseAssignmentExpression`, etc., driven from the top by `ParseFirstTopLevelDecl` / `ParseTopLevelDecl`. The parser does **not** build nodes itself.
+A **hand-written recursive-descent parser** (*"our recursive descent parser"*, `clang/lib/Parse/ParseStmt.cpp`): `ParseDeclaration`, `ParseStatement`, `ParseExpression`, …, driven from `ParseFirstTopLevelDecl` / `ParseTopLevelDecl`. It does **not** build nodes itself.
 
 **(c) Sema — build + check each node (`clang/lib/Sema`).**
 This is where [[type-checking]] happens. When the parser finishes recognizing a construct, it calls a `Sema::ActOn…` **action method** — e.g. `ActOnStartOfFunctionDef`, `ActOnDeclarator`, `ActOnIdExpression`, `ActOnBinOp` (all in `Sema.h`). The action performs the semantics — **name lookup**, **overload resolution** (`ActOnBinOp`'s comment: *"ActOnBinOp handles overloaded operators"*), **implicit conversions**, type checking — and returns the finished, checked AST node (or a diagnostic). Semantics and tree-building are the same step.
@@ -66,7 +66,7 @@ The interleaving is concrete in the types: the `Parser` **holds a reference to `
 > | Sema | `Sema` action methods `ActOnDeclarator`, `ActOnStartOfFunctionDef`, `ActOnIdExpression`, `ActOnBinOp` | `clang/include/clang/Sema/Sema.h`; `clang/lib/Sema/` |
 > | AST | `ASTContext`-owned `Decl` / `Stmt` / `Type` | see [[clang-ast]] |
 
-Confirmed in `Parser.h`: the field `Sema &Actions;` and the constructor `Parser(Preprocessor &PP, Sema &Actions, bool SkipFunctionBodies);`, and hundreds of `Actions.ActOn…` call sites (e.g. `Actions.ActOnStartOfTranslationUnit()` in `Parser.cpp`). The relationship is: **parser recognizes → `Actions.ActOnX(...)` checks + builds → node returned.**
+The relationship: **parser recognizes → `Actions.ActOnX(...)` checks + builds → node returned** — field, constructor and hundreds of `Actions.ActOn…` call sites confirmed (citations in the footer).
 
 **Figure — the interleaved loop for one binary expression `a + b`.** The parser never sees a "raw" tree; each returned node is already name-resolved and type-checked.
 
@@ -83,6 +83,12 @@ flowchart TD
 
 The reading: `ActOnBinOp` is where a bad `+` (say, on incompatible types, or an ambiguous overload) is caught — the diagnostic fires *during parsing*, located at the source token, not in a later walk.
 
+See it: with `int f(int a, int b) { return a + b; }` in `f.c`, `clang -Xclang -ast-dump -fsyntax-only f.c | grep BinaryOperator` prints `BinaryOperator 0x… <col:30, col:34> 'int' '+'` — the dumped node is already typed.
+
+> [!figure]+ Animation — the ActOn… loop, one token at a time
+> ![clang-frontend-pipeline-acton-loop.gif](attachments/clang-frontend-pipeline-acton-loop.gif)
+> The parser consumes one token at a time and immediately calls `Actions.ActOn…` into Sema — watch `DeclRefExpr a`, `DeclRefExpr b`, then the wired `BinaryOperator` come back already type-checked, so no raw tree ever exists. (Regenerate: `_meta/anim/storyboards/clang-frontend-pipeline-acton-loop.json`.)
+
 ## 5. Why interleaved
 
 Two reasons the design fuses parse and semantics rather than separating them:
@@ -98,11 +104,11 @@ Two reasons the design fuses parse and semantics rather than separating them:
 > - **One translation unit at a time.** The front end builds exactly one AST per TU (see [[clang-ast]] §Limitations). Whole-program facts need LTO or cross-TU indexing, not the front end alone.
 
 > [!summary] The one thing to remember
-> The Clang front end is **Lex → Parse → Sema → AST** with parse and semantics **interleaved**: a hand-written recursive-descent `Parser` holds a `Sema &Actions` and calls `Actions.ActOn…` as it recognizes each construct, so every AST node comes back already name-resolved, overload-resolved and type-checked — producing the [[clang-ast|AST]] that feeds both CodeGen and every source-level analysis.
+> **Lex → Parse → Sema → AST**, interleaved: the recursive-descent `Parser` calls `Sema`'s `ActOn…` per construct, so every AST node comes back already name-resolved, overload-resolved and type-checked — one [[clang-ast|AST]] feeding CodeGen and every source-level analysis.
 
 > [!quote] Sources & confidence
 > Tier-1, confirmed against the pinned Clang source ([[llvm-version]]):
-> - [clang/include/clang/Parse/Parser.h](https://github.com/llvm/llvm-project/blob/main/clang/include/clang/Parse/Parser.h) — `class Parser`; field `Sema &Actions`; constructor `Parser(Preprocessor &PP, Sema &Actions, …)`; `ParseDeclaration` / `ParseStatement` / `ParseExpression` / `ParseAssignmentExpression`; "recursive descent parser" comment in `clang/lib/Parse/ParseStmt.cpp`.
+> - [clang/include/clang/Parse/Parser.h](https://github.com/llvm/llvm-project/blob/main/clang/include/clang/Parse/Parser.h) — `class Parser`; field `Sema &Actions`; constructor `Parser(Preprocessor &PP, Sema &Actions, …)`; `ParseDeclaration` / `ParseStatement` / `ParseExpression` / `ParseAssignmentExpression`; "recursive descent parser" comment in `clang/lib/Parse/ParseStmt.cpp`; hundreds of `Actions.ActOn…` call sites throughout `clang/lib/Parse/` (e.g. `Actions.ActOnStartOfTranslationUnit()` in `clang/lib/Parse/Parser.cpp`).
 > - [clang/include/clang/Sema/Sema.h](https://github.com/llvm/llvm-project/blob/main/clang/include/clang/Sema/Sema.h) — "Sema — This implements semantic analysis and AST building for C"; action methods `ActOnStartOfFunctionDef`, `ActOnDeclarator`, `ActOnIdExpression`, `ActOnBinOp` ("handles overloaded operators"); name-lookup / overload-resolution / implicit-conversion machinery.
 > - `clang/include/clang/Lex/{Lexer,Preprocessor,Token}.h` — `Lexer`, `Preprocessor`, `Token` (chars → tokens, macro expansion).
 > - [Clang — Introduction to the Clang AST](https://clang.llvm.org/docs/IntroductionToTheClangAST.html) — primary doc.

@@ -1,0 +1,92 @@
+{
+  "id": "clang-frontend-pipeline-acton-loop",
+  "title": "Clang front end — the interleaved Parse/Sema loop (a + b)",
+  "canvas": { "cols": 3, "rows": 6, "cell": [230, 110], "margin": 24 },
+  "defaults": { "step_ms": 1700, "hold_ms": 4200 },
+  "summary_caption": "Lex once, then an interleaved loop: the Parser recognizes, calls Actions.ActOn..., and gets back a checked node — every Clang AST node is born type-checked.",
+  "nodes": [
+    { "id": "lex",     "at": [1, 0], "label": "Lexer + Preprocessor\nchars to tokens", "shape": "box" },
+    { "id": "tok-a",    "at": [0, 1], "label": "token: a",  "shape": "rounded" },
+    { "id": "tok-plus", "at": [1, 1], "label": "token: +",  "shape": "rounded" },
+    { "id": "tok-b",    "at": [2, 1], "label": "token: b",  "shape": "rounded" },
+    { "id": "parser",  "at": [0, 2], "label": "Parser\nParseExpression", "shape": "box" },
+    { "id": "sema",    "at": [2, 2], "label": "Sema &Actions\nchecks + builds", "shape": "box" },
+    { "id": "binop",   "at": [1, 4], "label": "BinaryOperator +\ntype: int", "shape": "box" },
+    { "id": "ast-a",    "at": [0, 5], "label": "DeclRefExpr a\ntype: int", "shape": "box" },
+    { "id": "ast-b",    "at": [2, 5], "label": "DeclRefExpr b\ntype: int", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "lex", "to": "tok-a" },
+    { "from": "lex", "to": "tok-plus" },
+    { "from": "lex", "to": "tok-b" },
+    { "from": "tok-a", "to": "parser" },
+    { "from": "parser", "to": "sema", "label": "Actions.ActOn..." },
+    { "from": "sema", "to": "parser", "curve": "left", "label": "checked AST node" },
+    { "from": "binop", "to": "ast-a" },
+    { "from": "binop", "to": "ast-b" }
+  ],
+  "frames": [
+    {
+      "caption": "Stage 1, Lex: the Preprocessor expands macros and hands over one token stream — a, +, b. Tokens, not characters, are the parser's alphabet.",
+      "nodes": { "lex": "active", "tok-a": "new", "tok-plus": "new", "tok-b": "new",
+                 "parser": "dim", "sema": "dim",
+                 "binop": "hidden", "ast-a": "hidden", "ast-b": "hidden" },
+      "edges": { "lex->tok-a": "active", "lex->tok-plus": "active", "lex->tok-b": "active",
+                 "tok-a->parser": "dim", "parser->sema": "dim", "sema->parser": "dim",
+                 "binop->ast-a": "hidden", "binop->ast-b": "hidden" }
+    },
+    {
+      "caption": "Stage 2, Parse: ParseExpression starts recursive descent over the tokens. The parser recognizes structure — it never builds an AST node itself.",
+      "nodes": { "lex": "done", "tok-a": "normal", "tok-plus": "normal", "tok-b": "normal",
+                 "parser": "active" },
+      "edges": { "lex->tok-a": "normal", "lex->tok-plus": "normal", "lex->tok-b": "normal",
+                 "tok-a->parser": "active" }
+    },
+    {
+      "caption": "The parser consumes 'a' and immediately calls Actions.ActOnIdExpression — semantic analysis runs mid-parse, not as a later pass.",
+      "nodes": { "tok-a": "active", "sema": "active" },
+      "edges": { "tok-a->parser": "normal", "parser->sema": "active" },
+      "badges": [ { "node": "sema", "text": "lookup", "style": "active" } ]
+    },
+    {
+      "caption": "Sema runs name lookup, finds the int variable a, and returns a finished DeclRefExpr — the first AST node, already typed.",
+      "nodes": { "tok-a": "done", "ast-a": "new" },
+      "edges": { "parser->sema": "normal", "sema->parser": "active" },
+      "clear_badges": true,
+      "badges": [ { "node": "ast-a", "text": "checked", "style": "done" } ]
+    },
+    {
+      "caption": "Token '+' means a binary expression — but the right operand comes first. The parser consumes 'b' and calls ActOnIdExpression again.",
+      "nodes": { "tok-plus": "active", "tok-b": "active", "ast-a": "done" },
+      "edges": { "sema->parser": "normal", "parser->sema": "active" },
+      "clear_badges": true,
+      "badges": [ { "node": "sema", "text": "lookup", "style": "active" } ]
+    },
+    {
+      "caption": "Name lookup again: back comes DeclRefExpr b, typed int. Both operands are checked nodes now — but '+' itself is still unchecked.",
+      "nodes": { "tok-b": "done", "ast-b": "new" },
+      "edges": { "parser->sema": "normal", "sema->parser": "active" },
+      "clear_badges": true,
+      "badges": [ { "node": "ast-b", "text": "checked", "style": "done" } ]
+    },
+    {
+      "caption": "With both operands in hand, the parser calls Actions.ActOnBinOp(a, '+', b) — the semantics of '+' happen now, during parsing.",
+      "nodes": { "ast-b": "done" },
+      "edges": { "sema->parser": "normal", "parser->sema": "active" },
+      "clear_badges": true,
+      "badges": [ { "node": "sema", "text": "check +", "style": "active" } ]
+    },
+    {
+      "caption": "ActOnBinOp does overload resolution, implicit conversions and the type check. A bad '+' would be diagnosed right here, at the source token.",
+      "duration_ms": 2200
+    },
+    {
+      "caption": "Sema returns a BinaryOperator typed int, already wired to both children — the parser never holds a raw, unchecked tree.",
+      "nodes": { "binop": "new", "tok-plus": "done" },
+      "edges": { "parser->sema": "normal", "sema->parser": "active",
+                 "binop->ast-a": "new", "binop->ast-b": "new" },
+      "clear_badges": true,
+      "badges": [ { "node": "binop", "text": "checked", "style": "done" } ]
+    }
+  ]
+}
