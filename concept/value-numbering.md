@@ -20,9 +20,8 @@ verified_on: 2026-06-28
 > **Prerequisites:** [[ssa-form]] · **Contrast:** [[instruction-combining]] · **Implementation:** [[llvm-gvn]] · **Cheap form:** [[early-cse]]
 
 > [!abstract] Chapter map
-> 1. **Value numbering** — give equivalent computations the same *number*, then reuse.
-> 2. **Redundancy elimination** — the payoff (remove re-computations).
-> 3. **Local** value numbering (per block) → **Global** value numbering (whole function, dominator-tree walk).
+> 1. **The idea** (§§1–4) — same ID ⇒ equivalent computation; the payoff is redundancy elimination.
+> 2. **Local** VN (§5, per block) → **Global** VN (§6, whole function, dominator-tree walk).
 
 > [!info]+ From classic compiler theory → LLVM
 > | Classic concept | LLVM realization |
@@ -35,25 +34,11 @@ verified_on: 2026-06-28
 
 ---
 
-### 1. Value numbering
+### 1. The idea
 
 > [!note] Definition
-> A process to decide whether **two computations are equivalent**; if so, keep only one and reuse it — avoiding redundant computation.
-
-### 2. Redundancy elimination
-
-> [!note] Definition
-> An expression is **redundant** iff, on *every* execution path, it is evaluated and its result **has already been computed**. Equivalently: removing it still preserves program semantics. (We assume the program is in [[ssa-form]] form.)
-
-### 3. Prerequisite
-
-> [!tip] Why SSA first
-> SSA gives each value a unique name, so "same value number" is well-defined without flow-sensitive bookkeeping — value numbering and [[ssa-form]] are a natural pair.
-
-### 4. What does value numbering mean?
-
-> [!note] The idea
-> Assign a **unique number (an "ID") to every canonical expression**. ==If two variables are assigned by the same expression, they get the same ID== — and the second computation is redundant.
+> Assign a **unique ID to every canonical expression**; ==same ID ⇒ equivalent computation== — keep the first, reuse it for the rest.
+> An expression is **redundant** iff its result has already been computed on *every* path. We work on [[ssa-form]]: unique names make "same value number" well-defined without flow-sensitive bookkeeping.
 
 > [!example]+ Before → After (reuse the common expression)
 > **Before:**
@@ -75,7 +60,7 @@ verified_on: 2026-06-28
 > }
 > ```
 
-### 5. Original (value numbers on SSA)
+### 2. The same example, in SSA
 
 > [!example]+ SSA-renamed, with value numbers
 > ```text
@@ -86,14 +71,18 @@ verified_on: 2026-06-28
 > ```
 > SSA renaming (`a0`, `a1`) makes the reuse safe: even though source `a` is overwritten, the *value* `x+y` keeps its number.
 
-### 6. Assign IDs to each expression, keep mapping in a table
+### 3. Assign IDs to each expression, keep mapping in a table
 
 > [!info] The mechanism
 > - **Base case:** each variable/constant gets an ID.
 > - **Inductive:** `(IDs of operands) + operator` → a new ID (a canonical key).
 > - For each expression `e`: if its key **already has an ID**, `e` is redundant → replace `e` by a table lookup of the existing value.
 
-### 7. Why value numbering?
+> [!figure]+ Animation — the VN table filling as local value numbering (§5) walks the block
+> ![value-numbering-lvn-table.gif](attachments/value-numbering-lvn-table.gif)
+> `(+, x0, y0)` misses once and hits twice — both hits become copies of leader `a0`, and SSA renaming keeps entry `#1` valid even after source `a` is overwritten by `a1 = 17`. (Regenerate: `_meta/anim/storyboards/value-numbering-lvn-table.json`.)
+
+### 4. Why value numbering?
 
 > [!info] Three wins
 > 1. **Replace redundant expressions** (the original motivation).
@@ -102,7 +91,7 @@ verified_on: 2026-06-28
 
 ---
 
-### 8. Local value numbering (LVN)
+### 5. Local value numbering (LVN)
 
 > [!note] Scope
 > Operates **per basic block**. State:
@@ -143,10 +132,10 @@ verified_on: 2026-06-28
 
 ---
 
-### 9. Global value numbering (GVN)
+### 6. Global value numbering (GVN)
 
 > [!note] Scope
-> Operates across the **whole function**. A function's entry block typically declares values that later blocks consume, so GVN must number expressions **with respect to control-flow context**.
+> Operates across the **whole function** — an expression's number is only reusable in blocks its definition **dominates**, so numbering must respect control flow.
 
 > [!info] Hash-based GVN (incremental / online)
 > - **Data structures:** walk the **[[dominator-tree]]**; keep a **scoped hash table** (updated as you enter/leave blocks). The table guarantees identical operations on identical value-numbered operands get the same number.
@@ -156,10 +145,24 @@ verified_on: 2026-06-28
 >   %x = phi i32 [ %inc, %then ], [ %dec, %else ]
 >   ```
 
-> [!note]- Why dominator-tree order? (click to expand)
-> - If block `X` executes before `Y` on **every** path, then `X` **dominates** `Y` (strictly if `X≠Y`).
-> - The **immediate dominator** `idom(Y)` is the last block that must be visited before `Y` on every path from entry.
-> - Compute idoms → form the dominator tree → process blocks in that order so definitions are numbered before uses.
+**Figure — why dominator-tree order?** A diamond CFG (top) and its dominator tree (bottom):
+
+```mermaid
+flowchart TD
+  E["entry: t = x + y"] --> T["then"]
+  E --> L["else"]
+  T --> M["merge: x + y again"]
+  L --> M
+```
+
+```mermaid
+flowchart TD
+  E2["entry (table: x+y is #1)"] --> T2["then"]
+  E2 --> L2["else"]
+  E2 --> M2["merge: reuse #1"]
+```
+
+Process blocks in dom-tree preorder with a scoped table — a block sees exactly the table entries of its **dominators**, so `x+y` in `merge` reuses `entry`'s number, while `then`'s entries are popped before `else` and never leak into it.
 
 > [!example]- DVNT — Dominator-tree Value Numbering Technique (click to expand)
 > ```text
@@ -190,6 +193,21 @@ verified_on: 2026-06-28
 > [!tip] Two algorithmic families
 > - **Hash-based** (above) — online/incremental, scoped table over the dominator tree.
 > - **Partition/equivalence-based** (offline) — two values are ==congruent== if computed by the same operator with pairwise-congruent operands; refine **congruence classes** to a fixed point.
+
+> [!example]- Try it — cross-block reuse LVN misses (click to expand)
+> ```llvm
+> ; t.ll — %b recomputes %a in a different block
+> define i32 @f(i32 %x, i32 %y) {
+> entry:
+>   %a = add i32 %x, %y
+>   br label %next
+> next:
+>   %b = add i32 %x, %y
+>   %r = add i32 %a, %b
+>   ret i32 %r
+> }
+> ```
+> `opt -passes=gvn -S t.ll` ⇒ `%b` is gone; `%r = add i32 %a, %a`.
 
 > [!quote] Sources & further reading
 > - **Also in:** Muchnick *Advanced Compiler Design & Impl.* §12.4 — value numbering.
