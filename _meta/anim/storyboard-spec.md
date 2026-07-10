@@ -54,7 +54,7 @@ A **storyboard** is a JSON file in `_meta/anim/storyboards/` that declaratively 
 
 **Frames are cumulative:** each frame inherits the previous frame's node/edge styles, labels, and badges, then applies its own overrides. To "un-highlight" something, set it back explicitly (e.g. to `done` or `normal`).
 
-**Styles** (nodes, edges, badges): `normal` · `active` (amber — the thing happening now) · `done` (green — settled) · `dim` (grey — out of play) · `new` (blue — just created) · `error` (red outline — the pitfall).
+**Styles** (nodes, edges, badges): `normal` · `active` (amber — the thing happening now) · `done` (green — settled) · `dim` (grey — out of play) · `new` (blue — just created) · `error` (red outline — the pitfall) · `hidden` (not drawn at all — for an edge/node that doesn't exist *yet*; set it `hidden` in frame 0 and reveal it later with `new`. Don't reuse `dim` for "not yet created": grey already means "removed/dead").
 
 ## Workflow (author agent)
 

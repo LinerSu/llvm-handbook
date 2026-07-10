@@ -136,6 +136,8 @@ def _render_one(sb, state, caption, step_text, frame_idx):
         c0 = ((b0[0] + b0[2]) / 2, (b0[1] + b0[3]) / 2)
         c1 = ((b1[0] + b1[2]) / 2, (b1[1] + b1[3]) / 2)
         style = state.edge_style[e.key]
+        if style == "hidden":
+            continue
         if e.curve == "none":
             p0 = D.border_point(b0, shapes[e.src], c1)
             p1 = D.border_point(b1, shapes[e.dst], c0)
@@ -156,6 +158,8 @@ def _render_one(sb, state, caption, step_text, frame_idx):
     for n in sb.nodes:
         box = boxes[n.id]
         style = state.node_style[n.id]
+        if style == "hidden":
+            continue
         D.node_shape(d, n.shape, box, style)
         text = state.labels[n.id]
         fnt = D.font(*F_LABEL)

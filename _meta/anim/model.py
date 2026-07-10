@@ -12,7 +12,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
-STYLES = ("normal", "active", "done", "dim", "new", "error")
+STYLES = ("normal", "active", "done", "dim", "new", "error", "hidden")
 SHAPES = ("box", "rounded", "diamond")
 CURVES = ("none", "left", "right")
 
