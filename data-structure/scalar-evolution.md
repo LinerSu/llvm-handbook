@@ -36,12 +36,12 @@ verified_on: 2026-06-28
 for (int i = 0; i < n; i++)
   a[i] = a[i] + 1;
 ```
-SCEV analyzes the IR and concludes:
+Reproduce (wrap the loop in `void f(int *a, int n)` and save as `scev.c`): `clang -O1 -emit-llvm -S -fno-discard-value-names scev.c -o - | opt -passes='print<scalar-evolution>' -disable-output`. SCEV concludes:
 - `i` is the add recurrence **`{0,+,1}<loop>`**;
-- the address `&a[i]` is **`{a, +, 4}<loop>`** (affine: base `a`, stride 4 bytes for `i32`);
-- the **backedge-taken count** is `n - 1` (so the trip count is `n`), letting LLVM know exactly how many times the loop runs.
+- the address `&a[i]` is **`{a, +, 4}<loop>`** — folded from `a + 4·{0,+,1}` (affine: base `a`, stride 4 bytes for `i32`);
+- the **backedge-taken count** is `n - 1` ⇒ **trip count `n`**, known exactly.
 
-Because the address is an *affine* AddRec, LLVM knows successive iterations touch `a`, `a+4`, `a+8`, … — contiguous, non-overlapping — which is what makes the loop safe to vectorize.
+*Affine* AddRec ⇒ successive iterations touch `a`, `a+4`, `a+8`, … — contiguous, non-overlapping ⇒ safe to vectorize.
 
 ## 2. What it powers in LLVM
 
@@ -64,3 +64,4 @@ SCEV is strongest on **affine** (linear) recurrences over integers; non-linear e
 > - **Also in:** Muchnick *Advanced Compiler Design & Impl.* §14 — induction-variable analysis.
 > - **Dragon Book §9.8** — symbolic analysis (induction variables, affine expressions of loop variables).
 > - [LLVM `ScalarEvolution`](https://llvm.org/doxygen/classllvm_1_1ScalarEvolution.html); Bachmann, Wang, Zima — *Chains of Recurrences*.
+> - 🎥 [Scalar Evolution — Demystified (J. Absar, EuroLLVM 2018)](https://www.youtube.com/watch?v=AmjliNp0_00) — talk walking through AddRec construction and SCEV's folding rules ([slides](https://llvm.org/devmtg/2018-04/slides/Absar-ScalarEvolution.pdf)).
