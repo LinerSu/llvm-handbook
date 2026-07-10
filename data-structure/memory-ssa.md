@@ -32,7 +32,7 @@ verified_on: 2026-06-28
 ### 1. Definition
 
 > [!note] Definition
-> **Memory SSA** is an analysis that lets us cheaply reason about interactions between memory operations — it provides an **SSA-style form for memory**, with def-use/use-def chains, so you can quickly find the may-defs and may-uses for a memory op. ([MemorySSA doc](https://llvm.org/docs/MemorySSA.html))
+> **Memory SSA** = an **SSA-style form for memory**: def-use/use-def chains over memory ops, so a pass can cheaply find the may-defs and may-uses of any access. ([MemorySSA doc](https://llvm.org/docs/MemorySSA.html))
 
 > [!info] ==Clobber==
 > An access **clobbers** another when it overwrites part of the memory that the other reads from or writes to. Memory SSA's job is to track, for each access, the most recent thing that could clobber it.
@@ -80,17 +80,33 @@ verified_on: 2026-06-28
 >   br label %while.cond
 > }
 > ```
+>
+> Reproduce: `opt -passes='print<memoryssa>' -disable-output foo.ll`
 
-> [!info]- Reading the annotations (click to expand)
-> - `6 = MemoryPhi({entry,1},{if.end,4})` — entering `while.cond`, the reaching memory def is either **1** or **4**; this MemoryPhi is named **6**.
-> - `2 = MemoryDef(6)` / `3 = MemoryDef(6)` — the two stores in `if.then`/`if.else`; each is reached by **6**.
-> - `5 = MemoryPhi({if.then,2},{if.else,3})` — the clobber before `if.end` is either **2** or **3**.
-> - `MemoryUse(5)` — `load %p1` is clobbered by **5**.
-> - `4 = MemoryDef(5)` — `store %p2` is a def reached by **5**.
-> - `MemoryUse(1)` — `load %p3` only depends on memory version **1** (the `store %p3` above the loop); newer versions don't affect it — exactly the kind of fact that lets [[loop-transformations#7. Loop-invariant code motion (LICM)|LICM]] hoist a load.
+**Figure — the memory-version graph of the example above** (solid = defining access, dashed/thick = what a use depends on; thick = the payoff edge):
+
+```mermaid
+graph TD
+  LOE["liveOnEntry"] --> D1["1 = MemoryDef (store %p3)"]
+  D1 --> P6["6 = MemoryPhi (while.cond)"]
+  P6 --> D2["2 = MemoryDef (store %p1)"]
+  P6 --> D3["3 = MemoryDef (store %p2)"]
+  D2 --> P5["5 = MemoryPhi (if.end)"]
+  D3 --> P5
+  P5 --> D4["4 = MemoryDef (store %p2)"]
+  D4 --> P6
+  P5 -.-> U5["MemoryUse: load %p1"]
+  D1 ==> U1["MemoryUse: load %p3"]
+```
+
+==`MemoryUse(1)`== depends only on version **1**, skipping every def in the loop — exactly the fact that lets [[loop-transformations#7. Loop-invariant code motion (LICM)|LICM]] hoist the load.
+
+> [!figure]+ Animation — version the memory, then walk for the clobber
+> ![memory-ssa-clobber-walk.gif](attachments/memory-ssa-clobber-walk.gif)
+> Memory SSA versions each store block by block (Defs 1–4, φs 5–6), then one alias-guided walk climbs past 4, φ5 and φ6 to prove nothing in the loop clobbers `%p3` — the load resolves to `MemoryUse(1)`. (Regenerate: `_meta/anim/storyboards/memory-ssa-clobber-walk.json`.)
 
 > [!tip] Where this gets used
-> Memory SSA powers memory-aware passes: LICM (is this load invariant?), GVN/DSE, and [[loop-transformations#9. Fission (distribution)|loop distribution]] — anywhere you must ask *"what could have clobbered this memory?"* without re-running a full data-flow analysis each time.
+> Memory SSA powers memory-aware passes: LICM (is this load invariant?), GVN/DSE, and [[loop-transformations#9. Fission (distribution)|loop distribution]] — LICM and DSE, for example, query `MemorySSAWalker::getClobberingMemoryAccess(MA)`.
 
 > [!quote] Sources
 > - [MemorySSA](https://llvm.org/docs/MemorySSA.html)

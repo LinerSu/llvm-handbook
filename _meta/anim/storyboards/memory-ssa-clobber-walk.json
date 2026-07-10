@@ -1,0 +1,107 @@
+{
+  "id": "memory-ssa-clobber-walk",
+  "title": "Memory SSA: version the memory, then walk for the clobber (§2 example)",
+  "canvas": { "cols": 3, "rows": 4, "cell": [240, 142], "margin": 24 },
+  "defaults": { "step_ms": 1700, "hold_ms": 4000 },
+  "summary_caption": "Def/Use/φ chains give memory a use-def graph: one cheap walk proves nothing in the loop clobbers %p3 — the fact LICM needs.",
+  "nodes": [
+    { "id": "entry", "at": [1, 0], "label": "entry\nstore %p3", "shape": "box" },
+    { "id": "cond", "at": [1, 1], "label": "while.cond\nbr i1 undef", "shape": "box" },
+    { "id": "then", "at": [0, 2], "label": "if.then\nstore %p1", "shape": "box" },
+    { "id": "els", "at": [2, 2], "label": "if.else\nstore %p2", "shape": "box" },
+    { "id": "end", "at": [1, 3], "label": "if.end\nload %p1\nstore %p2\nload %p3", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "entry", "to": "cond" },
+    { "from": "cond", "to": "then" },
+    { "from": "cond", "to": "els" },
+    { "from": "then", "to": "end" },
+    { "from": "els", "to": "end" },
+    { "from": "end", "to": "cond", "curve": "right", "label": "back edge" }
+  ],
+  "frames": [
+    {
+      "caption": "The note's worked example: a store to %p3 above the loop, a store diamond inside it. Memory SSA will give every memory op a version.",
+      "duration_ms": 2200
+    },
+    {
+      "caption": "entry: the store to %p3 may write memory, so it becomes MemoryDef 1 — its input is liveOnEntry, the state on function entry.",
+      "nodes": { "entry": "active" },
+      "set_labels": { "entry": "entry\n1 = Def(liveOnEntry)\nstore %p3" },
+      "badges": [ { "node": "entry", "text": "+Def", "style": "new" } ]
+    },
+    {
+      "caption": "while.cond merges entry with the loop back edge, so it gets MemoryPhi 6 = φ(1, ?). The back-edge input isn't known yet.",
+      "nodes": { "entry": "done", "cond": "active" },
+      "set_labels": { "cond": "while.cond\n6 = φ(1, ?)" },
+      "clear_badges": true,
+      "badges": [ { "node": "cond", "text": "+φ", "style": "new" } ]
+    },
+    {
+      "caption": "if.then: the store to %p1 is MemoryDef 2. Its input is 6 — the memory version reaching this block.",
+      "nodes": { "cond": "done", "then": "active" },
+      "set_labels": { "then": "if.then\n2 = Def(6)\nstore %p1" },
+      "clear_badges": true,
+      "badges": [ { "node": "then", "text": "+Def", "style": "new" } ]
+    },
+    {
+      "caption": "if.else: the store to %p2 is MemoryDef 3, also fed by 6. Each arm now produces its own memory version.",
+      "nodes": { "then": "done", "els": "active" },
+      "set_labels": { "els": "if.else\n3 = Def(6)\nstore %p2" },
+      "clear_badges": true,
+      "badges": [ { "node": "els", "text": "+Def", "style": "new" } ]
+    },
+    {
+      "caption": "if.end joins the two arms, so another merge: MemoryPhi 5 = φ(2, 3) — whichever store actually ran.",
+      "nodes": { "els": "done", "end": "active" },
+      "set_labels": { "end": "if.end\n5 = φ(2, 3)\nload %p1\nstore %p2\nload %p3" },
+      "clear_badges": true,
+      "badges": [ { "node": "end", "text": "+φ", "style": "new" } ]
+    },
+    {
+      "caption": "load %p1 only reads: MemoryUse(5). It stops at φ 5 because one incoming def — 2, the store to %p1 — really can clobber it.",
+      "set_labels": { "end": "if.end\n5 = φ(2, 3)\nUse(5): load %p1\nstore %p2\nload %p3" },
+      "clear_badges": true,
+      "badges": [ { "node": "end", "text": "+Use", "style": "new" } ]
+    },
+    {
+      "caption": "The store to %p2 becomes MemoryDef 4, chained after 5 — every def records the version it may overwrite.",
+      "set_labels": { "end": "if.end\n5 = φ(2, 3)\nUse(5): load %p1\n4 = Def(5): store %p2\nload %p3" },
+      "clear_badges": true,
+      "badges": [ { "node": "end", "text": "+Def", "style": "new" } ]
+    },
+    {
+      "caption": "Version 4 flows around the back edge and completes MemoryPhi 6 = φ(1, 4). The chains are built — one use is left.",
+      "nodes": { "end": "done", "cond": "active" },
+      "edges": { "end->cond": "active" },
+      "set_labels": { "cond": "while.cond\n6 = φ(1, 4)" },
+      "clear_badges": true,
+      "badges": [ { "node": "cond", "text": "+4", "style": "new" } ]
+    },
+    {
+      "caption": "Naively load %p3 would be MemoryUse(4), its nearest def. But uses get optimized: 4 writes %p2, which never aliases %p3 — walk past it.",
+      "nodes": { "cond": "done", "end": "active" },
+      "edges": { "end->cond": "done" },
+      "set_labels": { "end": "if.end\n5 = φ(2, 3)\nUse(5): load %p1\n4 = Def(5): store %p2\nUse(4): load %p3" },
+      "clear_badges": true,
+      "badges": [ { "node": "end", "text": "4: skip", "style": "error" } ],
+      "duration_ms": 2400
+    },
+    {
+      "caption": "The walk climbs through φ 5 into both arms: defs 2 and 3 write %p1 and %p2 — no alias with %p3 either. Keep climbing, through φ 6.",
+      "nodes": { "then": "active", "els": "active" },
+      "badges": [
+        { "node": "then", "text": "2: skip", "style": "error" },
+        { "node": "els", "text": "3: skip", "style": "error" }
+      ],
+      "duration_ms": 2400
+    },
+    {
+      "caption": "Behind φ 6, def 1 is the store to %p3 itself — and the clobber on every path. The load is optimized to MemoryUse(1).",
+      "nodes": { "then": "done", "els": "done", "entry": "active" },
+      "set_labels": { "end": "if.end\n5 = φ(2, 3)\nUse(5): load %p1\n4 = Def(5): store %p2\nUse(1): load %p3" },
+      "badges": [ { "node": "entry", "text": "1: clobber", "style": "done" } ],
+      "duration_ms": 2400
+    }
+  ]
+}

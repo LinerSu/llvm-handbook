@@ -27,6 +27,10 @@ verified_on: 2026-06-28
 > [!info] The textbook framing: tiling
 > Represent the computation as a tree/DAG; a target instruction is a **tile** (a small pattern with a cost) that covers part of it. Selecting code = covering the whole tree with tiles at minimum total cost. **Maximal munch** greedily takes the largest matching tile; **dynamic programming** finds an *optimal* tiling. LLVM's pattern matchers are the engineering form of this.
 
+> [!figure]+ Animation — tiling the load+add DAG, x86 vs. RISC
+> ![instruction-selection-tiling.gif](attachments/instruction-selection-tiling.gif)
+> SelectionDAG builds the per-block DAG, then the select phase tiles it: x86's memory-operand tile (`ADD32rm`) covers both IR ops in one instruction, while a RISC tile set — lacking that tile — must cover the same DAG with two. (Regenerate: `_meta/anim/storyboards/instruction-selection-tiling.json`.)
+
 ---
 
 ## 1. SelectionDAG (the default)
@@ -41,7 +45,11 @@ For each basic block, LLVM builds a **DAG** of operations, then runs four phases
 A final **scheduler** linearizes the selected DAG into a sequence of `MachineInstr`s.
 
 > [!example] Tiling, concretely
-> An IR `load` then `add` (`%v = load ptr %p; %r = add %v, %x`) may match a single x86 tile `add %x, (%p)` (a load-and-add addressing-mode instruction) — one tile covering two IR ops — if the target defines that pattern. On a RISC target with no memory operands, it stays two instructions (`ld`, `add`).
+> `%v = load i32, ptr %p` + `%r = add i32 %v, %x` — two IR ops, one x86 tile (an `add`-with-memory-operand pattern in the target's `.td`); a load/store RISC needs two. Reproduce:
+> ```sh
+> echo 'int f(int *p, int x){ return *p + x; }' | clang -O1 -S -target x86_64 -x c - -o -
+> ```
+> ⇒ `addl (%rdi), %eax` — one instruction covering both ops; with `-target aarch64` ⇒ `ldr` + `add` (two).
 
 ## 2. GlobalISel (whole-function, newer)
 
@@ -57,14 +65,14 @@ flowchart LR
 - **RegBankSelect** — assign each value a register *bank* (e.g. GPR vs. FPR).
 - **InstructionSelect** — match generic ops to real target instructions (TableGen patterns, shared with SelectionDAG where possible).
 
-It avoids SelectionDAG's per-block isolation and large `SDNode` graphs, and is most mature on AArch64.
+It avoids SelectionDAG's per-block isolation and large `SDNode` graphs.
 
 ## 3. FastISel (`-O0`)
 
 A fast, **best-effort** selector for unoptimized builds: it handles common cases directly for compile speed and **falls back to SelectionDAG** for anything it can't select.
 
 > [!summary] The one thing to remember
-> Instruction selection is **tiling**: cover the IR with target-instruction patterns at low cost. LLVM does it three ways — per-block **SelectionDAG** (build→legalize→combine→select, TableGen patterns), whole-function **GlobalISel** (translate→legalize→regbank→select), and quick **FastISel** at `-O0`.
+> Instruction selection is **tiling**: cover the IR with target-instruction tiles at minimum cost. Per-block **SelectionDAG**, whole-function **GlobalISel**, **FastISel** at `-O0`.
 
 > [!warning] Version-sensitive
 > Which selector is the default is **target- and version-dependent**: SelectionDAG remains the default on most targets while GlobalISel is the default on some (most mature on AArch64). Confirm for your target/version in [CodeGenerator.html](https://llvm.org/docs/CodeGenerator.html) (this vault tracks [[llvm-version]]).
@@ -73,3 +81,4 @@ A fast, **best-effort** selector for unoptimized builds: it handles common cases
 > - **Source:** [`CodeGen/SelectionDAG/`](https://github.com/llvm/llvm-project/tree/main/llvm/lib/CodeGen/SelectionDAG) · [`CodeGen/GlobalISel/`](https://github.com/llvm/llvm-project/tree/main/llvm/lib/CodeGen/GlobalISel)
 > - **Dragon Book §8.9** (instruction selection by tree rewriting), **§8.10–8.11** (optimal tiling via dynamic programming).
 > - [LLVM CodeGenerator](https://llvm.org/docs/CodeGenerator.html); [GlobalISel](https://llvm.org/docs/GlobalISel/index.html).
+> - 🎥 [2024 LLVM Dev Mtg — A Beginners' Guide to SelectionDAG](https://www.youtube.com/watch?v=nNQ6AF6i5FI) (MacLean & Fargnoli, NVIDIA).

@@ -1,0 +1,88 @@
+{
+  "id": "instruction-selection-tiling",
+  "title": "Instruction selection = tiling the DAG",
+  "canvas": { "cols": 4, "rows": 3, "cell": [180, 100], "margin": 24 },
+  "defaults": { "step_ms": 1600, "hold_ms": 3600 },
+  "summary_caption": "Selection is tiling: cover the DAG with target tiles at least cost. x86's memory-operand tile covers load+add in one instruction; a RISC tile set needs two.",
+  "nodes": [
+    { "id": "p",    "at": [0, 0], "label": "%p\n(ptr)", "shape": "rounded" },
+    { "id": "x",    "at": [2, 0], "label": "%x\n(i32)", "shape": "rounded" },
+    { "id": "ld",   "at": [0, 1], "label": "%v = load %p", "shape": "box" },
+    { "id": "add",  "at": [1, 2], "label": "%r = add %v, %x", "shape": "box" },
+    { "id": "outh", "at": [3, 0], "label": "x86 output", "shape": "rounded" },
+    { "id": "o1",   "at": [3, 1], "label": "instr 1\n?", "shape": "rounded" },
+    { "id": "o2",   "at": [3, 2], "label": "instr 2\n?", "shape": "rounded" }
+  ],
+  "edges": [
+    { "from": "p",  "to": "ld" },
+    { "from": "ld", "to": "add" },
+    { "from": "x",  "to": "add" }
+  ],
+  "frames": [
+    {
+      "caption": "Build, step 1 — the note's IR pair (%v = load ptr %p; %r = add %v, %x) enters SelectionDAG. Its leaves are the incoming values %p and %x.",
+      "nodes": { "p": "active", "x": "active", "ld": "hidden", "add": "hidden", "outh": "dim", "o1": "dim", "o2": "dim" },
+      "edges": { "p->ld": "hidden", "ld->add": "hidden", "x->add": "hidden" }
+    },
+    {
+      "caption": "Build, step 2 — each IR op becomes an SDNode: the load reads %p, and the add uses the load's result %v plus %x. One DAG per basic block.",
+      "nodes": { "p": "normal", "x": "normal", "ld": "new", "add": "new" },
+      "edges": { "p->ld": "new", "ld->add": "new", "x->add": "new" }
+    },
+    {
+      "caption": "Legalize + combine — i32 load and i32 add are both legal on x86, so nothing needs rewriting here; the DAG is unchanged.",
+      "nodes": { "ld": "normal", "add": "normal" },
+      "edges": { "p->ld": "normal", "ld->add": "normal", "x->add": "normal" }
+    },
+    {
+      "caption": "Select — the matcher starts at the DAG's root, the add, and asks: which TableGen tiles from x86's .td files match here?",
+      "nodes": { "add": "active" }
+    },
+    {
+      "caption": "Candidate tile 1 — the register-register add (ADD32rr) covers only the add node. The load would then need its own instruction: 2 total.",
+      "badges": [ { "node": "add", "text": "ADD32rr", "style": "active" } ]
+    },
+    {
+      "caption": "Candidate tile 2 — the add-from-memory tile (ADD32rm) matches add(load %p, %x): ONE tile covering BOTH IR ops.",
+      "nodes": { "ld": "active" },
+      "edges": { "ld->add": "active" },
+      "clear_badges": true,
+      "badges": [
+        { "node": "ld",  "text": "ADD32rm", "style": "new" },
+        { "node": "add", "text": "ADD32rm", "style": "new" }
+      ],
+      "duration_ms": 2200
+    },
+    {
+      "caption": "The bigger, cheaper covering wins (the textbook name for this greedy choice is maximal munch): the load folds into the add's addressing mode.",
+      "nodes": { "ld": "done", "add": "done" },
+      "edges": { "ld->add": "done" }
+    },
+    {
+      "caption": "Emit — the pair becomes ONE machine instruction, add %x, (%p). Slot 2 stays empty: two IR ops, one tile, one instruction.",
+      "nodes": { "outh": "normal", "o1": "new" },
+      "set_labels": { "o1": "add %x, (%p)" },
+      "duration_ms": 2200
+    },
+    {
+      "caption": "Same DAG, different target — a RISC machine has no memory-operand add, so the big tile simply does not exist in its .td files.",
+      "clear_badges": true,
+      "nodes": { "ld": "active", "add": "active", "o1": "dim" },
+      "edges": { "ld->add": "error" },
+      "set_labels": { "outh": "RISC output", "o1": "instr 1\n?" },
+      "badges": [ { "node": "add", "text": "no tile", "style": "error" } ],
+      "duration_ms": 2000
+    },
+    {
+      "caption": "Selection falls back to two smaller tiles: a load, then a register add. Two instructions — the target's tile set decides the covering.",
+      "clear_badges": true,
+      "nodes": { "ld": "done", "add": "done", "o1": "new", "o2": "new" },
+      "edges": { "ld->add": "done" },
+      "set_labels": { "o1": "ld %v, (%p)", "o2": "add %r, %v, %x" },
+      "badges": [
+        { "node": "ld",  "text": "ld",  "style": "done" },
+        { "node": "add", "text": "add", "style": "done" }
+      ]
+    }
+  ]
+}
