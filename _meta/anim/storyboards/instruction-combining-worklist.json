@@ -1,0 +1,52 @@
+{
+  "id": "instruction-combining-worklist",
+  "title": "instcombine: LIFO worklist to a fixed point",
+  "canvas": { "cols": 2, "rows": 3, "cell": [300, 100], "margin": 24 },
+  "defaults": { "step_ms": 2000, "hold_ms": 4200 },
+  "summary_caption": "Every rewrite pushes its users back on the LIFO list — the fixed point arrives when no pattern fires.",
+  "nodes": [
+    { "id": "wl",   "at": [0, 1], "label": "worklist (LIFO)\ntop: %Y, then %Z", "shape": "rounded" },
+    { "id": "iy",   "at": [1, 0], "label": "%Y = add i32 %X, 1", "shape": "box" },
+    { "id": "iz",   "at": [1, 1], "label": "%Z = add i32 %Y, 1", "shape": "box" },
+    { "id": "use",  "at": [1, 2], "label": "ret i32 %Z", "shape": "box" },
+    { "id": "dead", "at": [0, 2], "label": "unreachable block\n(pruned in prepare)", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "iy", "to": "iz", "label": "use" },
+    { "from": "iz", "to": "use", "label": "use" }
+  ],
+  "frames": [
+    {
+      "caption": "Prepare: one sweep over blocks reachable from entry seeds the worklist — unreachable code never enters.",
+      "nodes": { "dead": "dim" },
+      "badges": [ { "node": "dead", "text": "never enters", "style": "dim" } ],
+      "duration_ms": 2400
+    },
+    {
+      "caption": "Pop %Y = add %X, 1 — no pattern fires; nothing to fold yet.",
+      "nodes": { "iy": "active" },
+      "set_labels": { "wl": "worklist (LIFO)\ntop: %Z" }
+    },
+    {
+      "caption": "Pop %Z: it matches (add (add %X, 1), 1) — rewritten to %Z = add %X, 2.",
+      "nodes": { "iy": "normal", "iz": "new" },
+      "set_labels": { "iz": "%Z = add i32 %X, 2", "wl": "worklist (LIFO)\n(empty)" },
+      "badges": [ { "node": "iz", "text": "+fold", "style": "new" } ],
+      "duration_ms": 2400
+    },
+    {
+      "caption": "%Y just lost its last use — erased; the rewritten %Z's users are pushed back on the worklist.",
+      "nodes": { "iy": "dim", "iz": "done", "use": "active" },
+      "edges": { "iy->iz": "dim" },
+      "set_labels": { "wl": "worklist (LIFO)\ntop: ret i32 %Z" },
+      "clear_badges": true,
+      "badges": [ { "node": "iy", "text": "dead", "style": "dim" } ]
+    },
+    {
+      "caption": "Pop the user: nothing fires. Worklist empty — fixed point reached.",
+      "nodes": { "use": "done", "wl": "done" },
+      "set_labels": { "wl": "worklist (LIFO)\n(empty) — fixpoint" },
+      "duration_ms": 2400
+    }
+  ]
+}

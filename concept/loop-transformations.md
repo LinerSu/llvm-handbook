@@ -21,22 +21,19 @@ verified_on: 2026-06-28
 > **Prerequisites:** [[loop-info]], [[ssa-form]] · **Enabled by:** [[pointer-alias-analysis]], [[memory-ssa]] · **Hoisting:** [[loop-invariant-code-motion]] · Chapter: [[Loop-Optimization.MOC]]
 
 > [!abstract] Chapter map
-> The transforms that rewrite loops once they're in canonical form ([[loop-info]]): **unrolling, peeling/splitting, LICM, vectorization, fission, fusion** — each a *legality test* (dependence analysis) plus a *rewrite*.
+> The transforms that rewrite loops once they're in canonical form ([[loop-info]]): **unrolling, peeling/splitting, LICM, vectorization, fission, fusion** — each a *legality test* (dependence analysis) plus a *rewrite*. Two payoffs: **code** (reduce to simpler expressions — e.g. $\sum_{i=10}^{20} i = \dfrac{(10+20)\cdot 11}{2}$ closes the loop entirely) and **hardware** (locality / fewer cache misses).
 
 > [!info] The golden rule (carried from [[loop-info]])
 > A loop transform is legal **iff** it preserves the original data dependences. Every transform below is really a dependence-analysis legality check plus a mechanical rewrite.
 
----
-
-### 4. Loop transformation
-
-> [!info] What "transform" means here
-> Rewrite loops into a cheaper-to-execute shape while **preserving observable behavior** (correctness). Two payoffs:
-> - **High level (code):** reduce to simpler expressions — e.g. $\sum_{i=10}^{20} i = \dfrac{(10+20)\cdot 11}{2}$ closes the loop entirely.
-> - **Low level (hardware):** improve locality / reduce cache misses.
->
-> > [!warning] The golden rule
-> > A loop transform is legal **iff** it preserves the original data dependences. Every transform below is really a *legality test* (dependence analysis) plus a *rewrite*.
+| Transform | Pass | Rewrite | Payoff | Legality hazard |
+|---|---|---|---|---|
+| Unroll | `loop-unroll` | body ×K, trip count ÷K | ↓ branches; enables folding; BMC needs finite loops | — always legal; non-divisible trip counts need a remainder loop |
+| Peel/split | `LoopPeel` (in unroller) | pull out first/last iters | special-case first iters | — |
+| LICM | `licm` | hoist/sink invariants → preheader / after loop | compute once | dominance · sink vs hoist · aliasing |
+| Vectorize | `loop-vectorize`, `slp-vectorizer` | scalar iters → SIMD width w (+ epilogue) | data parallelism | carried deps (or runtime checks) |
+| Fission | `loop-distribute` | 1 loop → n loops, same range | locality; exposes parallelism | dependence cycles can't split |
+| Fusion | `loop-fusion` | adjacent loops → one body | locality; ↓ loop overhead | adjacency · equal trip counts · no backward dep |
 
 ---
 
@@ -63,7 +60,7 @@ verified_on: 2026-06-28
 > c[3] = a[3] + b[3];
 > ```
 
-> [!example]+ Partial unroll by 5 (trip count not statically divisible)
+> [!example]+ Partial unroll by 5
 > **Before:**
 > ```c
 > for (int x = 0; x < 100; x++) { remove(x); }
@@ -77,8 +74,7 @@ verified_on: 2026-06-28
 > ```
 
 > [!info] Why unroll?
-> - **Verification (e.g. BMC):** bounded model checking needs finite, unrolled loops since unbounded loops can't be bit-blasted directly.
-> - **Performance:** fewer branches/increments; fixed iteration counts expose constant folding and enable *other* passes downstream.
+> **Verification (e.g. BMC):** bounded model checking needs finite, unrolled loops — unbounded loops can't be bit-blasted directly. (Performance payoffs: see the table above.)
 
 > [!example]- Algorithm sketch — `UnrollLoop(L, K)` (click to expand)
 > ```text
@@ -150,6 +146,10 @@ verified_on: 2026-06-28
 > }
 > ```
 
+> [!figure]+ Animation — mark to a fixpoint, then hoist in dominator order
+> ![loop-transformations-licm-hoist.gif](attachments/loop-transformations-licm-hoist.gif)
+> LICM on the example above: the fixpoint marks `x = y + z` invariant first, then `t1 = x * x` by propagation, and both hoist into the preheader in dominator order so the def still precedes its use. (Regenerate: `_meta/anim/storyboards/loop-transformations-licm-hoist.json`.)
+
 > [!note]- Loop-invariant — the recursive definition (click to expand)
 > An instruction is **loop-invariant** iff, for every operand $x$, **either**
 > - all reaching definitions of $x$ are *outside* the loop, **or**
@@ -187,12 +187,18 @@ verified_on: 2026-06-28
 
 ### 8. Vectorization
 
-> [!info] Quick primer (not in your original notes)
+> [!info] Quick primer
 > Replace scalar iterations with **SIMD** operations that process several elements at once. LLVM has two vectorizers:
 > - **Loop vectorizer** `-loop-vectorize` — widens a loop so each iteration handles a vector of $w$ elements (plus a scalar *remainder/epilogue* loop).
 > - **SLP vectorizer** `-slp-vectorizer` — packs independent straight-line scalar ops into vectors.
 >
 > Legality again reduces to [[dependence-analysis|dependence analysis]]: a loop is vectorizable when iterations carry no dependence that vectorizing would violate (or such dependences are handled by runtime checks).
+
+> [!example] See it yourself
+> ```bash
+> clang -O3 -Rpass=loop-vectorize -Rpass-missed=loop-vectorize -Rpass-analysis=loop-vectorize -c file.c
+> ```
+> Per loop: a `vectorized` remark (width/interleave), or missed + the analysis remark that blocked it. *(Flags: [LLVM Vectorizers docs](https://llvm.org/docs/Vectorizers.html).)*
 
 ---
 
@@ -266,8 +272,7 @@ verified_on: 2026-06-28
 >   ```
 > - Typically only single-entry/single-exit loops qualify.
 
-> [!info] Why fuse?
-> Better **data locality** (touch `a[f]`/`b[f]` together → fewer cache misses) and less **loop-control overhead** (one set of compares/increments/branches). Combined with scalar replacement of array temporaries it can raise memory-bandwidth utilization.
+Combined with scalar replacement of array temporaries, fusion can raise memory-bandwidth utilization (locality and loop-overhead payoffs: see the table above).
 
 > [!quote] Sources (official LLVM docs)
 > - **Also in:** Muchnick *Advanced Compiler Design & Impl.* §13.2 (LICM) and §14 (loop optimizations).

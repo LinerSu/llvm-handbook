@@ -1,0 +1,75 @@
+{
+  "id": "loop-transformations-licm-hoist",
+  "title": "LICM — hoisting loop invariants",
+  "canvas": { "cols": 3, "rows": 4, "cell": [240, 120], "margin": 24 },
+  "defaults": { "step_ms": 1600, "hold_ms": 3600 },
+  "summary_caption": "LICM = fixpoint marking (x, then t1 by propagation) + dominator-order hoisting into the preheader.",
+  "nodes": [
+    { "id": "pre",   "at": [1, 0], "label": "preheader\n(empty)", "shape": "box" },
+    { "id": "cond",  "at": [1, 1], "label": "i < n ?", "shape": "diamond" },
+    { "id": "exit",  "at": [2, 2], "label": "exit", "shape": "rounded" },
+    { "id": "body",  "at": [0, 2], "label": "for.body\nx = y + z\nt1 = x * x\na[i] = 6*i + t1", "shape": "box" },
+    { "id": "latch", "at": [1, 3], "label": "latch\ni = i + 1", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "pre",   "to": "cond" },
+    { "from": "cond",  "to": "body", "label": "true" },
+    { "from": "cond",  "to": "exit", "label": "false" },
+    { "from": "body",  "to": "latch" },
+    { "from": "latch", "to": "cond", "label": "back edge" }
+  ],
+  "frames": [
+    {
+      "caption": "The note's LICM example, in LoopSimplify form: the empty preheader is where hoisted code will go.",
+      "nodes": { "pre": "active" }
+    },
+    {
+      "caption": "Scan the body top-down (dominator order), so defs are seen before uses. First candidate: x = y + z.",
+      "nodes": { "pre": "normal", "body": "active" }
+    },
+    {
+      "caption": "y and z are never defined inside the loop, so every operand is invariant: mark x = y + z.",
+      "set_labels": { "body": "for.body\nx = y + z [inv]\nt1 = x * x\na[i] = 6*i + t1" },
+      "badges": [ { "node": "body", "text": "inv: x", "style": "done" } ]
+    },
+    {
+      "caption": "t1 = x * x: operand x IS defined in the loop, but that single def is itself marked invariant. Mark t1.",
+      "set_labels": { "body": "for.body\nx = y + z [inv]\nt1 = x * x [inv]\na[i] = 6*i + t1" },
+      "badges": [ { "node": "body", "text": "inv: x, t1", "style": "done" } ],
+      "clear_badges": true,
+      "duration_ms": 2400
+    },
+    {
+      "caption": "a[i] = 6*i + t1 and i = i + 1 depend on i, which changes every iteration. Fixpoint reached: two invariants.",
+      "nodes": { "latch": "active" }
+    },
+    {
+      "caption": "Legality: defs are unique and dominate their uses; both are pure arithmetic, so even a zero-trip loop is unharmed.",
+      "nodes": { "latch": "normal", "cond": "active" }
+    },
+    {
+      "caption": "Hoist in dominator order: x = y + z moves to the preheader and now runs once, before the loop.",
+      "nodes": { "pre": "new", "cond": "normal" },
+      "set_labels": {
+        "pre": "preheader\nx = y + z",
+        "body": "for.body\nt1 = x * x [inv]\na[i] = 6*i + t1"
+      },
+      "badges": [ { "node": "pre", "text": "hoisted", "style": "new" } ],
+      "clear_badges": true,
+      "duration_ms": 2200
+    },
+    {
+      "caption": "t1 = x * x follows. Hoisting it first would break dominance: its operand x had to move up first.",
+      "set_labels": {
+        "pre": "preheader\nx = y + z\nt1 = x * x",
+        "body": "for.body\na[i] = 6*i + t1"
+      },
+      "duration_ms": 2200
+    },
+    {
+      "caption": "The body now does only a[i] = 6*i + t1: the invariant work runs once instead of n times.",
+      "nodes": { "pre": "done", "body": "done" },
+      "clear_badges": true
+    }
+  ]
+}
