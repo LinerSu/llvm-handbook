@@ -1,0 +1,80 @@
+{
+  "id": "dominator-tree-idom-build",
+  "title": "Building the dominator tree, idom by idom (§2 CFG)",
+  "canvas": { "cols": 6, "rows": 4, "cell": [130, 100], "margin": 24 },
+  "defaults": { "step_ms": 1700, "hold_ms": 4200 },
+  "summary_caption": "Parent = idom; dominance query = ancestor check; DF = first blocks out of reach — where mem2reg places φ.",
+  "nodes": [
+    { "id": "a",  "at": [1, 0], "label": "A: entry", "shape": "box" },
+    { "id": "b",  "at": [0, 1], "label": "B", "shape": "box" },
+    { "id": "c",  "at": [2, 1], "label": "C", "shape": "box" },
+    { "id": "d",  "at": [1, 2], "label": "D", "shape": "box" },
+    { "id": "e",  "at": [1, 3], "label": "E", "shape": "box" },
+    { "id": "ta", "at": [4, 0], "label": "A", "shape": "rounded" },
+    { "id": "tb", "at": [3, 1], "label": "B", "shape": "rounded" },
+    { "id": "td", "at": [4, 1], "label": "D", "shape": "rounded" },
+    { "id": "tc", "at": [5, 1], "label": "C", "shape": "rounded" },
+    { "id": "te", "at": [4, 2], "label": "E", "shape": "rounded" }
+  ],
+  "edges": [
+    { "from": "a", "to": "b" },
+    { "from": "a", "to": "c" },
+    { "from": "b", "to": "d" },
+    { "from": "c", "to": "d" },
+    { "from": "d", "to": "e" },
+    { "from": "ta", "to": "tb" },
+    { "from": "ta", "to": "td" },
+    { "from": "ta", "to": "tc" },
+    { "from": "td", "to": "te" }
+  ],
+  "frames": [
+    {
+      "caption": "The CFG from §2 (left). Goal: its dominator tree (right), where parent = immediate dominator.",
+      "nodes": { "ta": "dim", "tb": "dim", "tc": "dim", "td": "dim", "te": "dim" },
+      "edges": { "ta->tb": "dim", "ta->td": "dim", "ta->tc": "dim", "td->te": "dim" },
+      "duration_ms": 2200
+    },
+    {
+      "caption": "A is the entry block: every path starts at A, so A dominates every block — it is the root.",
+      "nodes": { "a": "active", "ta": "new" }
+    },
+    {
+      "caption": "B has a single predecessor, A: every path to B arrives via A, so idom(B) = A.",
+      "nodes": { "a": "done", "ta": "done", "b": "active", "tb": "new" },
+      "edges": { "a->b": "active", "ta->tb": "new" }
+    },
+    {
+      "caption": "C is symmetric: its only predecessor is A, so idom(C) = A.",
+      "nodes": { "b": "done", "tb": "done", "c": "active", "tc": "new" },
+      "edges": { "a->b": "normal", "ta->tb": "done", "a->c": "active", "ta->tc": "new" }
+    },
+    {
+      "caption": "D has two predecessors. One path reaches D through B while avoiding C entirely...",
+      "nodes": { "c": "done", "tc": "done", "d": "active" },
+      "edges": { "a->c": "normal", "ta->tc": "done", "a->b": "active", "b->d": "active" }
+    },
+    {
+      "caption": "...and another through C, avoiding B. Neither B nor C is on every path, so neither dominates D.",
+      "nodes": { "b": "error", "c": "error" },
+      "edges": { "a->c": "active", "c->d": "active" }
+    },
+    {
+      "caption": "Intersect the two chains: walk up from B and from C in the tree; they meet at A. So idom(D) = A.",
+      "nodes": { "b": "done", "c": "done", "d": "new", "td": "new" },
+      "edges": { "a->b": "normal", "b->d": "normal", "a->c": "normal", "c->d": "normal", "ta->td": "new" },
+      "duration_ms": 2400
+    },
+    {
+      "caption": "E has a single predecessor, D, so idom(E) = D. The tree is done: dominates = is an ancestor.",
+      "nodes": { "d": "done", "td": "done", "e": "active", "te": "new" },
+      "edges": { "ta->td": "done", "d->e": "active", "td->te": "new" }
+    },
+    {
+      "caption": "Payoff: B dominates a predecessor of D (B itself) but not D, so DF(B) = {D} — SSA puts the φ there.",
+      "nodes": { "e": "done", "te": "done", "b": "active", "d": "active" },
+      "edges": { "d->e": "normal", "td->te": "done", "b->d": "active" },
+      "badges": [ { "node": "d", "text": "+φ", "style": "new" } ],
+      "duration_ms": 2600
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "id": "data-flow-analysis-worklist",
+  "title": "Worklist iteration — constant propagation",
+  "canvas": { "cols": 2, "rows": 4, "cell": [250, 110], "margin": 28 },
+  "defaults": { "step_ms": 1600, "hold_ms": 3600 },
+  "summary_caption": "Facts only rise (bottom, constant, NAC); the back edge re-queues for.cond until nothing changes — the fixpoint.",
+  "nodes": [
+    { "id": "entry",    "at": [0, 0], "label": "entry\nout: bot",    "shape": "box" },
+    { "id": "worklist", "at": [1, 0], "label": "worklist\n[entry]",   "shape": "rounded" },
+    { "id": "cond",     "at": [0, 1], "label": "for.cond\nout: bot", "shape": "box" },
+    { "id": "end",      "at": [1, 1], "label": "for.end\nout: bot",  "shape": "box" },
+    { "id": "body",     "at": [0, 2], "label": "for.body\nout: bot", "shape": "box" },
+    { "id": "inc",      "at": [0, 3], "label": "for.inc\nout: bot",  "shape": "box" }
+  ],
+  "edges": [
+    { "from": "entry", "to": "cond" },
+    { "from": "cond",  "to": "body", "label": "i < n" },
+    { "from": "cond",  "to": "end" },
+    { "from": "body",  "to": "inc" },
+    { "from": "inc",   "to": "cond", "curve": "left" }
+  ],
+  "frames": [
+    {
+      "caption": "Init: every block's out-fact starts at bottom (nothing known); worklist = [entry]. We track the constants of i and sum.",
+      "nodes": { "worklist": "new" }
+    },
+    {
+      "caption": "Pop entry. Transfer: sum = 0, i = 0. Out-fact changed, so push the successor for.cond.",
+      "nodes": { "entry": "active", "worklist": "normal" },
+      "edges": { "entry->cond": "active" },
+      "set_labels": { "entry": "entry\nout: i=0 sum=0", "worklist": "worklist\n[for.cond]" }
+    },
+    {
+      "caption": "Pop for.cond. Join over preds: entry gives i=0, sum=0; for.inc is still bottom (identity). Changed: push both successors.",
+      "nodes": { "entry": "done", "cond": "active" },
+      "edges": { "entry->cond": "done", "cond->body": "active", "cond->end": "active" },
+      "set_labels": { "cond": "for.cond\nout: i=0 sum=0", "worklist": "worklist\n[for.body, for.end]" }
+    },
+    {
+      "caption": "Pop for.body. sum = sum + a[i]*k, and a[i] is unknown: sum rises to overdefined (NAC). Changed: push for.inc.",
+      "nodes": { "cond": "done", "body": "active" },
+      "edges": { "cond->body": "done", "cond->end": "normal", "body->inc": "active" },
+      "set_labels": { "body": "for.body\nout: i=0 sum=NAC", "worklist": "worklist\n[for.end, for.inc]" },
+      "badges": [ { "node": "body", "text": "sum:NAC", "style": "new" } ]
+    },
+    {
+      "caption": "Pop for.inc. i = i + 1 = 1. Changed: push for.cond along the BACK EDGE — the loop forces re-analysis.",
+      "nodes": { "body": "done", "inc": "active" },
+      "edges": { "body->inc": "done", "inc->cond": "active" },
+      "set_labels": { "inc": "for.inc\nout: i=1 sum=NAC", "worklist": "worklist\n[for.end, for.cond]" }
+    },
+    {
+      "caption": "Pop for.cond again. Join: i=0 (from entry) meets i=1 (from for.inc) — two different constants, so i rises to overdefined.",
+      "nodes": { "inc": "done", "cond": "active" },
+      "edges": { "inc->cond": "done", "cond->body": "active", "cond->end": "active" },
+      "set_labels": { "cond": "for.cond\nout: i=NAC sum=NAC", "worklist": "worklist\n[for.end, for.body]" },
+      "badges": [ { "node": "cond", "text": "i:NAC", "style": "new" } ],
+      "clear_badges": true
+    },
+    {
+      "caption": "Second lap. Pop for.body with the new in-fact: its out-fact becomes i and sum both overdefined. Changed: push for.inc.",
+      "nodes": { "cond": "done", "body": "active" },
+      "edges": { "cond->body": "done", "cond->end": "normal", "body->inc": "active" },
+      "set_labels": { "body": "for.body\nout: i=NAC sum=NAC", "worklist": "worklist\n[for.end, for.inc]" },
+      "clear_badges": true
+    },
+    {
+      "caption": "Pop for.inc: overdefined plus 1 is still overdefined. Changed: push for.cond once more.",
+      "nodes": { "body": "done", "inc": "active" },
+      "edges": { "body->inc": "done", "inc->cond": "active" },
+      "set_labels": { "inc": "for.inc\nout: i=NAC sum=NAC", "worklist": "worklist\n[for.end, for.cond]" }
+    },
+    {
+      "caption": "Pop for.cond a third time: the join is again i, sum overdefined — out-fact UNCHANGED, so nothing is pushed. The loop is stable.",
+      "nodes": { "inc": "done", "cond": "done" },
+      "edges": { "inc->cond": "dim" },
+      "set_labels": { "worklist": "worklist\n[for.end]" }
+    },
+    {
+      "caption": "Pop for.end: its in-fact is i, sum overdefined. Worklist empty — fixpoint reached after two laps around the loop.",
+      "nodes": { "end": "done", "worklist": "done" },
+      "edges": { "cond->end": "done" },
+      "set_labels": { "end": "for.end\nout: i=NAC sum=NAC", "worklist": "worklist\n[] fixpoint" }
+    }
+  ]
+}

@@ -55,6 +55,9 @@ flowchart TD
   C --> D
   D --> E["E"]
 ```
+> [!question] Predict first
+> `D`'s CFG predecessors are `B` and `C`. Before looking at the tree below: what is `idom(D)`? (Hint: is there a path entry→`D` that avoids `B`? One that avoids `C`?)
+
 Dominator tree (parent = immediate dominator):
 ```mermaid
 flowchart TD
@@ -63,21 +66,31 @@ flowchart TD
   A2 --> D2["D"]
   D2 --> E2["E"]
 ```
-`D` is reached through **both** `B` and `C`, so neither dominates it ⇒ `idom(D) = A`. Hence the **dominance frontier** of `B` (and of `C`) is `{D}`: a value defined in `B` or `C` needs a `phi` in `D` — exactly SSA φ-placement (see [[ssa-form]]).
+`D` is reached through **both** `B` and `C`, so neither dominates it ⇒ `idom(D) = A`.
+
+> [!figure]+ Animation — building this dominator tree, idom by idom
+> ![dominator-tree-idom-build.gif](attachments/dominator-tree-idom-build.gif)
+> Watch the tree grow one idom at a time — and why `D`'s two converging paths hoist `idom(D)` up to `A`, making `D` the dominance frontier of `B` and `C`. (Regenerate: `_meta/anim/storyboards/dominator-tree-idom-build.json`.)
 
 ### 3. Dominance frontier (why SSA needs it)
 
 > [!note] Definition
 > The **dominance frontier** $DF(A)$ is the set of blocks $B$ where $A$ dominates a *predecessor* of $B$ but does **not** strictly dominate $B$ itself — i.e. the first blocks "just out of reach" of $A$'s dominance. These are exactly the CFG merges where a value defined in $A$ may meet a different definition.
 
+Check it on the figure above: is `D ∈ DF(B)`? (1) `B` dominates a predecessor of `D` — every block dominates itself, and `B` is a predecessor of `D`. (2) `B` does not strictly dominate `D` — the path `A→C→D` avoids `B`. Both conditions hold ⇒ `D ∈ DF(B)`, and by symmetry `D ∈ DF(C)`. So a value defined in `B` or `C` needs a `phi` in `D` — exactly SSA φ-placement (see [[ssa-form]]).
+
 > [!tip] The payoff
-> Minimal-SSA construction places a φ for a variable precisely at the **iterated dominance frontier** of its definitions (Cytron et al.) — this is what `mem2reg` does (see [[ssa-form]]).
+> Minimal-SSA construction places a φ for a variable precisely at the **iterated dominance frontier** of its definitions — *iterated* because each placed φ is itself a new definition with its own frontier, so DF is re-applied until the set stops growing (Cytron et al.) — this is what `mem2reg` does (see [[ssa-form]]).
+
+> [!example] On the running example
+> The `-O0` CFG of `accumulate` ([[running-example#2. Front-end IR — everything is a stack slot]]) is `entry → for.cond`, `for.cond → {for.body, for.end}`, `for.body → for.inc → for.cond` (the back-edge). Dominator tree: `entry → for.cond → {for.body, for.end}`, `for.body → for.inc`.
+> Apply the DF definition to `for.inc`: it dominates itself, a predecessor of `for.cond`, but does not strictly dominate `for.cond` (the `entry → for.cond` edge avoids it) ⇒ `for.cond ∈ DF(for.inc)`. Now the stores: `i` is written in `entry` and `for.inc`; `sum` in `entry` and `for.body`. Since `DF(entry) = ∅` and `DF(for.body) = DF(for.inc) = {for.cond}` (already a fixed point), the iterated DF of each variable's definition blocks is `{for.cond}` — so `mem2reg` places the φs for both `sum` and `i` at the loop header `for.cond`. (In the `-O1` dump of [[running-example#3. After mem2reg and loop opts]] the surviving φs — `%sum.05`, `%indvars.iv` — sit in `for.body` because loop rotation later made it the new loop header.)
 
 ### 4. Where LLVM uses it
 
 > [!info] Consumers
 > - **SSA construction / `mem2reg`** — φ placement via dominance frontiers.
-> - **[[value-numbering|GVN]]** — processes blocks in reverse post-order with a global leader table, using the dominator tree for dominance queries (the scoped-hash-table-over-the-dominator-tree approach is `EarlyCSE`).
+> - **[[value-numbering|GVN]]** — processes blocks in reverse post-order with a global leader table, using the dominator tree for dominance queries. (A contrasting design: `EarlyCSE` instead walks the dominator tree itself, scoping its hash table to the current root-to-node path.)
 > - **[[loop-transformations#7. Loop-invariant code motion (LICM)|LICM]]** — legality needs the definition to dominate all uses and the block to dominate loop exits.
 > - **[[loop-info|LoopInfo / LCSSA]]** — the header dominates the loop; LCSSA closing-φ placement uses dominance frontiers.
 

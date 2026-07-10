@@ -25,7 +25,7 @@ verified_on: 2026-06-28
 > Scheduling **reorders machine instructions** to hide latency, avoid pipeline hazards, and expose instruction-level parallelism — while respecting dependences. LLVM does this on a **dependence DAG** with the register-pressure-aware **MachineScheduler**, plus **MachinePipeliner** for overlapping loop iterations (software pipelining).
 
 > [!info] What constrains a schedule
-> An instruction can move only if its **dependences** hold: **data** (RAW/true, WAR/anti, WAW/output), **control** (a branch), and **resource/structural** (two ops can't use the same functional unit/port in the same cycle). These form a **dependence DAG** over a region of instructions; any topological order that also respects latencies and resources is a legal schedule.
+> An instruction can move only if its **dependences** hold: **data** (RAW/true, WAR/anti, WAW/output), **control** (a branch), and **resource/structural** (two ops can't use the same functional unit/port in the same cycle). These form a **dependence DAG** over a region of instructions; any topological order that also respects latencies (an instruction's **latency** = the cycles until its result is ready to use) and resources is a legal schedule.
 
 ---
 
@@ -40,12 +40,35 @@ flowchart TD
   ADD --> ST["st c"]
 ```
 
+> [!question] Predict first
+> Assume `ld` takes 3 cycles and the machine issues one instruction per cycle. In source order `ld a; ld b; add; st`, where do the stalls fall — and can *any* reordering of these four instructions remove them? (Work it out, then check against the worked schedule below: no — every legal order of this DAG stalls the same, because nothing independent is left to fill the load shadow. That's why the scheduler hunts for unrelated work, as the next example shows.)
+
 **List scheduling** walks the DAG in priority order (e.g. critical-path length), issuing a ready instruction each cycle — the classic basic-block algorithm.
+
+> [!figure]+ Animation — list-scheduling this DAG cycle by cycle
+> ![instruction-scheduling-list-schedule.gif](attachments/instruction-scheduling-list-schedule.gif)
+> Each cycle the scheduler issues the highest-priority *ready* node (here with 2-cycle loads, single issue): issuing `ld b` while `ld a`'s latency is still in flight finishes the block in 5 cycles instead of the 6 a blocking, one-at-a-time order would take. (Regenerate: `_meta/anim/storyboards/instruction-scheduling-list-schedule.json`.)
+
+> [!example] List-scheduling the running example's loop body
+> The [[running-example#3. After mem2reg and loop opts|running example's loop body]] has two chains: the value chain `ld a[i]` → `mul ×k` → `add sum`, and the loop-control chain `add i,1` → `cmp` → `br` — note the compare consumes the incremented `i` (`icmp eq %indvars.iv.next, %wide.trip.count`), so it depends on the increment. Assume `ld` = 3 cycles, everything else 1, single issue.
+>
+> | cycle | naive source order | list-scheduled |
+> |---|---|---|
+> | 0 | `ld a[i]` | `ld a[i]` |
+> | 1 | *stall* | `add i,1` |
+> | 2 | *stall* | `cmp` |
+> | 3 | `mul ×k` | `mul ×k` |
+> | 4 | `add sum` | `add sum` |
+> | 5 | `add i,1` | `br` |
+> | 6 | `cmp` | |
+> | 7 | `br` | |
+>
+> This is exactly the ready-list walk above: `add i,1` is ready at cycle 0 (no incoming DAG edges) and `cmp` becomes ready one cycle later, once the increment's result is available; neither depends on the load, so both fit inside its latency shadow — 8 cycles become 6, two saved per iteration.
 
 ## 2. Global scheduling and MachineScheduler
 
 > [!info] What LLVM runs
-> LLVM's **`MachineScheduler`** is used by almost all targets. It builds a dependence DAG over a scheduling **region** (a portion of a single basic block — *local/regional* scheduling) and orders it to balance **two competing goals**: maximize ILP / hide latency, *and* **minimize register pressure** (it tracks live ranges to avoid causing spills — the direct tension with [[register-allocation]]). It runs **pre-RA** (the important one) and again **post-RA**. (The older per-block `SelectionDAG` scheduler still runs when GlobalISel/MachineScheduler don't.)
+> LLVM's **`MachineScheduler`** is used by almost all targets. It builds a dependence DAG over a scheduling **region** (a portion of a single basic block — *local/regional* scheduling) and orders it to balance **two competing goals**: maximize ILP / hide latency, *and* **minimize register pressure** (it tracks live ranges to avoid causing spills — the direct tension with [[register-allocation]]). It runs **pre-RA** (before register allocation — the run that matters most, since it can still shape register pressure) and again **post-RA** (after allocation, to clean up around spill code). (Targets that haven't adopted `MachineScheduler` instead get their real scheduling from an older list scheduler built into the `SelectionDAG` instruction selector; on targets that have adopted it, that in-selector scheduler just emits instructions in source order and leaves scheduling to `MachineScheduler` — a legacy detail you can ignore on mainstream targets. See `createDefaultScheduler` in `SelectionDAGISel.cpp`.)
 
 ## 3. Software pipelining (loops)
 

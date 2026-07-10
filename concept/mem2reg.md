@@ -60,7 +60,9 @@ sources:
 > ```text
 > 1. Collect info per alloca: defining blocks (stores) and using blocks (loads).
 > 2. Place φ: at the iterated dominance frontier of the defining blocks,
->    pruned to blocks where the value is live-in.
+>    pruned to blocks where the value is live-in (still needed at block entry).
+>    "Iterated" because each φ is itself a new definition: φs are also placed
+>    at the frontiers of φ-blocks, repeated to a fixed point.
 > 3. Rename: DFS the dominator tree carrying a "current value" stack per alloca;
 >    replace each load with the reaching value; each store updates the stack;
 >    fill φ operands from predecessors.
@@ -72,8 +74,7 @@ sources:
 
 ## 4. Worked example
 
-> [!example]+ Stack slot → SSA + φ
-> **Before (front-end output):**
+> [!example]+ Stack slot → SSA + φ — before (front-end output)
 > ```llvm
 > entry:
 >   %x = alloca i32
@@ -87,11 +88,24 @@ sources:
 > done:
 >   %v = load i32, ptr %x      ; which store reaches here?
 > ```
-> **After mem2reg:**
+
+> [!question] Predict first
+> Run §3's three moves by hand on the CFG above: which blocks **define** `%x`? What is their dominance frontier — i.e. in which block must a φ appear, and with which `[value, %pred]` operands? Decide before reading on.
+
+> [!example]+ After mem2reg
 > ```llvm
 > done:
 >   %v = phi i32 [ 1, %then ], [ 2, %else ]   ; φ at the merge; alloca gone
 > ```
+>
+> **§3 replayed on this CFG:**
+> 1. *Collect:* defining blocks of `%x` = `{then, else}` (the stores); using block = `{done}` (the load).
+> 2. *Place φ:* DF(`then`) = DF(`else`) = `{done}` — each dominates a predecessor of `done` (itself; dominance is reflexive) but does not dominate `done`. `%x` is live-in at `done` (loaded before any store) ⇒ one φ in `done`. The φ is itself a new definition, but DF(`done`) = ∅, so iteration stops.
+> 3. *Rename:* the walk processes `then` with current value `1` and `else` with current value `2`; finishing each block, it fills `done`'s φ operand for that predecessor edge ⇒ `phi i32 [ 1, %then ], [ 2, %else ]`. In `done` the φ becomes the current value, so the load is replaced by it; the two stores and the `alloca` are deleted — `then`/`else` keep only their branches.
+
+> [!figure]+ Animation — mem2reg promoting `%x` on this CFG
+> ![mem2reg-promotion.gif](attachments/mem2reg-promotion.gif)
+> The three moves replayed frame by frame: collect the two stores as defs, drop an empty φ at their dominance frontier (`done`), then rename down the dominator tree — each store fills its φ operand, the load becomes the φ, and the `alloca` disappears. (Regenerate: `_meta/anim/storyboards/mem2reg-promotion.json`.)
 
 ## 5. In LLVM
 

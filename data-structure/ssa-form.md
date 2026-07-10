@@ -43,6 +43,8 @@ verified_on: 2026-06-28
 > [!note] Definition
 > In **SSA**, every assignment targets a variable with a ==distinct name== — each variable is assigned **exactly once**. Equivalently, *every distinct assignment writes a distinct temporary.*
 
+**Why care?** With exactly one definition per name, "where does this value come from?" has exactly one answer — no data-flow analysis needed to find it. That collapses def-use bookkeeping to a simple lookup, which is what lets optimizations like constant propagation, [[value-numbering|GVN]], and dead-code elimination walk directly from a definition to all of its uses.
+
 > [!figure]+ Figure 1 — three-address code vs. SSA form
 > ![SSA_img00.png](attachments/SSA_img00.png)
 > ![SSA_img01.png](attachments/SSA_img01.png)
@@ -50,7 +52,7 @@ verified_on: 2026-06-28
 **Definitions and uses.**
 
 - A ==definition== of $v$ is a statement $s_j$ with $v$ on the **LHS**; every variable has ≥1 definition (its declaration/initialization).
-- A ==use== of $v$ is a statement $s_j$ with $v$ on the **RHS** — its value comes from the nearest preceding definition $s_i$ ($i<j$, minimal $j-i$).
+- A ==use== of $v$ is a statement $s_j$ with $v$ on the **RHS**. In *straight-line* code its value comes from the nearest preceding definition; once branches merge, **several** definitions can reach the same use — that ambiguity is exactly what UD chains record and what the φ function (below) resolves.
 
 > [!info] The two chains (and they are *not* symmetric)
 > | Chain | Direction | Definition | LLVM form |
@@ -77,7 +79,7 @@ verified_on: 2026-06-28
 > ```
 > - one `[value, predecessor-label]` pair per predecessor block;
 > - all `phi`s must be the **first** instructions of their block;
-> - **Convention:** the use of an incoming value is deemed to occur *on the edge from that predecessor* — this is exactly what makes [[loop-info#3. Loop closed SSA (LCSSA) --- a canonical form|LCSSA]] work. ([LangRef](https://llvm.org/docs/LangRef.html#phi-instruction))
+> - **Convention:** the use of an incoming value is deemed to occur *on the edge from that predecessor* — so the incoming value only has to dominate the **end of that predecessor block**, not the `phi` itself. This is exactly what makes [[loop-info#3. Loop closed SSA (LCSSA) --- a canonical form|LCSSA]] work. ([LangRef](https://llvm.org/docs/LangRef.html#phi-instruction))
 
 > [!example]+ φ in real IR
 > ```llvm
@@ -93,7 +95,14 @@ verified_on: 2026-06-28
 > ```
 
 > [!tip] Minimal SSA
-> Insert as **few** φ's as possible: place a φ for $v$ exactly at the **iterated [[dominator-tree|dominance frontier]]** of $v$'s definitions (Cytron et al.). This is what SSA-construction / `mem2reg` does.
+> Insert as **few** φ's as possible: place a φ for $v$ exactly at the **iterated [[dominator-tree|dominance frontier]]** of $v$'s definitions (Cytron et al.). Intuition: the dominance frontier of a def's block $B$ is the set of *first* blocks reachable from $B$ that $B$ does **not** strictly dominate — the earliest points where a path that bypasses $B$ can merge with one that went through it, so two different values of $v$ can meet there. That is exactly where a φ is needed. This is what SSA-construction / `mem2reg` does.
+
+> [!question] Predict first
+> In [[running-example|the running example]], `sum` is defined twice — initialized in `entry`, updated in `for.body`. Using the minimal-SSA rule above, in **which block** must the (single) φ for `sum` be placed? Decide before watching the animation.
+
+> [!figure]+ Animation — φ placement for `sum` on [[running-example|the running example]]
+> ![ssa-form-phi-placement.gif](attachments/ssa-form-phi-placement.gif)
+> The two defs of `sum` (entry, `for.body`) meet at `for.cond` — its dominance frontier — so exactly one φ is inserted there, then renaming yields the `%sum` φ of [[running-example#3. After mem2reg and loop opts|running-example §3]]. (Regenerate: `_meta/anim/storyboards/ssa-form-phi-placement.json`.)
 
 > [!quote] Sources
 > - [LangRef — `phi` instruction](https://llvm.org/docs/LangRef.html#phi-instruction)

@@ -159,7 +159,7 @@ Mint these *here* (named), never as new standalone examples, when a concept need
 - **`ext-if`** — wrap the body in `if (a[i] > 0)`. Gives a branch for **SimplifyCFG / JumpThreading / if-conversion**. ([[simplifycfg]], [[jump-threading]], [[if-conversion]])
 - **`ext-struct`** — pass `struct {int*p; int n;} *s` instead of `a, n`. Exercises **SROA** on the aggregate and `!tbaa` field disambiguation. ([[scalar-replacement-of-aggregates]])
 - **`ext-vec`** — compile at `-O2`: the loop **vectorizes** (NEON/AVX) with a scalar remainder. ([[loop-transformations]])
-- **`ext-asm`** — `clang -O1 -S runex.c`: target assembly, register-allocated loop. ([[code-generation-overview]], [[register-allocation]], [[instruction-scheduling]])
+- **`ext-asm`** — `clang -O1 -S runex.c`: target assembly, register-allocated loop; the loop slice with its register assignments is worked through in [[register-allocation]] §2. ([[code-generation-overview]], [[register-allocation]], [[instruction-scheduling]])
 
 > [!quote] Source & confidence
 > All IR is real `clang -emit-llvm` output (Apple clang 17, ≈ LLVM 19). Cosmetic spellings (e.g. `nocapture` → `captures(none)` in LLVM 21+, `nneg`/attribute lists) track the producing compiler — the *shapes* (φ placement, LCSSA, LFTR, inline+fold) are version-stable. Version anchor: [[llvm-version]].

@@ -1,0 +1,92 @@
+{
+  "id": "mem2reg-promotion",
+  "title": "mem2reg: stack slot to SSA + φ (note §4 example)",
+  "canvas": { "cols": 3, "rows": 3, "cell": [240, 118], "margin": 24 },
+  "defaults": { "step_ms": 1600, "hold_ms": 3600 },
+  "summary_caption": "mem2reg = SSA construction: φ at the dominance frontier of the stores, then rename down the dominator tree.",
+  "nodes": [
+    { "id": "entry", "at": [1, 0], "label": "entry\n%x = alloca i32\nbr i1 %c", "shape": "box" },
+    { "id": "then", "at": [0, 1], "label": "then\nstore i32 1, ptr %x", "shape": "box" },
+    { "id": "else", "at": [2, 1], "label": "else\nstore i32 2, ptr %x", "shape": "box" },
+    { "id": "done", "at": [1, 2], "label": "done\n%v = load i32, ptr %x", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "entry", "to": "then", "label": "true" },
+    { "from": "entry", "to": "else", "label": "false" },
+    { "from": "then", "to": "done" },
+    { "from": "else", "to": "done" }
+  ],
+  "frames": [
+    {
+      "caption": "Front-end IR: %x lives on the stack. Which store reaches the load in done?",
+      "nodes": { "entry": "normal", "then": "normal", "else": "normal", "done": "normal" }
+    },
+    {
+      "caption": "Step 1 — collect info per alloca: %x is defined by the stores in then and else.",
+      "nodes": { "then": "active", "else": "active" },
+      "badges": [
+        { "node": "then", "text": "def", "style": "active" },
+        { "node": "else", "text": "def", "style": "active" }
+      ]
+    },
+    {
+      "caption": "…and used by the load in done. entry only allocates the slot.",
+      "nodes": { "done": "active" },
+      "badges": [ { "node": "done", "text": "use", "style": "active" } ]
+    },
+    {
+      "caption": "Step 2 — place φ: the dominance frontier of both defining blocks is done, so an empty φ goes there.",
+      "nodes": { "then": "normal", "else": "normal" },
+      "set_labels": { "done": "done\n%v1 = φ(?, ?)\n%v = load i32, ptr %x" },
+      "clear_badges": true,
+      "badges": [
+        { "node": "then", "text": "def", "style": "active" },
+        { "node": "else", "text": "def", "style": "active" },
+        { "node": "done", "text": "+φ", "style": "new" }
+      ]
+    },
+    {
+      "caption": "Step 3 — rename: DFS the dominator tree. In entry the value stack for %x is still empty.",
+      "nodes": { "entry": "active", "done": "normal" }
+    },
+    {
+      "caption": "Visit then: the store makes 1 the current value — it fills the φ operand for the then edge.",
+      "nodes": { "entry": "done", "then": "active" },
+      "edges": { "then->done": "active" },
+      "set_labels": {
+        "then": "then\nstore 1 → cur = 1",
+        "done": "done\n%v1 = φ(1, ?)\n%v = load i32, ptr %x"
+      }
+    },
+    {
+      "caption": "Visit else: same move — 2 becomes the current value and fills the φ operand for the else edge.",
+      "nodes": { "then": "done", "else": "active" },
+      "edges": { "then->done": "done", "else->done": "active" },
+      "set_labels": {
+        "else": "else\nstore 2 → cur = 2",
+        "done": "done\n%v1 = φ(1, 2)\n%v = load i32, ptr %x"
+      }
+    },
+    {
+      "caption": "Visit done: the φ is the reaching value here, so the load is replaced by it and deleted.",
+      "nodes": { "else": "done", "done": "active" },
+      "edges": { "else->done": "done" },
+      "set_labels": { "done": "done\n%v = φ(1, 2)\n(load deleted)" }
+    },
+    {
+      "caption": "Every access is rewritten — the dead stores and the alloca are deleted. %x now lives in registers.",
+      "nodes": { "entry": "done", "done": "done" },
+      "set_labels": {
+        "entry": "entry\nbr i1 %c",
+        "then": "then\n(empty)",
+        "else": "else\n(empty)",
+        "done": "done\n%v = φ(1, 2)"
+      },
+      "clear_badges": true,
+      "badges": [
+        { "node": "entry", "text": "alloca gone", "style": "done" },
+        { "node": "done", "text": "+φ", "style": "new" }
+      ]
+    }
+  ]
+}
