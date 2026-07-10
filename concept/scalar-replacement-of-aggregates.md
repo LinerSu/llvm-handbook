@@ -39,14 +39,29 @@ store i32 %a, ptr %px
 ; ... store y, load x, load y ...
 ```
 
+Reproduce: `clang -O0 -Xclang -disable-O0-optnone -S -emit-llvm p.c -o - | opt -passes=sroa -S` (drop the `opt` stage to see the before).
+
 ## 2. What SROA does
 
 > [!info] Split, then promote
-> SROA analyzes the uses of the `alloca`. If the aggregate is only accessed through distinct, non-overlapping fields/elements, it **replaces the one aggregate slot with separate scalar slots** (scalar *replacement*), or rewrites the accesses **directly to SSA values**. `mem2reg`-style promotion then takes over. After SROA the example becomes pure SSA — no `alloca`, no memory:
+> SROA analyzes the uses of the `alloca`. It cleanly splits when the `alloca` never escapes (its address isn't passed away) and is accessed only through distinct, non-overlapping fields/elements; each scalar piece is then promoted like `mem2reg`. After SROA the example becomes pure SSA — no `alloca`, no memory:
 > ```llvm
-> %sum = add i32 %a, %a.plus1   ; p.x and p.y are now SSA values
+> %y = add i32 %a, 1        ; p.y — pure SSA, no alloca
+> %sum = add i32 %a, %y     ; p.x + p.y
 > ```
 > It also copes with the messy cases front ends produce: partial/overlapping accesses, `memcpy`/`memset` of the aggregate, and casts — splitting where it can and leaving the rest in memory.
+
+**SROA = split, then promote**
+
+```mermaid
+graph LR
+  A["alloca %struct.P (one slot)"] -->|"SROA: split"| X["alloca i32 (p.x)"]
+  A -->|"SROA: split"| Y["alloca i32 (p.y)"]
+  X -->|"promote"| XV["%a"]
+  Y -->|"promote"| YV["%y = %a + 1"]
+```
+
+One aggregate slot fans out into per-field slots, each then promoted to an SSA value.
 
 ## 3. Relationship to mem2reg
 
@@ -59,7 +74,7 @@ store i32 %a, ptr %px
 > When a callee that passes/returns a `struct` by value is [[inlining|inlined]], the copy becomes a local aggregate `alloca` in the caller. SROA + promotion turn that into registers — which is why inlining followed by SROA unlocks so much downstream constant propagation and [[value-numbering|CSE]].
 
 > [!summary] The one thing to remember
-> SROA **breaks aggregate `alloca`s into scalars and promotes them to SSA registers**, removing struct/array memory traffic that would otherwise block every scalar optimization. It's mem2reg's more powerful sibling and a top payoff after inlining.
+> ==Split aggregate `alloca`s into scalars ⇒ promote to SSA== — memory traffic gone, scalar opts unblocked.
 
 > [!quote] Further reading
 > - **Source:** [`Transforms/Scalar/SROA.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/SROA.cpp)

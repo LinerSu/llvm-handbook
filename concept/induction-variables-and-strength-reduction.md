@@ -26,11 +26,12 @@ verified_on: 2026-06-28
 
 > [!tip] See it live
 > [[running-example#3. After mem2reg and loop opts|The running example's `-O1` loop]] shows IndVarSimplify's work: the IV widened to i64 (`%indvars.iv`), the exposed `%wide.trip.count`, and the **LFTR** exit test `icmp eq %indvars.iv.next, %wide.trip.count`.
+> LSR isn't in `opt -O1` — it runs later, in the **codegen pipeline** (`TargetPassConfig::addIRPasses`). Watch it fire on the running example: `clang -O1 -S -emit-llvm -fno-discard-value-names runex.c -o - | opt -passes=loop-reduce -S`. On AArch64 the indexed `getelementptr … %indvars.iv` becomes a pointer φ (`%lsr.iv1`) stepped by `getelementptr i8, ptr %lsr.iv1, i64 4`, with a count-down trip counter; on x86-64 LSR keeps the indexed form, since `base + 4·i` is already a legal addressing mode (verified on the vault's pinned toolchain — [[llvm-version]]).
 
-> [!info] The two ideas
+> [!info] Three terms
 > - **Induction variable (IV)** — a value whose SCEV is an add-recurrence `{start,+,step}<loop>` (basic IV `i`; *derived* IV like `i·4` or `a + i·4`).
-> - **Strength reduction** — maintain a derived IV by **adding its step** each iteration instead of recomputing it: `t = a + i·4` becomes `t += 4`.
-> - **Linear-function test replacement (LFTR)** — rewrite the loop's exit test to use the new IV so the original one becomes dead.
+> - **Strength reduction** — maintain a derived IV by **adding its step** each iteration instead of recomputing it (worked in §1).
+> - **Linear-function test replacement (LFTR)** — rewrite the exit test to use the new IV so the original one becomes dead.
 
 ---
 
@@ -46,21 +47,37 @@ p = a;
 for (i = 0; i < n; i++) { sum += *p; p += 4; }   // multiply → add
 ```
 
+> [!figure]+ Animation — strength reduction as a sequence of edits
+> ![induction-variables-and-strength-reduction-pointer-iv.gif](attachments/induction-variables-and-strength-reduction-pointer-iv.gif)
+> SCEV tags `i` as `{0,+,1}` and the address as `{a,+,4}`; then `p = a` is created in the preheader, kept in step with `p += 4`, swapped in for the multiply, and LFTR retires the counter `i` entirely. (Regenerate: `_meta/anim/storyboards/induction-variables-and-strength-reduction-pointer-iv.json`.)
+
 ## 2. In LLVM — IndVarSimplify then LSR
 
-> [!info] A two-pass division of labor
-> - **`IndVarSimplify`** uses SCEV to **canonicalize** induction variables: **expose the trip count**, **widen** narrow IVs to the native width, and **rewrite exit values** to closed forms. Its canonicalization is mainly of the **exit test** (LFTR) — e.g. turning `for (i=7; i*i<1000; ++i)` into `for (i=0; i!=25; ++i)` — rather than renumbering strides into one unit-stride IV.
-> - **`LoopStrengthReduce` (LSR)** then **strength-reduces** the SCEV expressions — replacing the `i*2`/`base + i·w` computations with minimal-cost IVs and **targeting the machine's addressing modes** (so `a[i]` becomes a single incremented pointer/scaled-index).
+**How the two passes hand off**
 
-> [!warning] Why they're paired
-> IndVarSimplify can leave **widened** IVs and SCEV-expanded expressions that aren't cheap on their own — it relies on **LSR running afterward** to lower them to addressing-mode-friendly increments. Treat them as one IV-optimization stage, not two independent passes.
+```mermaid
+flowchart LR
+    subgraph STAGE["one IV-optimization stage"]
+      B["IndVarSimplify (mid-end): widen IV, expose trip count, LFTR exit test"]
+      C["LSR (codegen pipeline): base + i·w becomes an incremented pointer, matched to target addressing modes"]
+    end
+    A["loop IR: a + i·4, SCEV {a,+,4}"] --> B
+    B -- "widened IVs, expanded SCEVs — not yet cheap" --> C
+    C --> D["instruction selection"]
+```
+
+*IndVarSimplify canonicalizes; the result only pays off once LSR lowers it to the target's addressing modes.*
+
+> [!info] Two caveats
+> - IndVarSimplify's canonicalization is mainly of the **exit test** (LFTR) — e.g. `for (i=7; i*i<1000; ++i)` → `for (i=0; i!=25; ++i)` — rather than renumbering strides into one unit-stride IV.
+> - IndVarSimplify can leave **widened** IVs and SCEV-expanded expressions that aren't cheap on their own — it relies on **LSR running afterward**.
 
 ## 3. Why it matters
 
-Loop bodies are where programs spend their time; turning per-iteration multiplies and address computations into single adds is one of the highest-leverage classical optimizations. It also feeds the back end: LSR shapes IVs to fit addressing modes ([[code-generation-overview]]), reducing instruction count in the hot loop.
+Turning per-iteration multiplies and address computations into single adds is one of the highest-leverage classical optimizations — and LSR shapes IVs to fit the target's addressing modes ([[code-generation-overview]]), cutting instruction count in the hot loop.
 
 > [!summary] The one thing to remember
-> Recognize induction variables (SCEV add-recurrences), then **trade expensive per-iteration work for cheap increments**. LLVM splits it: **IndVarSimplify** canonicalizes IVs (and exposes trip counts), **LSR** strength-reduces them into addressing-mode-friendly increments — and the two are designed to run together.
+> IV = SCEV add-recurrence ⇒ **trade expensive per-iteration work for cheap increments**. IndVarSimplify canonicalizes (widening, trip count, LFTR); LSR strength-reduces into addressing-mode-friendly increments — two halves of one IV-optimization stage.
 
 > [!quote] Further reading
 > - **Source:** [`Transforms/Scalar/IndVarSimplify.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/IndVarSimplify.cpp) · [`Transforms/Scalar/LoopStrengthReduce.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/LoopStrengthReduce.cpp)
