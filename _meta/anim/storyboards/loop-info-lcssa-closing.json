@@ -1,0 +1,71 @@
+{
+  "id": "loop-info-lcssa-closing",
+  "title": "LCSSA: closing %sum.0 at the loop exit (running example)",
+  "canvas": { "cols": 3, "rows": 4, "cell": [250, 112], "margin": 24 },
+  "defaults": { "step_ms": 1700, "hold_ms": 4200 },
+  "summary_caption": "LCSSA = SSA + a loop-closing φ at each exit: all outside users in one place — cheap cloning, cleaner SCEV.",
+  "nodes": [
+    { "id": "entry", "at": [1, 0], "label": "entry", "shape": "box" },
+    { "id": "cond",  "at": [1, 1], "label": "for.cond\n%sum.0 = φ(0, %add)\ni < n ?", "shape": "rounded" },
+    { "id": "body",  "at": [0, 2], "label": "for.body\n%add = %sum.0 + a[i]*k", "shape": "box" },
+    { "id": "inc",   "at": [1, 3], "label": "for.inc\ni = i + 1", "shape": "box" },
+    { "id": "end",   "at": [2, 2], "label": "for.end\nret i32 %sum.0", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "entry", "to": "cond" },
+    { "from": "cond",  "to": "body", "label": "T" },
+    { "from": "cond",  "to": "end",  "label": "F" },
+    { "from": "body",  "to": "inc" },
+    { "from": "inc",   "to": "cond", "label": "back edge" }
+  ],
+  "frames": [
+    {
+      "caption": "The running example after mem2reg. LoopInfo: the loop is for.cond, for.body, for.inc — header for.cond.",
+      "nodes": { "cond": "active", "body": "active", "inc": "active" },
+      "edges": { "inc->cond": "active" },
+      "duration_ms": 2200
+    },
+    {
+      "caption": "LCSSA check — %sum.0 is defined inside the loop, by the φ at the header.",
+      "nodes": { "body": "normal", "inc": "normal" },
+      "edges": { "inc->cond": "normal" },
+      "badges": [ { "node": "cond", "text": "def %sum.0", "style": "active" } ]
+    },
+    {
+      "caption": "…but it is used outside: for.end returns it. Legal SSA — yet not loop-closed.",
+      "nodes": { "end": "error" },
+      "badges": [ { "node": "end", "text": "use", "style": "error" } ]
+    },
+    {
+      "caption": "Loop passes must then chase def-use chains that escape the loop — fragile, and costly to update.",
+      "edges": { "cond->end": "active" },
+      "duration_ms": 1900
+    },
+    {
+      "caption": "The fix (-lcssa): insert a loop-closing φ in the exit block, one incoming value per exiting edge.",
+      "nodes": { "end": "new" },
+      "edges": { "cond->end": "normal" },
+      "set_labels": { "end": "for.end\n%sum.0.lcssa = φ(%sum.0)\nret i32 %sum.0" },
+      "clear_badges": true,
+      "badges": [
+        { "node": "cond", "text": "def %sum.0", "style": "active" },
+        { "node": "end", "text": "+φ", "style": "new" }
+      ],
+      "duration_ms": 2200
+    },
+    {
+      "caption": "Rewrite the outside use: ret now reads %sum.0.lcssa. The φ is %sum.0's only user out there.",
+      "set_labels": { "end": "for.end\n%sum.0.lcssa = φ(%sum.0)\nret i32 %sum.0.lcssa" }
+    },
+    {
+      "caption": "Isn't the φ an outside use too? No — a φ's use occurs on the incoming edge, from for.cond: inside the loop.",
+      "edges": { "cond->end": "active" },
+      "duration_ms": 2200
+    },
+    {
+      "caption": "Every use of %sum.0 now sits inside the loop: LCSSA holds. This is the %sum.0.lcssa you see at -O1.",
+      "nodes": { "cond": "done", "body": "done", "inc": "done", "end": "done" },
+      "edges": { "cond->end": "done" }
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "id": "simplifycfg-diamond-to-select",
+  "title": "SimplifyCFG: folding a trivial diamond into a select",
+  "canvas": { "cols": 3, "rows": 3, "cell": [240, 110], "margin": 24 },
+  "defaults": { "step_ms": 1900, "hold_ms": 4200 },
+  "summary_caption": "Four small rewrites — φ to select, branch fold, dead-block removal, block merge — and the diamond is one straight-line block.",
+  "nodes": [
+    { "id": "entry", "at": [1, 0], "label": "entry\nbr i1 %c, T, F", "shape": "box" },
+    { "id": "t",     "at": [0, 1], "label": "T (true arm)\n(feeds 1)", "shape": "box" },
+    { "id": "f",     "at": [2, 1], "label": "F (false arm)\n(feeds 2)", "shape": "box" },
+    { "id": "m",     "at": [1, 2], "label": "M\n%x = φ(1, 2)\nuse %x", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "entry", "to": "t" },
+    { "from": "entry", "to": "f" },
+    { "from": "t", "to": "m" },
+    { "from": "f", "to": "m" },
+    { "from": "entry", "to": "m" }
+  ],
+  "frames": [
+    {
+      "caption": "Earlier passes left a trivial diamond: a branch on %c, two empty arms, and a φ merging 1 and 2.",
+      "edges": { "entry->m": "hidden" },
+      "duration_ms": 2300
+    },
+    {
+      "caption": "SimplifyCFG scans M: exactly two predecessors and a two-entry φ — a fold candidate.",
+      "nodes": { "m": "active" },
+      "badges": [ { "node": "m", "text": "2-entry φ", "style": "active" } ]
+    },
+    {
+      "caption": "Check the arms: T and F have no side effects, each feeds one cheap constant — safe to flatten.",
+      "nodes": { "t": "active", "f": "active" },
+      "badges": [
+        { "node": "t", "text": "empty", "style": "active" },
+        { "node": "f", "text": "empty", "style": "active" }
+      ]
+    },
+    {
+      "caption": "Fold: the φ becomes %x = select i1 %c, i32 1, i32 2 in entry, and M keeps just the use.",
+      "nodes": { "entry": "new", "t": "normal", "f": "normal", "m": "done" },
+      "set_labels": { "entry": "entry\n%x = select %c, 1, 2\nbr i1 %c, T, F", "m": "M\nuse %x", "t": "T (true arm)\n(now empty)", "f": "F (false arm)\n(now empty)" },
+      "clear_badges": true,
+      "badges": [ { "node": "entry", "text": "+select", "style": "new" } ]
+    },
+    {
+      "caption": "The branch now picks between two do-nothing arms — it folds to an unconditional jump straight to M.",
+      "nodes": { "entry": "active" },
+      "edges": { "entry->m": "new", "entry->t": "dim", "entry->f": "dim" },
+      "set_labels": { "entry": "entry\n%x = select %c, 1, 2\nbr label %M" },
+      "clear_badges": true,
+      "badges": [ { "node": "entry", "text": "br folds", "style": "active" } ]
+    },
+    {
+      "caption": "Entry still reaches M. T and F lost their only predecessor: unreachable, so SimplifyCFG deletes them.",
+      "nodes": { "t": "dim", "f": "dim" },
+      "edges": { "t->m": "dim", "f->m": "dim", "entry->m": "normal" },
+      "clear_badges": true,
+      "badges": [
+        { "node": "t", "text": "dead", "style": "dim" },
+        { "node": "f", "text": "dead", "style": "dim" }
+      ]
+    },
+    {
+      "caption": "M has one predecessor and entry one successor — M merges into entry. One block, no branches.",
+      "nodes": { "entry": "done", "m": "dim" },
+      "edges": { "entry->m": "dim" },
+      "set_labels": { "entry": "entry\n%x = select %c, 1, 2\nuse %x" },
+      "clear_badges": true,
+      "badges": [ { "node": "entry", "text": "1 block", "style": "done" } ],
+      "duration_ms": 2400
+    }
+  ]
+}

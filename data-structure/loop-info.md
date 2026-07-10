@@ -40,7 +40,7 @@ verified_on: 2026-06-28
 
 ---
 
-### 1. In LLVM, a LoopInfo indicates where are loops
+### 1. What a loop *is* in LLVM
 
 > [!note] Definition — a loop (the `LoopInfo` model)
 > A **loop** is a subset of CFG nodes (basic blocks) such that:
@@ -50,17 +50,17 @@ verified_on: 2026-06-28
 >
 > In the literature this is a ==natural loop==; LLVM's more general notion is a [cycle](https://llvm.org/docs/CycleTerminology.html). *(Source: LLVM LoopTerminology.)*
 
-Your notes, made precise — the anatomy of a loop:
+Loop anatomy:
 
-| Term | Meaning | Your wording |
-|---|---|---|
-| **Header** | single entry; dominates the whole loop | "entry point of the loop" |
-| **Entering block** / **predecessor** | non-loop node with an edge into the header | "nodes that point to header" |
-| **Preheader** | the *unique* entering block (dominates the loop, not part of it) | "if only one entering node → pre-header" |
-| **Latch** | loop node with an edge back to the header | "node that has edge back to header" |
-| **Backedge** | the latch → header edge | "the edge is called backedge" |
-| **Exiting block** | loop node with an edge leaving the loop | "exiting node" |
-| **Exit block** | the (non-loop) target of an exiting edge | "exit node" |
+| Term | Meaning |
+|---|---|
+| **Header** | single entry; dominates the whole loop |
+| **Entering block** / **predecessor** | non-loop node with an edge into the header |
+| **Preheader** | the *unique* entering block (dominates the loop, not part of it) |
+| **Latch** | loop node with an edge back to the header |
+| **Backedge** | the latch → header edge |
+| **Exiting block** | loop node with an edge leaving the loop |
+| **Exit block** | the (non-loop) target of an exiting edge |
 
 > [!figure]+ Figure 1 — loop anatomy (header / latch / exiting / exit)
 > ![Loops_img00.png](attachments/Loops_img00.png)
@@ -68,7 +68,7 @@ Your notes, made precise — the anatomy of a loop:
 > [!info] Trip count vs. backedge-taken count
 > The **trip count** is the number of header executions before leaving. A sharper measure used throughout LLVM is the **backedge-taken count**: for an execution that enters the header, $\text{backedge-taken} = \text{trip count} - 1$. [[scalar-evolution|Scalar Evolution (`SCEV`)]] reasons in terms of this count.
 
-**Loop subgraph properties** (kept from your notes, now justified):
+**Loop subgraph properties:**
 
 - A header block ==cannot be the header of another loop== → a loop is identified by its header (Single-Entry-Multiple-Exit region).
 - A loop may be *undefined* if it is not reachable from `entry` (dominance is undefined there).
@@ -95,7 +95,7 @@ Your notes, made precise — the anatomy of a loop:
 
 ---
 
-### 2. A LLVM pass to obtain info about loops.
+### 2. The `LoopInfo` analysis
 
 > [!tip] `LoopInfo` analysis — what it guarantees (and doesn't)
 > Inspect it with `opt input.ll -passes='print<loops>'`.
@@ -124,7 +124,7 @@ The fix: for any value live across the loop boundary, insert a single-entry ("lo
 >   %t = ...
 >   br i1 %cond, label %loop, label %exit
 > exit:
->   %y = add i32 %x, 1
+>   %y = add i32 %t, 1
 > ```
 > **After — LCSSA** (a loop-closing φ "closes" `t` at the exit):
 > ```llvm
@@ -132,9 +132,13 @@ The fix: for any value live across the loop boundary, insert a single-entry ("lo
 >   %t = ...
 >   br i1 %cond, label %loop, label %exit
 > exit:
->   %x.lcssa = phi i32 [ %t, %loop ]   ; "loop-closing" PHI
->   %y       = add i32 %x.lcssa, 1
+>   %t.lcssa = phi i32 [ %t, %loop ]   ; "loop-closing" PHI
+>   %y       = add i32 %t.lcssa, 1
 > ```
+
+> [!figure]+ Animation — `-lcssa` closing `%sum.0` on [[running-example|the running example]]
+> ![loop-info-lcssa-closing.gif](attachments/loop-info-lcssa-closing.gif)
+> The header φ defines `%sum.0` inside the loop; the `ret` in `for.end` uses it outside — so a loop-closing φ (`%sum.0.lcssa`) lands in the exit block and the `ret` is rewritten, leaving every use of `%sum.0` on an in-loop edge. (Regenerate: `_meta/anim/storyboards/loop-info-lcssa-closing.json`.)
 
 > [!question] Why doesn't the loop-closing φ itself count as a "use outside the loop"?
 > By LLVM convention (see [LangRef on `phi`](https://llvm.org/docs/LangRef.html#phi-instruction)), *"the use of each incoming value is deemed to occur on the edge from the predecessor block."* That edge originates **inside** the loop, so the value is considered used inside — exactly what LCSSA needs. (See [[ssa-form]] for the φ point-of-use convention.)
@@ -149,6 +153,8 @@ The fix: for any value live across the loop boundary, insert a single-entry ("lo
 > - a **preheader**;
 > - a **single backedge** (hence a single latch);
 > - **dedicated exits** (no exit block has a predecessor outside the loop).
+>
+> **Rotation** (`-loop-rotate`) is the third form: it converts the loop into *do-while* shape, making the **latch also an exiting block** — which is LLVM's definition of "rotated form" (`Loop::isRotatedForm()`) → [[loop-transformations]].
 >
 > Together, *LoopSimplify + LCSSA + rotation* are the canonical forms loop passes assume.
 

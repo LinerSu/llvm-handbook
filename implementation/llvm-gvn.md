@@ -31,20 +31,22 @@ sources:
 
 ## 1. The pass
 
-`GVN` is LLVM's production global-value-numbering + redundancy-elimination pass. Entry point: class **`GVNPass`** in [`llvm/lib/Transforms/Scalar/GVN.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/GVN.cpp) (new-PM `run()`; legacy wrapper `GVNLegacyPass`). It is the heavyweight CSE in the middle end — the concrete realization of [[value-numbering]].
+`GVN` is LLVM's production global-value-numbering + redundancy-elimination pass. Entry point: class **`GVNPass`** in [`llvm/lib/Transforms/Scalar/GVN.cpp`](https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/GVN.cpp) (new-PM `run()`; legacy wrapper `GVNLegacyPass`).
 
-## 2. What it realizes (and why this note exists)
+## 2. What it realizes
 
-This is the promotion case from the blueprint: **one pass implements two concept notes.**
+One pass, two concepts:
 
 - [[value-numbering]] — global CSE: number expressions by `(opcode, operand value-numbers, type)` and replace re-computations with a reuse.
 - [[partial-redundancy-elimination]] — **load PRE**: insert a load on the predecessor edges that lack it so the merge's load becomes fully redundant, then delete it.
 
-Keeping the LLVM mechanics for *both* in their separate concept notes would duplicate the same pass twice; promoting them here gives one authoritative "how the real pass works" note that both concepts link to.
-
 ## 3. Where it runs
 
-GVN is scheduled in the **function simplification pipeline at `-O2`/`-O3`** (not `-O1`). The cheap, local cousin **EarlyCSE** runs much earlier and at lower opt levels; GVN is the expensive whole-function pass that runs after the IR is already in SSA and cleaned up — i.e. after `mem2reg`/[[scalar-replacement-of-aggregates|SROA]] and [[instruction-combining|InstCombine]]. A later InstCombine/SimplifyCFG pass typically cleans up after it.
+Scheduled in the **function simplification pipeline at `-O2`/`-O3`** (not `-O1`), after the IR is in SSA and cleaned up:
+
+`mem2reg`/[[scalar-replacement-of-aggregates|SROA]] → [[instruction-combining|InstCombine]] → … → **GVN** → InstCombine/SimplifyCFG (cleanup)
+
+The cheap, local cousin [[early-cse|EarlyCSE]] runs much earlier and at lower opt levels; GVN is the expensive whole-function pass.
 
 ## 4. How it's built
 
@@ -67,13 +69,14 @@ GVN is scheduled in the **function simplification pipeline at `-O2`/`-O3`** (not
 
 ## 6. Run it yourself
 
-> [!example]+ See GVN remove a redundant load
+> [!example]+ See GVN remove a redundant load (`ext-gvn`)
+> Use the running example's sanctioned extension **`ext-gvn`** ([[running-example#7. Sanctioned extensions]]): change the loop body to `sum += a[i]*k + a[i];` — the second `a[i]` is a fully redundant load.
 > ```bash
-> # value numbering + load PRE on a single function
-> opt -passes='gvn' -S input.ll -o -
+> # promote to SSA, then GVN — the second load of a[i] disappears
+> clang -O0 -emit-llvm -S -fno-discard-value-names -Xclang -disable-O0-optnone runex.c -o - \
+>   | opt -passes='mem2reg,gvn' -S -o -
 >
-> # try the experimental rewrite instead
-> opt -passes='newgvn' -S input.ll -o -
+> # try the experimental rewrite instead: same pipe with -passes='mem2reg,newgvn'
 > ```
 > Add `-debug-only=gvn` (on an assertions build) to watch numbering and PRE decisions.
 
