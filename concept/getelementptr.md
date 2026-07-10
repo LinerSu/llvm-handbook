@@ -42,7 +42,7 @@ verified_on: 2026-06-28
 ### 1. What GEP is (and is not)
 
 > [!note] Definition
-> `getelementptr` performs **address calculation** from a base pointer and a list of indices, guided by an LLVM type. ==It dereferences nothing== — that's what `load`/`store` are for. *(Source: LLVM "The Often Misunderstood GEP Instruction".)*
+> `getelementptr` performs **address calculation** from a base pointer and a list of indices, guided by an LLVM type. ==It dereferences nothing==. *(Source: LLVM "The Often Misunderstood GEP Instruction".)*
 
 > [!warning] The #1 confusion: the **first index steps through the pointer**
 > GEP is **not** the C `[]` operator. In C, `&Foo->F` looks like a single field selection — but `Foo` is a pointer that must be indexed *explicitly* in LLVM. The equivalent C is `&Foo[0].F`: the first index walks the pointer (`[0]`), the second selects the field.
@@ -69,6 +69,11 @@ verified_on: 2026-06-28
 > }
 > ```
 > Every GEP's **second operand** is the base pointer `%P`; the **first index** (`1`, `2`, `0`) steps through it; the **second index** picks the field.
+> Reproduce: `clang -O0 -S -emit-llvm munge.c -o -` — clang emits each access as a step-GEP + field-GEP pair; at `-O1` each pair folds to a single byte-offset GEP (`getelementptr inbounds nuw i8, ptr %0, i64 8` for `&P[1].f1` — the `nuw` appears from LLVM 22's non-negative-index fold; the offset-0 pair for `&P[0].f1` folds away entirely).
+
+> [!figure]+ Animation — how the indices become a byte offset
+> ![getelementptr-index-walk.gif](attachments/getelementptr-index-walk.gif)
+> The three GEPs replayed index by index: the first index steps `%P` by whole structs (+8, +16, +0), the second selects the field — and the memory-ops tally shows only the 2 loads and 1 store ever touch memory. (Regenerate: `_meta/anim/storyboards/getelementptr-index-walk.json`.)
 
 ---
 
@@ -81,7 +86,7 @@ verified_on: 2026-06-28
 > %idx2 = getelementptr i32, ptr @MyVar, i64 1   ; &MyVar + 4
 > %idx3 = getelementptr i32, ptr @MyVar, i64 2   ; &MyVar + 8
 > ```
-> Because `i32` is 4 bytes, indices `0,1,2` ⇒ offsets `0,4,8`. No memory is touched — the address of `@MyVar` is passed directly.
+> Because `i32` is 4 bytes, indices `0,1,2` ⇒ offsets `0,4,8`.
 
 > [!warning] Why the extra `0`? — "there are no superfluous indices"
 > For a global `%MyStruct` of type `{ ptr, i32 }`, the *value* `%MyStruct` has type `ptr` (a pointer **to** the struct), not the struct itself. So:
@@ -91,7 +96,7 @@ verified_on: 2026-06-28
 > - `i64 0` — step over the pointer (0 elements from it);
 > - `i32 1` — select the second field.
 >
-> Drop the `0` and the lone index would instead **step the pointer**: `getelementptr {ptr,i32}, ptr %MyStruct, i32 1` computes `&MyStruct[1]` (the *next* struct), not field 1 — the `0` is needed because the first index always steps the base pointer.
+> Drop the `0` and the lone index would **step the pointer** instead: `getelementptr {ptr,i32}, ptr %MyStruct, i32 1` = `&MyStruct[1]` (the *next* struct), not field 1.
 
 > [!tip] When GEP can't do it in one shot
 > GEP can index *through* aggregates but **cannot dereference**. If a pointer sits **inside** the structure, you need a `load` in between:

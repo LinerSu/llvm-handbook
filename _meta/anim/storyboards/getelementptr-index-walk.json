@@ -1,0 +1,97 @@
+{
+  "id": "getelementptr-index-walk",
+  "title": "GEP — how indices become a byte offset",
+  "canvas": { "cols": 3, "rows": 4, "cell": [240, 110], "margin": 24 },
+  "defaults": { "step_ms": 1700, "hold_ms": 4200 },
+  "summary_caption": "GEP is typed address arithmetic: the first index steps the base pointer by whole structs, the second selects a field — only load and store touch memory.",
+  "nodes": [
+    { "id": "ptr",    "at": [0, 0], "label": "%P : ptr\n= &P[0]", "shape": "rounded" },
+    { "id": "legend", "at": [1, 0], "label": "munger_struct\nf1 +0, f2 +4\nsizeof = 8", "shape": "rounded" },
+    { "id": "gep",    "at": [2, 0], "label": "3 GEPs to run", "shape": "box" },
+    { "id": "p0f1",   "at": [0, 1], "label": "P[0].f1\noffset +0", "shape": "box" },
+    { "id": "p0f2",   "at": [1, 1], "label": "P[0].f2\noffset +4", "shape": "box" },
+    { "id": "acc",    "at": [2, 1], "label": "offset so far\n-", "shape": "rounded" },
+    { "id": "p1f1",   "at": [0, 2], "label": "P[1].f1\noffset +8", "shape": "box" },
+    { "id": "p1f2",   "at": [1, 2], "label": "P[1].f2\noffset +12", "shape": "box" },
+    { "id": "mem",    "at": [2, 2], "label": "memory ops\nnone yet", "shape": "rounded" },
+    { "id": "p2f1",   "at": [0, 3], "label": "P[2].f1\noffset +16", "shape": "box" },
+    { "id": "p2f2",   "at": [1, 3], "label": "P[2].f2\noffset +20", "shape": "box" }
+  ],
+  "edges": [
+    { "from": "ptr",  "to": "p0f1", "label": "base" },
+    { "from": "p0f1", "to": "p0f2" },
+    { "from": "p0f2", "to": "p1f1" },
+    { "from": "p1f1", "to": "p1f2" },
+    { "from": "p1f2", "to": "p2f1" },
+    { "from": "p2f1", "to": "p2f2" }
+  ],
+  "frames": [
+    {
+      "caption": "The note's example: P[0].f1 = P[1].f1 + P[2].f2. Three munger_structs sit in memory (4-byte cells); %P holds the address of P[0].",
+      "nodes": { "ptr": "active", "gep": "dim", "acc": "dim", "mem": "dim" },
+      "edges": { "p0f1->p0f2": "dim", "p0f2->p1f1": "dim", "p1f1->p1f2": "dim", "p1f2->p2f1": "dim", "p2f1->p2f2": "dim" },
+      "duration_ms": 2400
+    },
+    {
+      "caption": "GEP #1: getelementptr munger_struct, ptr %P, i32 1, i32 0. The FIRST index steps the base pointer itself: 1 whole struct forward.",
+      "nodes": { "ptr": "normal", "gep": "active", "acc": "active", "p1f1": "active", "p1f2": "active" },
+      "set_labels": { "gep": "GEP #1\n%P, i32 1, i32 0", "acc": "0 + 1*8 = 8" },
+      "badges": [ { "node": "p1f1", "text": "+8", "style": "active" } ]
+    },
+    {
+      "caption": "The second index, i32 0, descends INTO that struct: field f1 sits at +0. Result %tmp = %P+8 = &P[1].f1 — pure arithmetic, nothing dereferenced.",
+      "nodes": { "p1f1": "new", "p1f2": "normal" },
+      "set_labels": { "acc": "8 + 0 = 8\n%tmp = %P+8" },
+      "clear_badges": true,
+      "badges": [ { "node": "p1f1", "text": "&P[1].f1", "style": "new" } ]
+    },
+    {
+      "caption": "%tmp1 = load i32, ptr %tmp — the FIRST time memory is actually read. GEP made the address; only load touches it (green = touched).",
+      "nodes": { "p1f1": "done", "gep": "normal", "acc": "normal", "mem": "active" },
+      "set_labels": { "mem": "memory ops\n1 load" }
+    },
+    {
+      "caption": "GEP #2: %P, i32 2, i32 1. First index again steps the pointer: 2 structs = 16 bytes forward.",
+      "nodes": { "gep": "active", "acc": "active", "mem": "normal", "p2f1": "active", "p2f2": "active" },
+      "set_labels": { "gep": "GEP #2\n%P, i32 2, i32 1", "acc": "0 + 2*8 = 16" },
+      "badges": [ { "node": "p2f1", "text": "+16", "style": "active" } ]
+    },
+    {
+      "caption": "Second index i32 1 selects field f2 at +4. Total 20: %tmp2 = %P+20 = &P[2].f2. Same recipe every time — elements first, then fields.",
+      "nodes": { "p2f2": "new", "p2f1": "normal" },
+      "set_labels": { "acc": "16 + 4 = 20\n%tmp2 = %P+20" },
+      "clear_badges": true,
+      "badges": [
+        { "node": "p1f1", "text": "&P[1].f1", "style": "new" },
+        { "node": "p2f2", "text": "&P[2].f2", "style": "new" }
+      ]
+    },
+    {
+      "caption": "%tmp3 = load i32, ptr %tmp2 — second read — then %tmp4 = add i32 %tmp3, %tmp1 computes the sum in a register.",
+      "nodes": { "p2f2": "done", "gep": "normal", "acc": "normal", "mem": "active" },
+      "set_labels": { "mem": "memory ops\n2 loads" }
+    },
+    {
+      "caption": "GEP #3: %P, i32 0, i32 0. Stepping ZERO structs must still be written down — the first index is never optional.",
+      "nodes": { "gep": "active", "acc": "active", "mem": "normal", "p0f1": "active", "p0f2": "active" },
+      "set_labels": { "gep": "GEP #3\n%P, i32 0, i32 0", "acc": "0 + 0*8 = 0" },
+      "badges": [ { "node": "p0f1", "text": "+0", "style": "active" } ]
+    },
+    {
+      "caption": "Second index picks f1 at +0: %tmp5 = %P+0 = &P[0].f1. Three addresses computed and memory was never read to compute any of them.",
+      "nodes": { "p0f1": "new", "p0f2": "normal" },
+      "set_labels": { "acc": "0 + 0 = 0\n%tmp5 = %P+0" },
+      "clear_badges": true,
+      "badges": [
+        { "node": "p1f1", "text": "&P[1].f1", "style": "new" },
+        { "node": "p2f2", "text": "&P[2].f2", "style": "new" },
+        { "node": "p0f1", "text": "&P[0].f1", "style": "new" }
+      ]
+    },
+    {
+      "caption": "store i32 %tmp4, ptr %tmp5 — the single write. Final tally: 3 GEPs did the math, exactly 2 loads + 1 store touched memory.",
+      "nodes": { "p0f1": "done", "gep": "done", "acc": "done", "mem": "active", "ptr": "done" },
+      "set_labels": { "mem": "memory ops\n2 loads, 1 store" }
+    }
+  ]
+}
