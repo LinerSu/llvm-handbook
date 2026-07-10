@@ -1,0 +1,113 @@
+{
+  "id": "clang-ast-construction",
+  "title": "Building the Clang AST of  int f(int a, int b) { return a + b; }",
+  "canvas": { "cols": 4, "rows": 6, "cell": [200, 84], "margin": 24 },
+  "defaults": { "step_ms": 1700, "hold_ms": 3600 },
+  "summary_caption": "Decls first, expressions bottom-up, implicit casts made explicit — the AST records what you wrote plus how Sema read it.",
+  "nodes": [
+    { "id": "tu",  "at": [1, 0], "label": "TranslationUnitDecl" },
+    { "id": "fd",  "at": [1, 1], "label": "FunctionDecl f\n'int (int, int)'" },
+    { "id": "pa",  "at": [0, 2], "label": "ParmVarDecl a\n'int'" },
+    { "id": "cs",  "at": [1, 2], "label": "CompoundStmt" },
+    { "id": "pb",  "at": [3, 2], "label": "ParmVarDecl b\n'int'" },
+    { "id": "rs",  "at": [1, 3], "label": "ReturnStmt" },
+    { "id": "bo",  "at": [1, 4], "label": "BinaryOperator '+'\n'int'" },
+    { "id": "da",  "at": [0, 5], "label": "DeclRefExpr a\nlvalue 'int'" },
+    { "id": "ica", "at": [1, 5], "label": "ImplicitCastExpr\n<LValueToRValue>" },
+    { "id": "icb", "at": [2, 5], "label": "ImplicitCastExpr\n<LValueToRValue>" },
+    { "id": "db",  "at": [3, 5], "label": "DeclRefExpr b\nlvalue 'int'" }
+  ],
+  "edges": [
+    { "from": "tu",  "to": "fd" },
+    { "from": "fd",  "to": "pa" },
+    { "from": "fd",  "to": "pb" },
+    { "from": "fd",  "to": "cs" },
+    { "from": "cs",  "to": "rs" },
+    { "from": "rs",  "to": "bo" },
+    { "from": "bo",  "to": "ica" },
+    { "from": "bo",  "to": "icb" },
+    { "from": "ica", "to": "da" },
+    { "from": "icb", "to": "db" },
+    { "from": "da",  "to": "pa", "label": "names" },
+    { "from": "db",  "to": "pb", "label": "names" }
+  ],
+  "frames": [
+    {
+      "caption": "int f(int a, int b) { return a + b; } — parsing starts. ASTContext already owns the root: TranslationUnitDecl.",
+      "duration_ms": 2400,
+      "nodes": {
+        "tu": "new",
+        "fd": "hidden", "pa": "hidden", "cs": "hidden", "pb": "hidden",
+        "rs": "hidden", "bo": "hidden", "da": "hidden", "ica": "hidden",
+        "icb": "hidden", "db": "hidden"
+      },
+      "edges": {
+        "tu->fd": "hidden", "fd->pa": "hidden", "fd->pb": "hidden", "fd->cs": "hidden",
+        "cs->rs": "hidden", "rs->bo": "hidden", "bo->ica": "hidden", "bo->icb": "hidden",
+        "ica->da": "hidden", "icb->db": "hidden", "da->pa": "hidden", "db->pb": "hidden"
+      }
+    },
+    {
+      "caption": "The declarator parses first: each parameter becomes a ParmVarDecl of QualType int — created before their function exists.",
+      "nodes": { "tu": "normal", "pa": "new", "pb": "new" }
+    },
+    {
+      "caption": "ActOnStartOfFunctionDef: Sema creates FunctionDecl f, adopts both parameters, and hangs it off the root.",
+      "nodes": { "fd": "new", "pa": "normal", "pb": "normal" },
+      "edges": { "tu->fd": "new", "fd->pa": "new", "fd->pb": "new" }
+    },
+    {
+      "caption": "Body: 'a' parses to a DeclRefExpr. Name lookup links it back to ParmVarDecl a — an lvalue, with no parent yet.",
+      "nodes": { "fd": "normal", "da": "new", "pa": "active" },
+      "edges": { "tu->fd": "normal", "fd->pa": "normal", "fd->pb": "normal", "da->pa": "new" }
+    },
+    {
+      "caption": "Then 'b' — a second orphan DeclRefExpr. Expressions are built bottom-up, leaves first.",
+      "nodes": { "da": "normal", "pa": "normal", "db": "new", "pb": "active" },
+      "edges": { "da->pa": "normal", "db->pb": "new" }
+    },
+    {
+      "caption": "ActOnBinOp: '+' needs rvalues, so Sema wraps each operand in an ImplicitCastExpr — sugar the AST keeps visible.",
+      "duration_ms": 2200,
+      "nodes": { "db": "normal", "pb": "normal", "ica": "new", "icb": "new" },
+      "edges": { "db->pb": "normal", "ica->da": "new", "icb->db": "new" },
+      "badges": [
+        { "node": "ica", "text": "sugar", "style": "new" },
+        { "node": "icb", "text": "sugar", "style": "new" }
+      ]
+    },
+    {
+      "caption": "Only now is BinaryOperator '+' created — typed 'int' with the uniqued QualType from ASTContext.",
+      "nodes": { "ica": "normal", "icb": "normal", "bo": "new" },
+      "edges": { "ica->da": "normal", "icb->db": "normal", "bo->ica": "new", "bo->icb": "new" }
+    },
+    {
+      "caption": "ActOnReturnStmt wraps the finished expression in a ReturnStmt.",
+      "nodes": { "bo": "normal", "rs": "new" },
+      "edges": { "bo->ica": "normal", "bo->icb": "normal", "rs->bo": "new" }
+    },
+    {
+      "caption": "At the closing brace, the statement list becomes the CompoundStmt body — still detached from any Decl.",
+      "nodes": { "rs": "normal", "cs": "new" },
+      "edges": { "rs->bo": "normal", "cs->rs": "new" }
+    },
+    {
+      "caption": "ActOnFinishFunctionBody attaches the CompoundStmt to FunctionDecl f — the Decl and Stmt hierarchies meet.",
+      "nodes": { "cs": "active", "fd": "active" },
+      "edges": { "cs->rs": "normal", "fd->cs": "new" }
+    },
+    {
+      "caption": "The finished AST — exactly the tree that clang -Xclang -ast-dump prints (section 5 of the note).",
+      "duration_ms": 2400,
+      "nodes": {
+        "tu": "done", "fd": "done", "pa": "done", "pb": "done", "cs": "done",
+        "rs": "done", "bo": "done", "ica": "done", "icb": "done", "da": "done", "db": "done"
+      },
+      "edges": {
+        "tu->fd": "done", "fd->pa": "done", "fd->pb": "done", "fd->cs": "done",
+        "cs->rs": "done", "rs->bo": "done", "bo->ica": "done", "bo->icb": "done",
+        "ica->da": "done", "icb->db": "done"
+      }
+    }
+  ]
+}

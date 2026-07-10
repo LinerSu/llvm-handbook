@@ -36,7 +36,7 @@ verified_on: 2026-06-30
 ### 1. Definition
 
 > [!note] Definition
-> The **Clang AST** is the semantic tree Clang's parser and Sema build for a translation unit. It is three cooperating class hierarchies — **`Decl`** (declarations), **`Stmt`** (statements, with **`Expr` a subclass of `Stmt`**), and **`Type`/`QualType`** (types) — all allocated and owned by a single **`ASTContext`**, whose doc calls it the holder of "long-lived AST nodes (such as types and decls)." The root is **`TranslationUnitDecl`**.
+> The **Clang AST** is the semantic tree Clang's parser and Sema build per translation unit — the three hierarchies in the table above, allocated and owned by one **`ASTContext`** (its doc: holder of "long-lived AST nodes (such as types and decls)"), rooted at **`TranslationUnitDecl`**.
 
 - **`ASTContext`** owns the arena (`BumpPtrAllocator`) and the type-uniquing tables. It hands out **canonical types** (`getCanonicalType`) so that `int` reached through five different typedefs still compares equal, and exposes the root via `getTranslationUnitDecl()`.
 - Types live *outside* the Stmt/Decl trees: a node carries a **`QualType`** (a `Type*` plus qualifier bits), never an inline type subtree. This is why the same `Type` object is shared by every expression of that type.
@@ -55,11 +55,9 @@ verified_on: 2026-06-30
 > | Control flow | lowered to `br` / `switch` basic blocks | **un-lowered statements** (`IfStmt`, `ForStmt`, `WhileStmt`) |
 > | Macros & templates | expanded / instantiated away | **visible** (expansion locs; template patterns as `Decl`s) |
 
-The thesis in one line: **the AST is the front-end's faithful record of the program as written; IR is what survives lowering.**
-
 ### 3. Figure — the AST of `a + b`
 
-**Figure — a `FunctionDecl` whose body adds two `int`s.** Note the two hierarchies meeting: a `Decl` at the top, `Stmt`/`Expr` nodes below, each `DeclRefExpr` pointing back at the `VarDecl` it names. `Type` nodes (the `QualType int` on each expression) hang off to the side, shared, not shown as children.
+**Figure — `int f(int a, int b) { return a + b; }`.** `Decl` on top, `Stmt`/`Expr` below; dashed edges are cross-hierarchy references — each `DeclRefExpr` names its `VarDecl`, and the typed nodes shown share the one uniqued `Type` (`DeclRefExpr` type edges omitted for clarity).
 
 ```mermaid
 flowchart TD
@@ -70,7 +68,14 @@ flowchart TD
   BO --> RB["DeclRefExpr b"]
   LA -.names.-> VA["VarDecl a : int"]
   RB -.names.-> VB["VarDecl b : int"]
+  VA -. QualType .-> TY["Type int (uniqued in ASTContext)"]
+  VB -. QualType .-> TY
+  BO -. QualType .-> TY
 ```
+
+> [!figure]+ Animation — Sema assembling this tree, in construction order
+> ![clang-ast-construction.gif](attachments/clang-ast-construction.gif)
+> `ParmVarDecl`s exist before their `FunctionDecl`, the `DeclRefExpr`s are built as orphans, an `ImplicitCastExpr` wraps each operand at `ActOnBinOp`, and the `CompoundStmt` body attaches last — joining the `Decl` and `Stmt` hierarchies. (Regenerate: `_meta/anim/storyboards/clang-ast-construction.json`.)
 
 ### 4. Why analysis cares
 
@@ -111,7 +116,6 @@ flowchart TD
 - **No values, no SSA.** The AST models syntax and types, not dataflow. There are no basic blocks, φ-nodes, or def-use chains — those appear only after lowering to [[three-address-code|LLVM IR]] via [[control-flow-translation|CodeGen]]. Optimization reasoning belongs there, not here.
 - **Intra-TU.** One AST = one translation unit. Whole-program facts need LTO / cross-TU indexing, not the AST alone.
 - **Verbose and heavy.** Sugar preservation and per-node source locations make the AST large; walking it repeatedly is not free (hence ASTMatchers and cached traversals).
-- It is the **input** to lowering, not the output: CodeGen consumes the AST and emits IR, at which point the fidelity described above is deliberately dropped.
 
 > [!summary] Remember
 > The Clang AST is the typed, sugar-preserving, source-located tree of what was *written* — `Decl` / `Stmt` (with `Expr` a `Stmt`) / `Type`, all owned by `ASTContext`, rooted at `TranslationUnitDecl`. It is everything LLVM IR throws away, and the substrate every source-level tool runs on.
@@ -125,3 +129,4 @@ flowchart TD
 > - [clang/include/clang/AST/Expr.h](https://github.com/llvm/llvm-project/blob/main/clang/include/clang/AST/Expr.h) — `Expr : public ValueStmt`; `ImplicitCastExpr`
 > - [clang/include/clang/AST/TypeBase.h](https://github.com/llvm/llvm-project/blob/main/clang/include/clang/AST/TypeBase.h) — `QualType`, `TypedefType`, `CountAttributedType` ("sugar type with `__counted_by`"), `getSingleStepDesugaredType`
 > - [Clang — Introduction to the Clang AST](https://clang.llvm.org/docs/IntroductionToTheClangAST.html)
+> - Video (secondary source, not tier-1 — the classic tutorial talk; fundamentals unchanged since 2013): [2013 EuroLLVM Developers' Meeting — "The Clang AST - a tutorial" (Manuel Klimek)](https://www.youtube.com/watch?v=b8JTwPz5dSw)
