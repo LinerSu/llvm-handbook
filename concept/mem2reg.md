@@ -4,6 +4,7 @@ facet: concept
 stage: optimization
 ecosystem: [general, llvm]
 concepts: [ssa, memory-optimization]
+algorithm: [ssa-construction]
 implements:
   - { ecosystem: llvm, src: "llvm/lib/Transforms/Utils/PromoteMemoryToRegister.cpp" }
 data_structures: [dominator-tree, ssa-form]

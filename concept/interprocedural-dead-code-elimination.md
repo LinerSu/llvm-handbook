@@ -4,6 +4,7 @@ facet: concept
 stage: optimization
 ecosystem: [llvm]
 concepts: [interprocedural, dead-code]
+algorithm: [mark-and-sweep-reachability]
 implements:
   - { ecosystem: llvm, src: "llvm/lib/Transforms/IPO/DeadArgumentElimination.cpp" }
   - { ecosystem: llvm, src: "llvm/lib/Transforms/IPO/GlobalDCE.cpp" }

@@ -4,6 +4,7 @@ facet: concept
 stage: optimization
 ecosystem: [llvm]
 concepts: [inlining, interprocedural]
+algorithm: [tarjan-scc]
 implements:
   - { ecosystem: llvm, src: "llvm/lib/Transforms/IPO/Inliner.cpp; llvm/lib/Analysis/InlineCost.cpp" }
 docs: "doxygen — Inliner ↗ https://llvm.org/doxygen/Inliner_8h_source.html"

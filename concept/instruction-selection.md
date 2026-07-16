@@ -4,6 +4,7 @@ facet: concept
 stage: codegen
 ecosystem: [llvm]
 concepts: [instruction-selection, code-generation]
+algorithm: [switch-lowering]
 implements:
   - { ecosystem: llvm, src: "llvm/lib/CodeGen/SelectionDAG/" }
   - { ecosystem: llvm, src: "llvm/lib/CodeGen/GlobalISel/" }

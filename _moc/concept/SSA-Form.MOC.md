@@ -18,7 +18,7 @@ status: draft
 Every value is assigned **exactly once**; control-flow merges reconcile definitions with **φ nodes**; def-use / use-def chains come for free. → **[[ssa-form|SSA Form]]** *(data-structure · ir)*.
 
 ## 2. Theory — where φ goes
-Minimal SSA places φ at **iterated dominance frontiers** (Cytron et al. 1991), computed from the [[dominator-tree|dominator tree]] over the [[control-flow-graph|CFG]].
+Minimal SSA places φ at **iterated dominance frontiers** (Cytron et al. 1991), computed from the [[dominator-tree|dominator tree]] over the [[control-flow-graph|CFG]]. That's the theory — but it is *not* the algorithm LLVM runs: `mem2reg` uses a **Sreedhar–Gao** level walk that never materializes a frontier set, and prunes by liveness, yielding **pruned** rather than minimal SSA. → **[[ssa-construction|SSA Construction]]** *(algorithm · ir)* · chapter: [[Dominance.MOC|Dominance]].
 
 ## 3. Construction
 LLVM scalars are SSA *by construction*; the real work is promoting memory to registers. → **[[mem2reg|mem2reg]]** (scalar alloca → SSA + φ) and **[[scalar-replacement-of-aggregates|SROA]]**, which splits aggregates *and* promotes them itself — SROA subsumes mem2reg, they are not an ordered pair.

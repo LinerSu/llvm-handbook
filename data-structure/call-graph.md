@@ -4,6 +4,7 @@ facet: data-structure
 stage: analysis
 ecosystem: [llvm]
 concepts: [call-graph, interprocedural]
+algorithm: [tarjan-scc]
 src: "llvm/lib/Analysis/CallGraph.cpp; llvm/lib/Analysis/LazyCallGraph.cpp"
 docs: "doxygen — CGSCCPassManager ↗ https://llvm.org/doxygen/CGSCCPassManager_8h.html"
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §12.1"

@@ -4,6 +4,7 @@ facet: data-structure
 stage: ir
 ecosystem: [general, llvm]
 concepts: [ssa]
+algorithm: [ssa-construction]
 src: "llvm/lib/Transforms/Utils/ (mem2reg, SSAUpdater)"
 docs: "LangRef — phi ↗ https://llvm.org/docs/LangRef.html#phi-instruction"
 prereqs: [llvm-basics]

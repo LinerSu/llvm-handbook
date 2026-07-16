@@ -4,6 +4,7 @@ facet: concept
 stage: codegen
 ecosystem: [general, llvm]
 concepts: [register-allocation, code-generation]
+algorithm: [graph-coloring]
 implements:
   - { ecosystem: llvm, src: "llvm/lib/CodeGen/RegAllocGreedy.cpp" }
   - { ecosystem: llvm, src: "llvm/lib/CodeGen/RegAllocBasic.cpp / RegAllocFast.cpp / RegAllocPBQP.cpp" }

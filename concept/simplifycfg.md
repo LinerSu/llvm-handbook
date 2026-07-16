@@ -4,6 +4,7 @@ facet: concept
 stage: optimization
 ecosystem: [llvm]
 concepts: [control-flow]
+algorithm: [switch-lowering]
 implements:
   - { ecosystem: llvm, src: "llvm/lib/Transforms/Utils/SimplifyCFG.cpp" }
 docs: "Passes — simplifycfg ↗ https://llvm.org/docs/Passes.html"
