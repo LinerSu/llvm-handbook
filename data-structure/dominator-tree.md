@@ -97,9 +97,9 @@ Check it on the figure above: is `D ∈ DF(B)`? (1) `B` dominates a predecessor 
 ### 4. Where LLVM uses it
 
 > [!info] Consumers
-> - **SSA construction / `mem2reg`** — φ placement via dominance frontiers.
+> - **SSA construction / `mem2reg`** — φ placement at the *iterated* dominance frontier, computed by `ForwardIDFCalculator` from the tree's levels rather than from materialized frontier sets (§3). → [[ssa-construction]]
 > - **[[value-numbering|GVN]]** — processes blocks in reverse post-order with a global leader table, using the dominator tree for dominance queries. (A contrasting design: `EarlyCSE` instead walks the dominator tree itself, scoping its hash table to the current root-to-node path.)
-> - **[[loop-transformations#Loop-invariant code motion (LICM)|LICM]]** — legality needs the definition to dominate all uses and the block to dominate loop exits.
+> - **[[loop-transformations#Loop-invariant code motion (LICM)|LICM]]** — hoist legality needs the definition to dominate all uses; the classic second half, "and the block must dominate the loop exits", is what LICM *replaces* — see §6.
 > - **[[loop-info|LoopInfo / LCSSA]]** — the header dominates the loop. LCSSA's closing-φ placement *looks* like a frontier question but isn't computed as one: it enumerates the loop's exit blocks from `LoopInfo` and filters them with a plain `dominates` query. The only part of a loop-internal def's frontier that can matter is its exits, and those are already known.
 
 > [!note] Post-dominators
