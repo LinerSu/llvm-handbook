@@ -4,6 +4,7 @@ facet: data-structure
 stage: analysis
 ecosystem: [llvm]
 concepts: [dependence-analysis, loop-optimization]
+algorithm: [dependence-testing]
 src: llvm/lib/Analysis/DependenceAnalysis.cpp
 docs: "doxygen — DependenceInfo ↗ https://llvm.org/doxygen/classllvm_1_1DependenceInfo.html"
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §11.6"

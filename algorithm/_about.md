@@ -49,10 +49,11 @@ A note here is reached from its consumer via the typed **`algorithm:`** frontmat
 | [[switch-lowering]] | `LowerSwitch`, `SwitchLoweringUtils` | one sorted array becomes a BST, an exact $O(n^2)$ DP, and a jump table — the objective differs, the structure doesn't |
 | [[graph-coloring]] | `RegAllocGreedy` (by contrast) | LLVM ships **neither** Chaitin nor linear scan — splitting beats coloring |
 | [[mark-and-sweep-reachability]] | `GlobalDCE` | algorithm intact; all difficulty moved into roots, comdats, and vtable edges |
+| [[dependence-testing]] | `DependenceAnalysis` | Banerjee's equations **simplified** because SCEV normalized the loops; no Omega test; monotonicity assumed but unchecked |
 
 ## Candidates not yet written
 
-- **Dependence testing** (Banerjee / GCD / Omega) → `DependenceAnalysis`; leaned on by [[dependence-analysis]] and [[scalar-evolution]].
 - **SSA reconstruction** (`SSAUpdater`) → leaned on by [[loop-transformations|LCSSA]] and several loop passes. Distinct from [[ssa-construction]]: it *repairs* SSA rather than building it.
+- **Abstract interpretation as a cost model** → `InlineCost` is a bounded abstract interpretation of the callee, specialized per call site, with threshold-directed early exit. Currently described only inside [[inlining]].
 
 Something that clears **both** parts of the bar and isn't listed: add it. Something that clears only one: leave it in the note that uses it.
