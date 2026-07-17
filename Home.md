@@ -9,6 +9,50 @@ status: draft
 
 The vault is one book spanning **theory → algorithm → LLVM → real-world use**. Folders are by **facet** (the kind of knowledge); chapters and source-tree views are **MOCs**; classification/correctness rules live in **`_meta/`**.
 
+## 🗺️ Big picture — the whole pipeline in one graph
+
+> [!abstract] Why this graph exists
+> Every chapter below is a zoom into one node here. Keep the two halves straight: the **front end** (source → AST, Clang-specific, decides *meaning*) and the **middle/back end** (IR → machine code, LLVM-specific, transforms an already-fixed meaning). Nothing downstream of `CG` can change whether the program was well-formed — that door only swings one way.
+
+**The whole pipeline, front end to back end**
+```mermaid
+flowchart TD
+    Src["Source (.c / .cpp)"]
+    Lex["Lex + Parse (interleaved with Sema)"]
+    Sema["Sema: name lookup, overload resolution, type-check, constexpr fold"]
+    AST["Clang AST"]
+    CFGC["Clang CFG (source-level)"]
+    SLA["Source-level analyses: Static Analyzer, dataflow framework"]
+    CG["CodeGen: AST to LLVM IR"]
+    IR0["LLVM IR, unoptimized (alloca + load/store per variable)"]
+    M2R["mem2reg"]
+    SSA["SSA form (phi nodes)"]
+    OPT["Optimizer passes: loops, GVN, SCCP, inlining, alias analysis"]
+    ISEL["Instruction selection"]
+    RA["Register allocation"]
+    SCHED["Instruction scheduling"]
+    MC["MC layer emission"]
+    OBJ["Assembly or object code"]
+
+    Src --> Lex --> Sema --> AST
+    AST --> CFGC --> SLA
+    AST --> CG --> IR0 --> M2R --> SSA --> OPT --> ISEL --> RA --> SCHED --> MC --> OBJ
+```
+Everything left of `AST` is Clang's front end (chapter [[Source-Level-Analysis.MOC|Front-End & Source-Level Analysis]]); everything from `CG` onward is the [[running-example|running example]]'s territory, traced concretely in its §2–§4.
+
+| Stage | What happens | Note |
+|---|---|---|
+| Lex + Parse + Sema | build a type-checked AST; parsing and semantic analysis are interleaved, not separate passes | [[clang-frontend-pipeline]] |
+| Clang AST | the typed, sugar-preserving tree everything downstream reads | [[clang-ast]] |
+| Clang CFG + source-level analyses | analysis *before* lowering — Static Analyzer, `clang::dataflow`, LifetimeSafety | [[Source-Level-Analysis.MOC]] · [[clang-static-analyzer]] · [[clang-dataflow-framework]] · [[lifetime-safety]] |
+| CodeGen (AST → IR) | `if`/`while`/`switch` lower to basic blocks + terminators + `phi` | [[control-flow-translation]] |
+| Unoptimized IR → SSA | every local starts as an `alloca`; `mem2reg` promotes to `phi`-form SSA | [[mem2reg]] · [[ssa-form]] — see [[running-example#2. Front-end IR — everything is a stack slot|running example §2]] |
+| Optimizer passes | loop opts, redundancy elimination, constant propagation, inlining, alias analysis — the bulk of [[LLVM.MOC|the LLVM chapter]] | [[Loop-Optimization.MOC]] · [[Redundancy-Elimination.MOC]] · [[Constant-Propagation.MOC]] · [[Interprocedural-Analysis.MOC]] · [[pointer-alias-analysis]] |
+| Backend | instruction selection → scheduling → register allocation → MC emission | [[code-generation-overview]] · [[register-allocation]] · [[instruction-scheduling]] · [[instruction-selection]] |
+
+> [!tip] Answering "where does pass/feature X plug in?"
+> Find which node above it touches, then open that node's note or MOC. A flag that only changes the IR (most `-fsanitize=`, most `-O` behavior) plugs in at or after `CG`; a flag that changes whether code is well-formed, or a warning's text, plugs in at `Sema`. A flag that changes both (e.g. `-fwrapv`) has a foot in each side — `Sema`'s constexpr evaluator and `CG`'s codegen both have to agree with each other.
+
 ## 📖 Reading path — read it like a book
 
 > [!tip] New here? Start with the two lines below, then read the chapters in order.
@@ -18,7 +62,7 @@ The vault is one book spanning **theory → algorithm → LLVM → real-world us
 
 **Part I — The representation**
 1. **LLVM IR & object model** → [[LLVM-IR.MOC]] — what the IR is; Module→Function→BasicBlock→Instruction; GEP addressing. *(no prereq)*
-2. **Control flow & dominance** → [[control-flow-graph]] then [[dominator-tree]] — the CFG and the dominance every analysis stands on. *(after 1)*
+2. **Control flow & dominance** → [[control-flow-graph]] then [[Dominance.MOC]] — the CFG and the dominance every analysis stands on. *(after 1)*
 3. **SSA form** → [[SSA-Form.MOC]] — single-assignment values, φ-nodes, and **mem2reg** (how SSA is built). *(after 1–2)*
 
 **Part II — Analysis & loops**
@@ -38,6 +82,8 @@ The vault is one book spanning **theory → algorithm → LLVM → real-world us
 **Cross-cutting — security** → [[Memory-Safety-Hardening.MOC|Memory Safety & C/C++ Hardening]] — the features/analyses that eliminate whole classes of memory-safety bugs: bounds ([[fbounds-safety]], [[safe-buffers]]), lifetime ([[lifetime-safety]]), type ([[typed-allocators]]), control-flow ([[pointer-authentication]]), and scaling them ([[interprocedural-summaries]], [[scalable-static-analysis]]).
 
 **Reference shelf** — theory: [[dataflow-foundations]], [[polyhedral-model]]; textbook crosswalks: [[muchnick.MOC|Muchnick]] · [[dragon-book-ch9.MOC|Dragon Book Ch.9]] (and Ch.6/8/10/11/12).
+
+**Refresher shelf** — *"I know the concept, but how is it actually done — and what does LLVM really ship?"* Each note gives the textbook algorithm, then the delta against production code: [[dominator-tree-construction|dominator-tree construction]] (Semi-NCA, not Lengauer–Tarjan) · [[ssa-construction|SSA construction]] (Sreedhar–Gao, and *pruned* not minimal) · [[tarjan-scc|Tarjan SCC]] (batch to build, incremental to maintain) · [[switch-lowering|switch lowering]] (BST + an exact DP) · [[graph-coloring|graph coloring]] (which LLVM declines to use) · [[mark-and-sweep-reachability|mark-and-sweep]] · [[unification]]. See [[algorithm/_about|the layer's bar]] for what belongs here.
 
 ## Index — jump to anything
 - **Ecosystems** — [[LLVM.MOC|LLVM]] (more to come: MLIR, Clang, Rust, Swift, JAX, PyTorch)
