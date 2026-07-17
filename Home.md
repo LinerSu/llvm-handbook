@@ -100,11 +100,16 @@ Add a note from `_templates/topic-note.md`, fill its frontmatter (facet · stage
 
 ## Needs attention
 
+> [!warning] `unverified` is the vault's default state, not an anomaly
+> On **2026-07-16** an audit found that `status: verified` had never meant anything: every note was born `verified` at authoring, and the one correctness pass that ran was *web*-verified — it edited [[dominator-tree]] and still left five wrong claims in it. Sampling 9 notes against LLVM source refuted **13 of 132 claims (9.8%)**; **8 of 9 notes** were wrong. So 69 notes were relabelled `unverified`, which is simply true: nobody has checked them against source yet.
+>
+> They are not *bad* — 84% of sampled claims were correct. They are **unchecked**. A note leaves this list only when every falsifiable claim in it has been read against LLVM source at the tag in [[llvm-version]] (see [[note-checklist]] §8).
+
 ```dataview
-TABLE facet, stage, ecosystem, status
+TABLE facet, stage, ecosystem, status, verified_on
 FROM "concept" OR "data-structure" OR "theory" OR "algorithm" OR "implementation" OR "application"
-WHERE status = "needs-review" OR status = "stub" OR status = "migrated"
-SORT status ASC
+WHERE status = "unverified" OR status = "needs-review" OR status = "stub" OR status = "migrated" OR status = "draft"
+SORT status ASC, file.name ASC
 ```
 
 ## All notes by facet

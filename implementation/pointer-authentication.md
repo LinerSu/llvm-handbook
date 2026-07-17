@@ -10,9 +10,9 @@ src: "clang/lib/CodeGen/CGPointerAuth.cpp"
 docs: "Clang — Pointer Authentication ↗ https://clang.llvm.org/docs/PointerAuthentication.html"
 prereqs: [llvm-basics]
 related: [fbounds-safety, safe-buffers]
-tags: [kind/pass, status/verified]
-status: verified
-verified_on: 2026-07-01
+tags: [kind/pass, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Pointer Authentication (ptrauth / arm64e)

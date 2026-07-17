@@ -12,7 +12,7 @@ prereqs: [interprocedural-summaries, call-graph]
 related: [safe-buffers, interprocedural-summaries, pointer-alias-analysis]
 tags: [kind/analysis, status/needs-review, version-sensitive]
 status: needs-review
-verified_on: 2026-07-01
+verified_on: ""
 ---
 
 # Scalable Static Analysis Framework (SSAF)

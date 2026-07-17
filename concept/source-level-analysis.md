@@ -7,9 +7,9 @@ concepts: [source-level-analysis]
 docs: "Clang — Clang Static Analyzer ↗ https://clang.llvm.org/docs/ClangStaticAnalyzer.html"
 prereqs: [clang-ast, clang-cfg]
 related: [clang-static-analyzer, clang-dataflow-framework, data-flow-analysis, pointer-alias-analysis, type-checking]
-tags: [kind/concept, status/verified]
-status: verified
-verified_on: 2026-06-30
+tags: [kind/concept, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Source-Level vs IR-Level Program Analysis

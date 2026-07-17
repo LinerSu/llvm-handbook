@@ -8,9 +8,9 @@ src: llvm/lib/IR/
 docs: "LangRef ↗ https://llvm.org/docs/LangRef.html"
 prereqs: []
 related: [getelementptr, ssa-form, extending-llvm-ir]
-tags: [kind/concept, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/concept, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # LLVM Basics

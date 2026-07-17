@@ -10,9 +10,9 @@ docs: "Passes — sroa ↗ https://llvm.org/docs/Passes.html"
 book: "Muchnick, Advanced Compiler Design & Implementation §12.2"
 prereqs: [ssa-form, three-address-code]
 related: [ssa-form, inlining, mem2reg]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Scalar Replacement of Aggregates (SROA)

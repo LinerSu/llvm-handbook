@@ -10,9 +10,9 @@ docs: "IPO FunctionSpecialization ↗ https://llvm.org/doxygen/FunctionSpecializ
 book: "Muchnick, Advanced Compiler Design & Implementation §19"
 prereqs: [ipsccp, inlining]
 related: [ipsccp, inlining]
-tags: [kind/transform, status/verified, version-sensitive]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified, version-sensitive]
+status: unverified
+verified_on: ""
 ---
 
 # Function Specialization (Cloning)

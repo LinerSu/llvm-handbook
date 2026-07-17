@@ -11,9 +11,9 @@ docs: "CodeGenerator — scheduling ↗ https://llvm.org/docs/CodeGenerator.html
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §10"
 prereqs: [code-generation-overview, control-flow-graph]
 related: [register-allocation, instruction-selection]
-tags: [kind/concept, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/concept, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Instruction Scheduling

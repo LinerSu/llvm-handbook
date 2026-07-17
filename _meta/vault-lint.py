@@ -90,6 +90,23 @@ def load_vocab():
 
 VOCAB = load_vocab()
 
+# ---- load the version anchor (single source of truth for the tag) -----------
+# _meta/llvm-version.md's `as_of` is the date its version-sensitive claim table was
+# last checked. A note tagged `version-sensitive` whose verified_on predates that
+# was verified against a tag the vault no longer documents.
+def load_llvm_anchor():
+    path = os.path.join(ROOT, "_meta", "llvm-version.md")
+    if not os.path.exists(path):
+        warn(rel(path), "llvm-version.md missing — cannot check version-sensitive staleness")
+        return "", ""
+    fm, _ = split_frontmatter(open(path, encoding="utf-8").read())
+    if not fm:
+        return "", ""
+    return (str(fm.get("as_of", "")).strip().strip('"'),
+            str(fm.get("llvm_git_tag", "")).strip().strip('"'))
+
+LLVM_AS_OF, LLVM_TAG = load_llvm_anchor()
+
 # ---- first pass: collect every note name for link resolution ----------------
 note_names = set()      # basename without .md, e.g. "loop-info", "LLVM.MOC"
 files = list(walk_md())
@@ -165,6 +182,32 @@ for path in files:
             err(r, f"stage '{fm['stage']}' not in controlled-vocabulary")
         if fm.get("status") and VOCAB["status"] and fm["status"] not in VOCAB["status"]:
             err(r, f"status '{fm['status']}' not in controlled-vocabulary")
+
+        # --- integrity of the `verified` badge -------------------------------
+        # `verified` asserts "every falsifiable claim here was checked against LLVM
+        # source at the pinned tag, on this date" (note-checklist §8). It is not a
+        # synonym for "lint passed". The vault shipped for three weeks with 76/79
+        # notes stamped verified at *authoring* time; a 9-note sample then refuted
+        # 13/132 claims. These checks make the badge structurally falsifiable — they
+        # cannot check truth, only that someone recorded having looked.
+        status = (fm.get("status") or "").strip()
+        von = (fm.get("verified_on") or "").strip().strip('"').strip("'")
+        tags = fm_list(fm.get("tags"))
+        if status == "verified" and not von:
+            err(r, "status 'verified' but verified_on is empty — verified_on records the date "
+                   "the note's claims were checked against source at the tag in llvm-version; "
+                   "if no such check happened, the status is 'unverified'")
+        if status != "verified" and von:
+            warn(r, f"verified_on '{von}' set but status is '{status}' — clear verified_on, "
+                    "it records a check that the status says did not conclude")
+        # A version-sensitive note verified before the anchor moved is, by the anchor's
+        # own policy, due for re-verification: its claims were checked against a tag
+        # the vault no longer documents.
+        if status == "verified" and von and "version-sensitive" in tags and LLVM_AS_OF:
+            if von < LLVM_AS_OF:  # ISO dates compare lexically
+                warn(r, f"version-sensitive note verified_on {von} predates llvm-version as_of "
+                        f"{LLVM_AS_OF} — re-verify its defaults against {LLVM_TAG or 'the pinned tag'} "
+                        "and re-stamp, or downgrade to 'unverified'")
         for e in fm_list(fm.get("ecosystem")):
             if VOCAB["ecosystem"] and e not in VOCAB["ecosystem"]:
                 warn(r, f"ecosystem '{e}' not in controlled-vocabulary (mint deliberately)")

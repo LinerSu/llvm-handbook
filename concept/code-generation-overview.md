@@ -11,9 +11,9 @@ implements:
 docs: "The LLVM Target-Independent Code Generator ↗ https://llvm.org/docs/CodeGenerator.html"
 prereqs: [llvm-basics, ssa-form]
 related: [loop-transformations, data-flow-analysis]
-tags: [kind/concept, status/verified, version-sensitive]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/concept, status/unverified, version-sensitive]
+status: unverified
+verified_on: ""
 ---
 
 # Code Generation (Backend) Overview

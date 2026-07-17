@@ -6,9 +6,9 @@ ecosystem: [general, llvm, clang]
 concepts: [interprocedural, dataflow-analysis]
 prereqs: [data-flow-analysis, call-graph]
 related: [inlining, ipsccp, interprocedural-dead-code-elimination, call-graph]
-tags: [kind/concept, status/verified]
-status: verified
-verified_on: 2026-07-01
+tags: [kind/concept, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Summary-Based (Compositional) Interprocedural Analysis

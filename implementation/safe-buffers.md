@@ -10,9 +10,9 @@ src: "clang/lib/Analysis/UnsafeBufferUsage.cpp"
 docs: "Clang — Safe Buffers ↗ https://clang.llvm.org/docs/SafeBuffers.html"
 prereqs: [clang-ast]
 related: [fbounds-safety, interprocedural-summaries, clang-ast]
-tags: [kind/analysis, status/verified]
-status: verified
-verified_on: 2026-07-01
+tags: [kind/analysis, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # C++ Safe Buffers (-Wunsafe-buffer-usage)

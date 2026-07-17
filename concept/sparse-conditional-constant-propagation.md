@@ -10,9 +10,9 @@ docs: "Passes — sccp ↗ https://llvm.org/docs/Passes.html"
 book: "Muchnick, Advanced Compiler Design & Implementation §12.6"
 prereqs: [data-flow-analysis, ssa-form]
 related: [data-flow-analysis, dataflow-foundations, dead-code-elimination, lazy-value-info, correlated-value-propagation]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Sparse Conditional Constant Propagation (SCCP)

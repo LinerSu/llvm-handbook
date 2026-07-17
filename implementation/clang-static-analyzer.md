@@ -10,9 +10,9 @@ src: "clang/lib/StaticAnalyzer"
 docs: "Clang — Clang Static Analyzer ↗ https://clang.llvm.org/docs/ClangStaticAnalyzer.html"
 prereqs: [clang-cfg, source-level-analysis]
 related: [clang-dataflow-framework, dataflow-relational-octagon, pointer-alias-analysis, data-flow-analysis]
-tags: [kind/pass, status/verified]
-status: verified
-verified_on: 2026-06-30
+tags: [kind/pass, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Clang Static Analyzer

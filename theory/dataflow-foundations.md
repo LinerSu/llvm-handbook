@@ -8,9 +8,9 @@ docs: "Cousot & Cousot 1977; Kildall 1973"
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §9.3"
 prereqs: []
 related: [data-flow-analysis, value-numbering, dominator-tree]
-tags: [kind/theory, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/theory, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Foundations of Data-Flow Analysis

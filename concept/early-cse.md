@@ -11,9 +11,9 @@ src: "llvm/lib/Transforms/Scalar/EarlyCSE.cpp"
 docs: "Passes — early-cse ↗ https://llvm.org/docs/Passes.html"
 prereqs: [value-numbering, dominator-tree]
 related: [value-numbering, llvm-gvn, memory-ssa]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 sources:
   - "https://llvm.org/doxygen/EarlyCSE_8cpp.html"
   - "https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/EarlyCSE.cpp"
@@ -25,14 +25,14 @@ sources:
 > **Prerequisites:** [[value-numbering]], [[dominator-tree]] · **Heavyweight cousin:** [[llvm-gvn]] · **Uses:** [[memory-ssa]]
 
 > [!abstract] Chapter map
-> **EarlyCSE** is the **cheap, local** redundancy eliminator: a single dominator-tree walk with a **scoped hash table** that removes trivially redundant instructions (and, with [[memory-ssa|MemorySSA]], redundant loads and dead stores). It runs early and at low opt levels to clean up before the expensive passes — the fast counterpart to the whole-function [[llvm-gvn|GVN]].
+> **EarlyCSE** is the **cheap, local** redundancy eliminator: a single dominator-tree walk with a **scoped hash table** that removes trivially redundant instructions — including redundant loads and simple dead stores. It runs early and at low opt levels to clean up before the expensive passes — the fast counterpart to the whole-function [[llvm-gvn|GVN]].
 
 > [!info]+ Where it sits between LVN and GVN
 > | | [[value-numbering|Local VN]] | **EarlyCSE** | [[llvm-gvn|GVN]] |
 > |---|---|---|---|
 > | Scope | one block | dominator subtree (scoped) | whole function |
 > | Cost | cheap | cheap | expensive |
-> | Memory ops | no | yes (via MemorySSA) | yes (MemDep, load PRE) |
+> | Memory ops | yes (generation counter) | yes + MemorySSA adds precision | yes (MemDep, load PRE) |
 > | When | — | early, `-O1+` | `-O2+` |
 
 ---
@@ -44,8 +44,18 @@ sources:
 
 ## 2. Memory CSE
 
-> [!info] The MemorySSA variant
-> The `EarlyCSEMemSSA` variant uses [[memory-ssa|MemorySSA]] to also eliminate **redundant loads** (same address, no intervening clobber) and **simple dead stores** — cheap memory cleanups that don't need GVN's full load-PRE machinery.
+> [!info] The MemorySSA variant — what it actually adds
+> A common misreading: MemorySSA is *not* what lets EarlyCSE touch memory. **Plain `early-cse` already** eliminates redundant loads and simple dead stores, using a **memory-generation counter** that bumps on every may-write, plus a `LastStore` record. The check is literally "same generation ⇒ nothing clobbered in between":
+>
+> ```cpp
+> // Check the simple memory generation tracking first.
+> if (EarlierGeneration == LaterGeneration)
+>   return true;
+> if (!MSSA)
+>   return false;
+> ```
+>
+> `EarlyCSEMemSSA` adds [[memory-ssa|MemorySSA]] so the pass can *still* CSE a load when the generations **differ** — i.e. across an intervening write that provably doesn't alias. It buys **precision**, not capability. (When present, MemorySSA is also kept up to date as an updater.)
 
 ## 3. Worked example
 

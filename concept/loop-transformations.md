@@ -10,9 +10,9 @@ implements:
 docs: "Passes ↗ https://llvm.org/docs/Passes.html"
 prereqs: [loop-info, ssa-form]
 related: [pointer-alias-analysis, memory-ssa, loop-invariant-code-motion]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Loop Transformations
@@ -205,7 +205,7 @@ verified_on: 2026-06-28
 ### Fission (distribution)
 
 > [!note] Definition
-> Break one loop into multiple loops over the **same index range**, each holding a subset of the statements. LLVM: `LoopDistribute` (`-loop-distribute`); enabled at `-O2/-O3` or via `#pragma clang loop distribute(enable)`.
+> Break one loop into multiple loops over the **same index range**, each holding a subset of the statements. LLVM: `LoopDistribute` (`-loop-distribute`). The pass is *scheduled* at `-O2/-O3`, but it distributes **nothing by default** — a loop must opt in via `#pragma clang loop distribute(enable)`, or the hidden `-enable-loop-distribute` (`cl::init(false)`) must be set globally.
 
 > [!example]+ Distribute by dependence class
 > **Before:**
@@ -239,7 +239,7 @@ verified_on: 2026-06-28
 
 > [!info] Why & how
 > - **Why:** improve cache locality / reduce misses, and **expose parallelism** (each split loop can run independently).
-> - **How** (`LoopDistributePass`): partition instructions by walking the body backward; unsafe-dependence instructions go to *cyclic* partitions, the rest to *non-cyclic* ones. Memory dependences are classified by **LoopAccessAnalysis** (`MemoryDepChecker` — NoDep / Forward / Backward / Unknown), not Memory SSA. Only innermost, single-exit loops are considered.
+> - **How** (`LoopDistributePass`): seed partitions by walking the memory operations in **program order** — an op carrying an unsafe dependence joins a *cyclic* partition, every other store gets its own *non-cyclic* one — then merge adjacent non-cyclic partitions and pull in the non-memory instructions each needs via a use-def transitive closure (`populateUsedSet`). Memory dependences are classified by **LoopAccessAnalysis** (`MemoryDepChecker` — NoDep / Forward / Backward / Unknown), not Memory SSA. Only innermost, single-exit loops are considered.
 
 ---
 

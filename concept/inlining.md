@@ -11,9 +11,9 @@ docs: "doxygen — Inliner ↗ https://llvm.org/doxygen/Inliner_8h_source.html"
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §12.2"
 prereqs: [call-graph]
 related: [call-graph, value-numbering]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Inlining

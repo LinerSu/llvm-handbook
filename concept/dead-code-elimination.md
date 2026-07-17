@@ -11,9 +11,9 @@ docs: "Passes — adce/bdce/dce ↗ https://llvm.org/docs/Passes.html"
 book: "Muchnick, Advanced Compiler Design & Implementation §18"
 prereqs: [ssa-form, data-flow-analysis]
 related: [data-flow-analysis, control-flow-graph]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Dead-Code Elimination (DCE / ADCE / BDCE)

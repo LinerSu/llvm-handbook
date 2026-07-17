@@ -10,9 +10,9 @@ docs: "doxygen — CGSCCPassManager ↗ https://llvm.org/doxygen/CGSCCPassManage
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §12.1"
 prereqs: [control-flow-graph]
 related: [inlining, pointer-alias-analysis]
-tags: [kind/data-structure, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/data-structure, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Call Graph & CGSCC

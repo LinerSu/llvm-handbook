@@ -11,9 +11,9 @@ docs: "CodeGenerator ↗ https://llvm.org/docs/CodeGenerator.html"
 book: "Muchnick, Advanced Compiler Design & Implementation §18"
 prereqs: [control-flow-graph, instruction-scheduling]
 related: [simplifycfg, instruction-scheduling]
-tags: [kind/transform, status/verified, version-sensitive]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified, version-sensitive]
+status: unverified
+verified_on: ""
 ---
 
 # If-Conversion (Predication)

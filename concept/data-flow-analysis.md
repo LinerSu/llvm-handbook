@@ -11,9 +11,9 @@ implements:
 docs: "doxygen — SparsePropagation ↗ https://llvm.org/doxygen/SparsePropagation_8h_source.html"
 prereqs: [control-flow-graph]
 related: [value-numbering, pointer-alias-analysis, dominator-tree, lazy-value-info]
-tags: [kind/analysis, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/analysis, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Data-Flow Analysis

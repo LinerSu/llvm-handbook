@@ -8,9 +8,9 @@ src: "llvm/include/llvm/IR/CFG.h"
 docs: "LangRef — functions/basic blocks ↗ https://llvm.org/docs/LangRef.html#functions"
 prereqs: [llvm-basics]
 related: [dominator-tree, loop-info, ssa-form]
-tags: [kind/data-structure, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/data-structure, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Control-Flow Graph (CFG)

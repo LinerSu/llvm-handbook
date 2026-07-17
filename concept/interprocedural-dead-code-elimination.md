@@ -12,9 +12,9 @@ docs: "Passes — deadargelim/globaldce ↗ https://llvm.org/docs/Passes.html"
 book: "Muchnick, Advanced Compiler Design & Implementation §19"
 prereqs: [call-graph, dead-code-elimination]
 related: [dead-code-elimination, call-graph, ipsccp]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Interprocedural Dead-Code Elimination (DAE & GlobalDCE)

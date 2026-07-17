@@ -9,9 +9,9 @@ implements:
 docs: "Passes — gvn ↗ https://llvm.org/docs/Passes.html"
 prereqs: [ssa-form]
 related: [instruction-combining, llvm-gvn, early-cse]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Value Numbering
@@ -28,7 +28,7 @@ verified_on: 2026-06-28
 > |---|---|
 > | Common-subexpression elimination | **GVN** / **NewGVN** passes |
 > | Value numbering (assign IDs to expressions) | hash of `(opcode, operand value-numbers, type)` |
-> | Available expressions data-flow | replaced by SSA + a dominator-tree scoped table |
+> | Available expressions data-flow | replaced by SSA + a leader table with dominance queries (`gvn`) — or a dominator-tree scoped table ([[early-cse]]) |
 > | DAG of a basic block | the value-number table *is* that DAG |
 > | φ at merges | GVN reasons about φ to number across blocks |
 
@@ -138,7 +138,11 @@ verified_on: 2026-06-28
 > Operates across the **whole function** — an expression's number is only reusable in blocks its definition **dominates**, so numbering must respect control flow.
 
 > [!info] Hash-based GVN (incremental / online)
-> - **Data structures:** walk the **[[dominator-tree]]**; keep a **scoped hash table** (updated as you enter/leave blocks). The table guarantees identical operations on identical value-numbered operands get the same number.
+> - **Data structures (the classic algorithm):** walk the **[[dominator-tree]]**; keep a **scoped hash table** (updated as you enter/leave blocks). The table guarantees identical operations on identical value-numbered operands get the same number.
+>
+> **LLVM's `gvn` is not this shape.** It walks blocks in **reverse post-order** and keeps a **leader table**, enforcing dominance by explicit `DT->dominates()` *queries* rather than by scoping — `ScopedHashTable` appears zero times in `GVN.cpp`. The domtree-walk-plus-scoped-table above is [[early-cse|EarlyCSE]]'s design. (`NewGVN` is a third shape again: congruence classes, also no scoped table.)
+>
+> Worth knowing *why* this is easy to get wrong: `GVN.cpp` carries the comment `// Top-down walk of the dominator tree.` directly above `ReversePostOrderTraversal<Function *> RPOT(&F);`. The comment is stale; the code is not.
 > - **Idea 1 — reuse LVN:** hash `(operator, value-numbers of operands)` to get the expression's value. *(e.g. `a op b` where `a→2`, `b→4` yields a fresh value for `a op b`.)*
 > - **Idea 2 — walk in dominator-tree order:** a value enters a block either through a **single predecessor** (its immediate dominator) or through **multiple predecessors**, where a **φ** summarizes the incoming values — natural in LLVM IR:
 >   ```llvm

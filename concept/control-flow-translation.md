@@ -7,9 +7,9 @@ concepts: [control-flow-translation, control-flow]
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §6.6–6.8"
 prereqs: [control-flow-graph, three-address-code]
 related: [ssa-form, loop-info, llvm-basics]
-tags: [kind/concept, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/concept, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Control Flow in LLVM (Lowering, Branches, φ)

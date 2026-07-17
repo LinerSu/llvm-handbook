@@ -10,9 +10,9 @@ docs: "LangRef — call/musttail ↗ https://llvm.org/docs/LangRef.html#call-ins
 book: "Muchnick, Advanced Compiler Design & Implementation §15.1"
 prereqs: [three-address-code]
 related: [inlining, loop-transformations]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Tail-Call & Tail-Recursion Optimization

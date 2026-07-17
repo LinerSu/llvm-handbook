@@ -8,9 +8,9 @@ src: "clang/include/clang/AST/RecursiveASTVisitor.h"
 docs: "Clang — How to write RecursiveASTVisitor ↗ https://clang.llvm.org/docs/RAVFrontendAction.html"
 prereqs: [clang-ast]
 related: [visitor-pattern, clang-ast, safe-buffers, lifetime-safety]
-tags: [kind/concept, status/verified]
-status: verified
-verified_on: 2026-07-01
+tags: [kind/concept, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # AST Traversal (RecursiveASTVisitor & AST Matchers)

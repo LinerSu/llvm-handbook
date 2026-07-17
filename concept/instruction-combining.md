@@ -9,9 +9,9 @@ implements:
 docs: "Passes — instcombine ↗ https://llvm.org/docs/Passes.html"
 prereqs: [llvm-basics, ssa-form]
 related: [value-numbering, visitor-pattern]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Instruction Combining

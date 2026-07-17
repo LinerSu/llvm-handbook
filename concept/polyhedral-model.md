@@ -10,9 +10,9 @@ docs: "Polly ↗ https://polly.llvm.org/"
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §11"
 prereqs: [loop-info, scalar-evolution]
 related: [dependence-analysis, loop-transformations]
-tags: [kind/concept, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/concept, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # The Polyhedral Model (Polly)

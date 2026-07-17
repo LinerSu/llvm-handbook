@@ -13,7 +13,7 @@ prereqs: [value-numbering, ssa-form]
 related: [value-numbering, partial-redundancy-elimination, dominator-tree, memory-ssa]
 tags: [kind/pass, status/draft, version-sensitive]
 status: draft
-verified_on: 2026-06-28
+verified_on: ""
 sources:
   - "https://llvm.org/doxygen/classllvm_1_1GVNPass.html"
   - "https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/GVN.cpp"

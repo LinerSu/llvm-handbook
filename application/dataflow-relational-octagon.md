@@ -13,9 +13,9 @@ src: "clang/include/clang/Analysis/FlowSensitive/DataflowEnvironment.h"
 docs: "Clang doxygen — clang::dataflow ↗ https://clang.llvm.org/doxygen/namespaceclang_1_1dataflow.html"
 prereqs: [dataflow-worked-example, clang-dataflow-framework]
 related: [dataflow-worked-example, clang-dataflow-framework, clang-static-analyzer, source-level-analysis, data-flow-analysis]
-tags: [kind/analysis, status/verified]
-status: verified
-verified_on: 2026-06-30
+tags: [kind/analysis, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Wiring an Octagon into clang::dataflow — Which Seam?

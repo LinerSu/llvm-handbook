@@ -11,9 +11,9 @@ src: "llvm/lib/Transforms/Scalar/ConstraintElimination.cpp"
 docs: "LLVM Passes — ConstraintElimination ↗ https://llvm.org/docs/Passes.html"
 prereqs: [llvm-basics, dominator-tree]
 related: [lazy-value-info, correlated-value-propagation, data-flow-analysis, getelementptr]
-tags: [kind/pass, status/verified]
-status: verified
-verified_on: 2026-06-30
+tags: [kind/pass, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # LLVM ConstraintElimination
