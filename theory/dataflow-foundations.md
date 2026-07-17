@@ -53,6 +53,19 @@ This is why a constant lattice (height 2) or a bit-vector lattice (height = #fac
 > ![dataflow-foundations-lattice-climb.gif](attachments/dataflow-foundations-lattice-climb.gif)
 > The loop-header facts `i` and `sum` from [[running-example|the running example]] climb the constant lattice as worklist iteration runs — monotone transfers only move facts *up*, and the height-2 chain caps each fact at two moves, which is exactly why the fixpoint (MFP) must arrive. (Regenerate: `_meta/anim/storyboards/dataflow-foundations-lattice-climb.json`.)
 
+The theorem above says iteration *stops*. It says nothing about **when** — and that gap is why no real engine visits blocks in arbitrary order.
+
+> [!info] Why every engine walks in reverse post-order
+> Visit blocks in **reverse post-order** — a topological order of the CFG once back edges are ignored — and each fact propagates as far as it can along forward edges **within a single sweep**. Only a **back edge** can carry a fact to a block already visited this pass, and so only a back edge can force another sweep.
+>
+> The consequence is the striking part: the number of sweeps is bounded by the flow graph's **loop nesting depth**, *not by its size*. A 10,000-block function nested two loops deep converges in a couple of passes; a 50-block function nested five deep takes more. Formally, depth $d$ is the greatest number of back edges on any acyclic path from entry, the flow graph must be **reducible**, and the classical bound is stated for bit-vector ("rapid") frameworks — Hecht & Ullman's result, generalized to monotone frameworks by Kam & Ullman.
+
+> [!danger] Unverified — the exact constant
+> Sources state the bound as **$d+2$** or **$d+3$**, differing on how passes are counted (whether the initial sweep and the final confirm-nothing-changed sweep are included) and on the precise framework conditions. This note therefore asserts only the **shape** — linear in loop depth, independent of graph size — and deliberately does not commit to a constant. Settling it requires Hecht & Ullman (1975) or Kam & Ullman (1976) directly; three secondary sources consulted disagreed with each other.
+
+> [!tip] Where this shows up in LLVM
+> It's why `llvm/ADT/PostOrderIterator.h` ships a `ReversePostOrderTraversal` at all, and why Clang's dataflow engine walks its CFG in RPO rather than in layout order (see [[dataflow-worked-example]]). [[loop-invariant-code-motion|LICM]] leans on the same property for a different purpose: it hoists in RPO so that an operand is already hoisted by the time its user is examined — which is what lets it get away with a *local* invariance test instead of iterating to a fixpoint at all. Choosing the traversal order is how you avoid needing the fixpoint.
+
 ## 3. MFP vs. MOP — precision
 
 > [!info] The two solutions

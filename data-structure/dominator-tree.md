@@ -4,6 +4,7 @@ facet: data-structure
 stage: analysis
 ecosystem: [general, llvm]
 concepts: [dominance]
+algorithm: [dominator-tree-construction]
 src: "llvm/include/llvm/IR/Dominators.h; llvm/include/llvm/Support/GenericDomTree.h"
 docs: "doxygen — DominatorTree ↗ https://llvm.org/doxygen/classllvm_1_1DominatorTree.html"
 prereqs: [control-flow-graph]
@@ -27,7 +28,8 @@ verified_on: 2026-06-28
 > | $A$ dominates $B$ | `DominatorTree::dominates(A, B)` |
 > | Immediate dominator $idom(B)$ | parent of `B` in the `DominatorTree` |
 > | Dominator tree | `DominatorTree` (`llvm/IR/Dominators.h`) |
-> | Dominance frontier | `DominanceFrontier` — drives `mem2reg` φ-placement |
+> | Dominance frontier | `DominanceFrontier` — an in-tree analysis, but **not** what drives φ-placement (see §3) |
+> | Iterated dominance frontier | `ForwardIDFCalculator` — this *is* what `mem2reg` uses |
 > | Post-dominance | `PostDominatorTree` |
 
 ---
@@ -42,7 +44,10 @@ verified_on: 2026-06-28
 ### 2. The dominator tree
 
 > [!note] Definition
-> Make $idom(B)$ the parent of $B$ for every block; the result is a tree rooted at the entry. $A$ dominates $B$ **iff** $A$ is an ancestor of $B$ in this tree — so dominance queries become ancestor checks. LLVM computes it with the near-linear **Lengauer–Tarjan** algorithm (with the Semi-NCA refinement) and maintains it incrementally as the CFG changes.
+> Make $idom(B)$ the parent of $B$ for every block; the result is a tree rooted at the entry. $A$ dominates $B$ **iff** $A$ is an ancestor of $B$ in this tree — so dominance queries become ancestor checks.
+
+> [!info] How it's actually built
+> Not with the near-linear **Lengauer–Tarjan** algorithm the textbooks give you. LLVM ships **Semi-NCA**, which keeps LT's semidominator phase but computes each idom as a nearest common ancestor — accepting an $O(n^2)$ worst case in exchange for simpler code and, decisively, **cheap incremental updates** as passes mutate the CFG underneath it. → [[dominator-tree-construction]]
 
 **Figure — a CFG and the dominator tree built from it.**
 
@@ -80,7 +85,10 @@ flowchart TD
 Check it on the figure above: is `D ∈ DF(B)`? (1) `B` dominates a predecessor of `D` — every block dominates itself, and `B` is a predecessor of `D`. (2) `B` does not strictly dominate `D` — the path `A→C→D` avoids `B`. Both conditions hold ⇒ `D ∈ DF(B)`, and by symmetry `D ∈ DF(C)`. So a value defined in `B` or `C` needs a `phi` in `D` — exactly SSA φ-placement (see [[ssa-form]]).
 
 > [!tip] The payoff
-> Minimal-SSA construction places a φ for a variable precisely at the **iterated dominance frontier** of its definitions — *iterated* because each placed φ is itself a new definition with its own frontier, so DF is re-applied until the set stops growing (Cytron et al.) — this is what `mem2reg` does (see [[ssa-form]]).
+> SSA construction places a φ for a variable at the **iterated dominance frontier** of its definitions — *iterated* because each placed φ is itself a new definition with its own frontier, so DF is re-applied until the set stops growing. That is Cytron et al.'s formulation, and it yields **minimal** SSA (see [[ssa-form]]).
+
+> [!warning] What `mem2reg` actually does is not this
+> Two departures, both easy to get wrong. It never materializes a dominance-frontier set for any block — it computes the *iterated* frontier directly, per-alloca, by a **Sreedhar–Gao** level walk. And it prunes by liveness as it goes, so it lands on **pruned** SSA, not minimal. → [[ssa-construction]]
 
 > [!example] On the running example
 > The `-O0` CFG of `accumulate` ([[running-example#2. Front-end IR — everything is a stack slot]]) is `entry → for.cond`, `for.cond → {for.body, for.end}`, `for.body → for.inc → for.cond` (the back-edge). Dominator tree: `entry → for.cond → {for.body, for.end}`, `for.body → for.inc`.
@@ -89,10 +97,10 @@ Check it on the figure above: is `D ∈ DF(B)`? (1) `B` dominates a predecessor 
 ### 4. Where LLVM uses it
 
 > [!info] Consumers
-> - **SSA construction / `mem2reg`** — φ placement via dominance frontiers.
+> - **SSA construction / `mem2reg`** — φ placement at the *iterated* dominance frontier, computed by `ForwardIDFCalculator` from the tree's levels rather than from materialized frontier sets (§3). → [[ssa-construction]]
 > - **[[value-numbering|GVN]]** — processes blocks in reverse post-order with a global leader table, using the dominator tree for dominance queries. (A contrasting design: `EarlyCSE` instead walks the dominator tree itself, scoping its hash table to the current root-to-node path.)
-> - **[[loop-transformations#Loop-invariant code motion (LICM)|LICM]]** — legality needs the definition to dominate all uses and the block to dominate loop exits.
-> - **[[loop-info|LoopInfo / LCSSA]]** — the header dominates the loop; LCSSA closing-φ placement uses dominance frontiers.
+> - **[[loop-transformations#Loop-invariant code motion (LICM)|LICM]]** — hoist legality needs the definition to dominate all uses; the classic second half, "and the block must dominate the loop exits", is what LICM *replaces* — see §6.
+> - **[[loop-info|LoopInfo / LCSSA]]** — the header dominates the loop. LCSSA's closing-φ placement *looks* like a frontier question but isn't computed as one: it enumerates the loop's exit blocks from `LoopInfo` and filters them with a plain `dominates` query. The only part of a loop-internal def's frontier that can matter is its exits, and those are already known.
 
 > [!note] Post-dominators
 > $B$ **post-dominates** $A$ iff every path from $A$ to the exit passes through $B$ — the dominance relation on the reverse CFG. Used by control-dependence and sinking transforms.
