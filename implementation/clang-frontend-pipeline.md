@@ -10,9 +10,9 @@ src: "clang/lib/Sema"
 docs: "Clang — Introduction to the Clang AST ↗ https://clang.llvm.org/docs/IntroductionToTheClangAST.html"
 prereqs: [llvm-basics]
 related: [clang-ast, type-checking, control-flow-translation]
-tags: [kind/pass, status/verified]
-status: verified
-verified_on: 2026-07-01
+tags: [kind/pass, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Clang Front-End Pipeline (Lex → Parse → Sema → AST)

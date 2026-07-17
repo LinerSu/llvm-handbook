@@ -10,9 +10,9 @@ docs: "Passes — jump-threading ↗ https://llvm.org/docs/Passes.html"
 book: "Muchnick, Advanced Compiler Design & Implementation §18"
 prereqs: [control-flow-graph, sparse-conditional-constant-propagation]
 related: [simplifycfg, sparse-conditional-constant-propagation, lazy-value-info, correlated-value-propagation]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Jump Threading

@@ -9,9 +9,9 @@ src: "llvm/lib/Transforms/Utils/ (mem2reg, SSAUpdater)"
 docs: "LangRef — phi ↗ https://llvm.org/docs/LangRef.html#phi-instruction"
 prereqs: [llvm-basics]
 related: [memory-ssa, value-numbering, loop-info, mem2reg]
-tags: [kind/data-structure, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/data-structure, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # SSA Form

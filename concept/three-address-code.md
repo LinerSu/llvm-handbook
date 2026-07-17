@@ -9,9 +9,9 @@ docs: "LangRef — instruction reference ↗ https://llvm.org/docs/LangRef.html#
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §6.1–6.2"
 prereqs: [llvm-basics]
 related: [ssa-form, value-numbering, control-flow-graph, dominator-tree]
-tags: [kind/concept, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/concept, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Three-Address Code

@@ -7,9 +7,9 @@ concepts: [llvm-ir, ssa, memory-optimization, loop-optimization, induction-varia
 prereqs: [llvm-basics]
 related: [ssa-form, mem2reg, loop-info, getelementptr, scalar-evolution, induction-variables-and-strength-reduction, inlining, instruction-combining]
 docs: "Produced locally with `clang -emit-llvm` (Apple clang 17 ≈ LLVM 19); cosmetics track the clang version — see [[llvm-version]]"
-tags: [kind/concept, status/verified, version-sensitive]
-status: verified
-verified_on: 2026-06-29
+tags: [kind/concept, status/unverified, version-sensitive]
+status: unverified
+verified_on: ""
 ---
 
 # The Running Example — one program through the pipeline

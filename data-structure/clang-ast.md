@@ -8,9 +8,9 @@ src: "clang/include/clang/AST/ASTContext.h"
 docs: "Clang — Introduction to the Clang AST ↗ https://clang.llvm.org/docs/IntroductionToTheClangAST.html"
 prereqs: [llvm-basics]
 related: [clang-cfg, source-level-analysis, type-checking, three-address-code]
-tags: [kind/data-structure, status/verified]
-status: verified
-verified_on: 2026-06-30
+tags: [kind/data-structure, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Clang AST

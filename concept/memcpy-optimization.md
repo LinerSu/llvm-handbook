@@ -11,9 +11,9 @@ src: "llvm/lib/Transforms/Scalar/MemCpyOptimizer.cpp"
 docs: "MemCpyOptimizer doxygen ↗ https://llvm.org/doxygen/MemCpyOptimizer_8h_source.html"
 prereqs: [memory-ssa]
 related: [memory-ssa, dead-store-elimination, pointer-alias-analysis]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 sources:
   - "https://llvm.org/doxygen/MemCpyOptimizer_8h_source.html"
   - "https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/MemCpyOptimizer.cpp"

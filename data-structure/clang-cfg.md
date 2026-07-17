@@ -8,9 +8,9 @@ src: "clang/include/clang/Analysis/CFG.h"
 docs: "Clang doxygen — clang::CFG ↗ https://clang.llvm.org/doxygen/classclang_1_1CFG.html"
 prereqs: [clang-ast]
 related: [control-flow-graph, source-level-analysis, data-flow-analysis]
-tags: [kind/data-structure, status/verified]
-status: verified
-verified_on: 2026-06-30
+tags: [kind/data-structure, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Clang CFG (source-level)

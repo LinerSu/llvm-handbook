@@ -8,9 +8,9 @@ src: llvm/lib/Analysis/LoopInfo.cpp
 docs: "LoopTerminology ↗ https://llvm.org/docs/LoopTerminology.html"
 prereqs: [ssa-form]
 related: [loop-transformations, memory-ssa]
-tags: [kind/data-structure, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/data-structure, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # LoopInfo & Loop Canonical Forms

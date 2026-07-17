@@ -19,9 +19,22 @@ Run this after writing or updating **any** vault note, as a matter of course —
 7. **Classification** — `facet`/`stage`/`ecosystem` assigned per [[classification-protocol]]; any new `concepts:` key added to [[controlled-vocabulary]].
 
 ## When the note makes LLVM claims
-8. **Correctness** — fact-check each non-obvious LLVM claim against a **primary source** ([[source-hierarchy]]); set `status: verified` + `verified_on` only after checking; wrap anything unconfirmed in `> [!danger] Unverified`.
-9. **Version** — version-dependent specifics carry the `version-sensitive` tag and link [[llvm-version]]; never hardcode a release number.
+
+> [!danger] What `status: verified` means — read this before setting it
+> **`verified` = every falsifiable claim in this note was checked against LLVM source at the tag in [[llvm-version]], on the date in `verified_on`.** It does *not* mean the note reads plausibly, that `vault-lint` passed, or that a web search agreed. If you did not open the file, the note is **`unverified`**. That is a normal, honest status — 69 notes carried it after the 2026-07-16 audit.
+>
+> This bar exists because the vault failed it. From the initial commit until 2026-07-16, every note was born `status: verified`; `verified_on` recorded the authoring date, not a check. A correctness pass did run, was **web**-verified, edited [[dominator-tree]], and still left five wrong claims in it — including that LLVM builds dominator trees with "near-linear **Lengauer–Tarjan**" when it ships **Semi-NCA**. Measured error rate across a 9-note sample: **13 of 132 claims refuted (9.8%); 8 of 9 notes wrong.**
+
+8. **Correctness** — **enumerate every falsifiable claim** (one naming an LLVM pass, class, file, function, flag, default, algorithm, complexity, or version) and check **each** against tier-1 source ([[source-hierarchy]]) at the tag in [[llvm-version]]. Then set `status: verified` + `verified_on`. Wrap anything unconfirmed in `> [!danger] Unverified` and leave the note `unverified`.
+   - **Check every claim, not the doubtful ones.** Verification triggered by suspicion is a *plausibility filter*: it catches only claims that look wrong, which is the exact complement of the dangerous set. The claims that survive are the confident, wrong, well-written ones.
+   - **Search is not evidence.** It cannot catch an error the web shares — and in the 2026-07-16 audit, **10/10 refuted claims were ones search would have confirmed**. Tier-3 docs "can lag the code"; tier-4 blogs are "never the sole citation".
+   - **LLVM's own comments are not evidence either.** `GVN.cpp` carries `// Top-down walk of the dominator tree.` directly above `ReversePostOrderTraversal<Function *> RPOT(&F);` — a vault note copied that comment and was wrong for it. The code is truth; the comment beside it is a claim.
+   - **The standing check for any "pass X uses/enables Y" claim is the `cl::opt` default** — find the `cl::init(...)` and read it. The failure pattern is always "the feature exists, so it reads true, but it's off by default or is an enhancement rather than the mechanism". This one check refuted two claims in the audit.
+   - **A wrong refutation is as costly as the original error.** Before contradicting a note, rule out: non-default flags, virtual dispatch, template instantiations, semantics-vs-procedure, classic-theory register, target overrides, incomplete≠contradicted, and deliberately out-of-tree subjects. Discarding your own draft refutation is a success.
+   - Automated by the `note-correctness-review` skill, which implements exactly this and reports an **error rate** — a pass with no denominator can't tell you whether the badge means anything.
+9. **Version** — version-dependent specifics carry the `version-sensitive` tag and link [[llvm-version]]; never hardcode a release number. On a bump, re-verify that note's claims **against source** and re-stamp `verified_on`; a stale `verified_on` on a `version-sensitive` note is a `vault-lint` WARN.
 10. **Source link** — a note about a *specific LLVM pass/transformation* includes a **clickable GitHub source link** to the implementing file or directory (`https://github.com/llvm/llvm-project/blob/main/llvm/lib/…`) in the `[!quote]` footer. The `src:`/`implements:` frontmatter keeps the path; the footer makes it a link. (Paths are version-stable; the version lives in [[llvm-version]].)
+    - **These links track `main` for navigation — they are not the verified revision.** Verification happens at the tag; `main` may have drifted since. Say so in the footer rather than letting "verified" sit next to a `main` URL, which reads as though `main` is what was checked.
 
 ## Reading pass
 11. Each heading carries its point; the story is consistent across the note (and its chapter); the note is right-sized — cut redundancy, add only where a reader would be lost.

@@ -10,9 +10,9 @@ docs: "Garbage Collection Safepoints in LLVM ↗ https://llvm.org/docs/Statepoin
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §7.5"
 prereqs: [code-generation-overview]
 related: [code-generation-overview]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Garbage-Collection Support (Statepoints)

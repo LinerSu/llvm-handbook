@@ -8,9 +8,9 @@ src: llvm/lib/Analysis/MemorySSA.cpp
 docs: "MemorySSA ↗ https://llvm.org/docs/MemorySSA.html"
 prereqs: [ssa-form]
 related: [pointer-alias-analysis, loop-transformations]
-tags: [kind/data-structure, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/data-structure, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Memory SSA

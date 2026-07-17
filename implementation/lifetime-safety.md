@@ -10,9 +10,9 @@ src: "clang/lib/Analysis/LifetimeSafety"
 docs: "Clang — LifetimeSafety ↗ https://clang.llvm.org/docs/"
 prereqs: [clang-cfg, data-flow-analysis]
 related: [clang-static-analyzer, clang-dataflow-framework, pointer-alias-analysis]
-tags: [kind/analysis, status/verified]
-status: verified
-verified_on: 2026-07-01
+tags: [kind/analysis, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Clang LifetimeSafety

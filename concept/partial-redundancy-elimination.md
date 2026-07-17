@@ -10,9 +10,9 @@ docs: "GVN load elimination ↗ https://blog.llvm.org/2009/12/introduction-to-lo
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §9.5"
 prereqs: [value-numbering, data-flow-analysis]
 related: [value-numbering, memory-ssa, llvm-gvn]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Partial-Redundancy Elimination (PRE)

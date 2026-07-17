@@ -10,9 +10,9 @@ src: "llvm/include/llvm/IR/InstVisitor.h"
 docs: "InstVisitor doxygen ↗ https://llvm.org/doxygen/classllvm_1_1InstVisitor.html"
 prereqs: [llvm-basics]
 related: [instruction-combining, instruction-selection, extending-llvm-ir, ast-traversal]
-tags: [kind/concept, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/concept, status/unverified]
+status: unverified
+verified_on: ""
 sources:
   - "https://llvm.org/doxygen/classllvm_1_1InstVisitor.html"
   - "https://llvm.org/doxygen/InstVisitor_8h_source.html"

@@ -12,9 +12,9 @@ src: "llvm/lib/Analysis/LazyValueInfo.cpp"
 docs: "LazyValueInfo doxygen ↗ https://llvm.org/doxygen/classllvm_1_1LazyValueInfo.html"
 prereqs: [data-flow-analysis, dataflow-foundations]
 related: [correlated-value-propagation, jump-threading, sparse-conditional-constant-propagation, data-flow-analysis, constraint-elimination]
-tags: [kind/analysis, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/analysis, status/unverified]
+status: unverified
+verified_on: ""
 sources:
   - "https://llvm.org/doxygen/classllvm_1_1LazyValueInfo.html"
   - "https://llvm.org/doxygen/classllvm_1_1ValueLatticeElement.html"

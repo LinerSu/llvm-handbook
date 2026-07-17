@@ -10,9 +10,9 @@ src: "clang/lib/Sema/SemaExprCXX.cpp"
 docs: "WG21 P2719 — Type-aware allocation and deallocation functions"
 prereqs: [clang-ast]
 related: [fbounds-safety, safe-buffers, pointer-authentication]
-tags: [kind/pass, status/verified]
-status: verified
-verified_on: 2026-07-01
+tags: [kind/pass, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Type-Aware Allocation (typed allocators)

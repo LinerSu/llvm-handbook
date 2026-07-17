@@ -10,9 +10,9 @@ src: "clang/lib/Sema/SemaBoundsSafety.cpp"
 docs: "Clang — -fbounds-safety ↗ https://clang.llvm.org/docs/BoundsSafety.html"
 prereqs: [clang-ast, getelementptr]
 related: [constraint-elimination, safe-buffers, clang-ast, fbounds-safety-bottlenecks]
-tags: [kind/pass, status/verified, version-sensitive]
-status: verified
-verified_on: 2026-07-01
+tags: [kind/pass, status/unverified, version-sensitive]
+status: unverified
+verified_on: ""
 ---
 
 # -fbounds-safety

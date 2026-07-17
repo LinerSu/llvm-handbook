@@ -10,9 +10,9 @@ docs: "CodeGenerator ↗ https://llvm.org/docs/CodeGenerator.html"
 book: "Muchnick, Advanced Compiler Design & Implementation §15.5"
 prereqs: [code-generation-overview, dominator-tree]
 related: [code-generation-overview, register-allocation]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Shrink Wrapping

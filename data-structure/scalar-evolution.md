@@ -9,9 +9,9 @@ docs: "doxygen — ScalarEvolution ↗ https://llvm.org/doxygen/classllvm_1_1Sca
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §9.8"
 prereqs: [loop-info]
 related: [loop-transformations, loop-info]
-tags: [kind/data-structure, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/data-structure, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Scalar Evolution (SCEV)

@@ -9,9 +9,9 @@ src: "llvm/include/llvm/IR/Dominators.h; llvm/include/llvm/Support/GenericDomTre
 docs: "doxygen — DominatorTree ↗ https://llvm.org/doxygen/classllvm_1_1DominatorTree.html"
 prereqs: [control-flow-graph]
 related: [ssa-form, value-numbering, loop-info]
-tags: [kind/data-structure, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/data-structure, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Dominator Tree & Dominance Frontier

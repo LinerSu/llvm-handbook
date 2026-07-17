@@ -10,9 +10,9 @@ docs: "Passes — ipsccp ↗ https://llvm.org/docs/Passes.html"
 book: "Muchnick, Advanced Compiler Design & Implementation §19"
 prereqs: [sparse-conditional-constant-propagation, call-graph]
 related: [sparse-conditional-constant-propagation, function-specialization, dead-code-elimination]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Interprocedural SCCP (IPSCCP)

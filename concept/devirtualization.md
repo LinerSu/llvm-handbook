@@ -10,9 +10,9 @@ docs: "doxygen — WholeProgramDevirt ↗ https://llvm.org/doxygen/WholeProgramD
 book: "Muchnick, Advanced Compiler Design & Implementation §19"
 prereqs: [call-graph, inlining]
 related: [inlining, call-graph]
-tags: [kind/transform, status/verified, version-sensitive]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified, version-sensitive]
+status: unverified
+verified_on: ""
 ---
 
 # Devirtualization

@@ -25,13 +25,20 @@ source: "https://github.com/llvm/llvm-project/releases"
 
 ## Version-sensitive claims to re-check on a bump
 
-| Claim | Note | Current (22.1.x) |
-|---|---|---|
-| Default register allocator | [[register-allocation]] | **Greedy** at `-O1+`, Fast at `-O0` |
-| Default instruction selector | [[instruction-selection]], [[code-generation-overview]] | **SelectionDAG** on most targets; **GlobalISel** default/most-mature on **AArch64** |
-| PRE availability | [[partial-redundancy-elimination]] | **load PRE in GVN** on by default; full **GVN-PRE off** by default |
-| Pointer/alias passes in-tree | [[pointer-alias-analysis]] | `basic-aa`, `tbaa`, `globals-aa`, `scev-aa`, `cfl-anders-aa`, `cfl-steens-aa`; DSA in external `poolalloc` |
-| Latest stable release | (this note) | **22.1.8** |
+> [!warning] Re-check these against **source at `llvm_git_tag`**, never against docs or search
+> Every row below is a claim about a *default*, and defaults are exactly what tier-3 prose and tier-4 blogs get wrong (see [[source-hierarchy]]). Three of these rows were themselves wrong until 2026-07-16 — this table shipped for three weeks asserting the existence of alias analyses LLVM had deleted. **The standing check for any "pass X uses/enables Y" claim is the `cl::opt` default**: find the `cl::init(...)` and read it. That single check refuted two claims in the 2026-07-16 audit.
+
+| Claim | Note | Current (22.1.x) | Source of truth |
+|---|---|---|---|
+| Default register allocator | [[register-allocation]] | **Greedy** at `-O1+`, **Fast** at `-O0` | `TargetPassConfig.cpp` (`createTargetRegisterAllocator`) |
+| Default instruction selector | [[instruction-selection]], [[code-generation-overview]] | **SelectionDAG** by default everywhere, *except*: **SPIRV** always uses GlobalISel (`setGlobalISel(true); setFastISel(false)`), and **AArch64 at `-O0`** uses GlobalISel (`aarch64-enable-global-isel-at-O` is `cl::init(0)`, and `CodeGenOptLevel::None == 0`). **FastISel runs at `-O0` only on targets that don't opt into GlobalISel** — GlobalISel is tested *first*. | `TargetPassConfig.cpp:1004-1016`; `AArch64TargetMachine.cpp:158-161,385-391`; `SPIRVTargetMachine.cpp:91-93` |
+| PRE availability | [[partial-redundancy-elimination]] | In GVN, **both** `enable-pre` (scalar) and `enable-load-pre` are **`cl::init(true)`** — on by default. Off by default: `enable-load-pre-split-backedge`, `enable-gvn-memoryssa`. There is **no `gvn-pre` pass**; complete VanDrunen/Hosking-style PRE is not implemented upstream at all (which is different from "off by default"). | `GVN.cpp:108-117` |
+| Pointer/alias passes in-tree | [[pointer-alias-analysis]] | Exactly six registered: `globals-aa` (module), `basic-aa`, `objc-arc-aa`, `scev-aa`, `scoped-noalias-aa`, `tbaa` (function). **CFL-AA is gone** — `cfl-anders-aa`/`cfl-steens-aa` have no registration and their sources 404 at this tag. DSA remains out-of-tree in `poolalloc`. | `llvm/lib/Passes/PassRegistry.def:47,392-396` |
+| GlobalISel maturity | [[instruction-selection]] | **Not a checkable claim — do not assert it.** "Most mature on AArch64" has no source metric. The checkable fact is which targets call `setGlobalISel(true)`: SPIRV (always) and AArch64 (`-O0` only). Notably **not** AMDGPU, which still needs explicit `-global-isel`. | `grep -rn "setGlobalISel(true)" llvm/lib/Target/` |
+| Latest stable release | (this note) | **22.1.8** | [releases](https://github.com/llvm/llvm-project/releases) |
+
+> [!note] Table last source-verified
+> **2026-07-16**, against `llvmorg-22.1.8`, by reading the files in the *Source of truth* column directly. Prior to that date this table had never been checked against source — it was authored alongside the vault and inherited its claims from the notes it was meant to govern.
 
 ## Notes currently tagged `version-sensitive`
 

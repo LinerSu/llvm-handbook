@@ -7,9 +7,9 @@ concepts: [type-checking, type-systems]
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §6.3, §6.5"
 prereqs: [llvm-basics]
 related: [unification, extending-llvm-ir, getelementptr, source-level-analysis, clang-ast]
-tags: [kind/concept, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/concept, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # LLVM Types & Where Type-Checking Lives

@@ -8,9 +8,9 @@ src: llvm/lib/IR/Instructions.cpp
 docs: "The Often Misunderstood GEP ↗ https://llvm.org/docs/GetElementPtr.html"
 prereqs: [llvm-basics]
 related: [pointer-alias-analysis]
-tags: [kind/concept, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/concept, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # GetElementPtr (GEP) — address computation in LLVM IR

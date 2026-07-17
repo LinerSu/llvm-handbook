@@ -11,9 +11,9 @@ src: "llvm/lib/Transforms/Scalar/LICM.cpp"
 docs: "Passes — licm ↗ https://llvm.org/docs/Passes.html"
 prereqs: [loop-info, ssa-form]
 related: [loop-transformations, scalar-evolution, pointer-alias-analysis, memory-ssa]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 sources:
   - "https://llvm.org/doxygen/LICM_8cpp.html"
   - "https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/LICM.cpp"

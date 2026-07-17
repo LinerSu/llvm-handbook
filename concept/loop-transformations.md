@@ -10,9 +10,9 @@ implements:
 docs: "Passes ↗ https://llvm.org/docs/Passes.html"
 prereqs: [loop-info, ssa-form]
 related: [pointer-alias-analysis, memory-ssa, loop-invariant-code-motion]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Loop Transformations

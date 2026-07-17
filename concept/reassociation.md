@@ -10,9 +10,9 @@ docs: "Passes — reassociate ↗ https://llvm.org/docs/Passes.html"
 book: "Muchnick, Advanced Compiler Design & Implementation §12.3"
 prereqs: [three-address-code]
 related: [value-numbering, instruction-combining, loop-transformations]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Reassociation

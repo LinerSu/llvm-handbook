@@ -12,9 +12,9 @@ docs: "CodeGenerator — register allocation ↗ https://llvm.org/docs/CodeGener
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §8.8"
 prereqs: [code-generation-overview]
 related: [instruction-selection, data-flow-analysis, control-flow-graph, running-example]
-tags: [kind/concept, status/verified, version-sensitive]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/concept, status/unverified, version-sensitive]
+status: unverified
+verified_on: ""
 ---
 
 # Register Allocation

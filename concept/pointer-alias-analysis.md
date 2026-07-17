@@ -9,9 +9,9 @@ implements:
 docs: "AliasAnalysis ↗ https://llvm.org/docs/AliasAnalysis.html"
 prereqs: [llvm-basics]
 related: [memory-ssa, loop-transformations, value-numbering]
-tags: [kind/analysis, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/analysis, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Pointer / Alias Analysis

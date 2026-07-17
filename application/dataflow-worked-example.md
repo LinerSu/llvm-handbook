@@ -13,9 +13,9 @@ src: "clang/include/clang/Analysis/FlowSensitive"
 docs: "Clang doxygen — clang::dataflow ↗ https://clang.llvm.org/doxygen/namespaceclang_1_1dataflow.html"
 prereqs: [clang-dataflow-framework, data-flow-analysis]
 related: [clang-dataflow-framework, clang-cfg, source-level-analysis, clang-static-analyzer]
-tags: [kind/analysis, status/verified]
-status: verified
-verified_on: 2026-06-30
+tags: [kind/analysis, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # A Minimal clang::dataflow Analysis, Worked

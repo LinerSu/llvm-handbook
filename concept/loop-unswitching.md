@@ -10,9 +10,9 @@ docs: "Passes — simple-loop-unswitch ↗ https://llvm.org/docs/Passes.html"
 book: "Muchnick, Advanced Compiler Design & Implementation §14"
 prereqs: [loop-info, loop-transformations]
 related: [loop-transformations]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Loop Unswitching

@@ -11,9 +11,9 @@ docs: "doxygen — IndVarSimplify ↗ https://llvm.org/doxygen/IndVarSimplify_8c
 book: "Muchnick, Advanced Compiler Design & Implementation §14"
 prereqs: [scalar-evolution, loop-info]
 related: [scalar-evolution, loop-transformations]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Induction Variables & Strength Reduction

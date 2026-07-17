@@ -10,9 +10,9 @@ docs: "doxygen — DependenceInfo ↗ https://llvm.org/doxygen/classllvm_1_1Depe
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §11.6"
 prereqs: [scalar-evolution, loop-info]
 related: [polyhedral-model, loop-transformations]
-tags: [kind/analysis, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/analysis, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Array Dependence Analysis

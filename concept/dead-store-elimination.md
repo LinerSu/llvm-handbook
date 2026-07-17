@@ -11,9 +11,9 @@ src: "llvm/lib/Transforms/Scalar/DeadStoreElimination.cpp"
 docs: "DeadStoreElimination doxygen ↗ https://llvm.org/doxygen/DeadStoreElimination_8cpp.html"
 prereqs: [memory-ssa]
 related: [memory-ssa, dead-code-elimination, pointer-alias-analysis, memcpy-optimization]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 sources:
   - "https://llvm.org/doxygen/DeadStoreElimination_8cpp.html"
   - "https://github.com/llvm/llvm-project/blob/main/llvm/lib/Transforms/Scalar/DeadStoreElimination.cpp"

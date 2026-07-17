@@ -7,9 +7,9 @@ concepts: [unification, type-inference]
 book: "Dragon Book (Aho/Lam/Sethi/Ullman, 2e) §6.5.5"
 prereqs: []
 related: [type-checking, pointer-alias-analysis]
-tags: [kind/algorithm, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/algorithm, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Unification

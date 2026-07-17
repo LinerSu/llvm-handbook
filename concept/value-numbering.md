@@ -9,9 +9,9 @@ implements:
 docs: "Passes — gvn ↗ https://llvm.org/docs/Passes.html"
 prereqs: [ssa-form]
 related: [instruction-combining, llvm-gvn, early-cse]
-tags: [kind/transform, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/transform, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Value Numbering

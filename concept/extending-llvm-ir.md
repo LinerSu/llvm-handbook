@@ -8,9 +8,9 @@ src: llvm/lib/IR/
 docs: "LangRef ↗ https://llvm.org/docs/LangRef.html"
 prereqs: [llvm-basics]
 related: [getelementptr, pointer-alias-analysis]
-tags: [kind/concept, status/verified]
-status: verified
-verified_on: 2026-06-28
+tags: [kind/concept, status/unverified]
+status: unverified
+verified_on: ""
 ---
 
 # Extending LLVM IR
