@@ -90,7 +90,9 @@ verified_on: ""
 > - **Scalable:** unification keeps the graph **finite**.
 
 > [!warning] Where DSA/Steensgaard actually live (verified against the AliasAnalysis doc)
-> In current LLVM the *in-tree* alias analyses are `basic-aa`, `tbaa`, `globals-aa` (globalsmodref), and `scev-aa`. **DSA (`-ds-aa`) and Steensgaard (`-steens-aa`) are NOT part of LLVM core** — they ship in the optional `poolalloc` module. Treat DSA below as the canonical *algorithm* to learn, not an off-the-shelf core pass.
+> The *in-tree* alias analyses are exactly **six**, all registered in `llvm/lib/Passes/PassRegistry.def`: `globals-aa` (module-level; globalsmodref), and the function-level `basic-aa`, `tbaa`, `scev-aa`, `scoped-noalias-aa` (honours `!noalias`/`!alias.scope`), and `objc-arc-aa`. **DSA (`-ds-aa`) and Steensgaard (`-steens-aa`) are NOT part of LLVM core** — they ship in the optional `poolalloc` module. Treat DSA below as the canonical *algorithm* to learn, not an off-the-shelf core pass. → [[llvm-version]]
+>
+> Also gone: **CFL-AA** (`cfl-anders-aa`, `cfl-steens-aa`), the in-tree CFL-reachability analyses that older material still cites. They have no registration and their sources no longer exist upstream — so if a tutorial hands you `-cfl-steens-aa`, it predates their removal.
 
 > [!info] What it gives you
 > - **Input:** an IR file. **Output:** a **DSA graph** with memory info.

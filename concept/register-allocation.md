@@ -26,7 +26,7 @@ verified_on: ""
 > After instruction selection, the code is **MIR** (LLVM's machine-level IR) and still uses **infinitely many virtual registers**; register allocation maps them onto the target's **finite** physical registers, **spilling** to the stack when they don't fit. The textbook method is graph coloring — but LLVM's production allocator is *not* a graph colorer, and the difference is worth knowing.
 
 > [!info] What it needs first: live ranges
-> A virtual register's **live range** is the set of program points where its value may still be used — computed by **liveness**, a backward "may" [[data-flow-analysis|dataflow analysis]] over the [[control-flow-graph|CFG]] (`LiveVariables` → `LiveIntervals`). Two ranges **interfere** if they are live at the same point and so cannot share a physical register.
+> A virtual register's **live range** is the set of program points where its value may still be used — the classic backward "may" [[data-flow-analysis|dataflow analysis]] over the [[control-flow-graph|CFG]]. In LLVM it is `LiveIntervals`, built by `LiveIntervalCalc` from SSA def-use chains plus `SlotIndexes`; the separate `LiveVariables` pass runs earlier in the pipeline but is **not** an input to it — it survives only to supply kill flags for `TwoAddressInstruction`. Two ranges **interfere** if they are live at the same point and so cannot share a physical register.
 
 ---
 
@@ -63,7 +63,7 @@ This is the classic **Chaitin–Briggs** graph-coloring approach: build → try 
 > | **Fast** (`RegAllocFast`) | `-O0` | local, per-block, greedy — fastest, lowest quality |
 > | **Basic** (`RegAllocBasic`) | reference/baseline | priority-ordered; spills whole live intervals (no splitting) |
 > | **Greedy** (`RegAllocGreedy`) | **default at `-O1+`** | global; **live-range splitting + eviction** guided by spill-weight cost, not coloring |
-> | **PBQP** (`RegAllocPBQP`) | opt-in | models allocation as a Partitioned Boolean Quadratic Problem (graph-based, constraint solver) |
+> | **PBQP** (`RegAllocPBQP`) | opt-in | models allocation as a Partitioned Boolean Quadratic **Programming** problem (graph-based, constraint solver) |
 
 **Greedy**, the one you actually get, treats allocation as a priority queue of intervals: assign the highest-priority interval a free register; if none is free, either **evict** a lower-spill-weight interval (re-queue it) — *spill weight* ≈ the estimated runtime cost of keeping that value in memory, defined in §4 — or **split** the interval at block boundaries so part of it stays in a register and part spills. Splitting (instead of spilling a whole value) is the key win over textbook coloring.
 

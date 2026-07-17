@@ -23,7 +23,7 @@ verified_on: ""
 > **Prerequisites:** [[code-generation-overview]] · **Followed by:** [[register-allocation]]
 
 > [!abstract] Chapter map
-> Instruction selection maps **target-independent IR operations** to **target machine instructions**. One IR op may need several machine instructions, and one machine instruction may cover several IR ops — so selection is a **covering** (tiling) problem. LLVM has three selectors: **SelectionDAG** (default), **GlobalISel** (newer), and **FastISel** (`-O0`).
+> Instruction selection maps **target-independent IR operations** to **target machine instructions**. One IR op may need several machine instructions, and one machine instruction may cover several IR ops — so selection is a **covering** (tiling) problem. LLVM has three selectors: **SelectionDAG** (the default), **GlobalISel** (newer), and **FastISel** (a fast `-O0` path). Which one you get is a per-target question, not just an opt-level one — see §3.
 
 > [!info] The textbook framing: tiling
 > Represent the computation as a tree/DAG; a target instruction is a **tile** (a small pattern with a cost) that covers part of it. Selecting code = covering the whole tree with tiles at minimum total cost. **Maximal munch** greedily takes the largest matching tile; **dynamic programming** finds an *optimal* tiling. LLVM's pattern matchers are the engineering form of this.
@@ -68,7 +68,10 @@ flowchart LR
 
 It avoids SelectionDAG's per-block isolation and large `SDNode` graphs.
 
-## 3. FastISel (`-O0`)
+## 3. FastISel (`-O0`, only where GlobalISel doesn't win first)
+
+> [!warning] `-O0` does **not** imply FastISel — and not on this vault's own example target
+> `TargetPassConfig` tests **GlobalISel before** the `-O0`/FastISel branch. So any target that opts into GlobalISel takes it at `-O0` and FastISel never runs. **AArch64 is such a target**: `aarch64-enable-global-isel-at-O` is `cl::init(0)` and `CodeGenOptLevel::None == 0`, so the `optLevel <= 0` test fires. Since the [[running-example]] is compiled for Apple arm64, `clang -O0` there selects **GlobalISel**, not FastISel. FastISel at `-O0` is the x86-64 story. → [[llvm-version]]
 
 A fast, **best-effort** selector for unoptimized builds: it handles common cases directly for compile speed and **falls back to SelectionDAG** for anything it can't select.
 

@@ -44,7 +44,7 @@ verified_on: ""
 > | **MemoryUse** | reads but does *not* modify memory | `load`, `readonly` call |
 > | **MemoryPhi** | φ for memory at CFG merges | merges may-reaching memory versions |
 >
-> Each `MemoryDef`/`MemoryUse` links to the access it depends on. Initially every `MemoryDef` conservatively clobbers every other; the analysis then disambiguates.
+> Each `MemoryDef`/`MemoryUse` links to the access it depends on. Initially every `MemoryDef` conservatively clobbers every other; **the walker** then disambiguates *on demand*. Note the asymmetry, which the header states outright: `MemoryUse`s are disambiguated, but the `MemoryDef` chain deliberately **is not** — that would need multiple reaching definitions. (Defs do cache an "optimized" clobber, but that's a cache, not a change to the chain.)
 
 ### 2. Worked example
 
@@ -106,7 +106,12 @@ graph TD
 > Memory SSA versions each store block by block (Defs 1–4, φs 5–6), then one alias-guided walk climbs past 4, φ5 and φ6 to prove nothing in the loop clobbers `%p3` — the load resolves to `MemoryUse(1)`. (Regenerate: `_meta/anim/storyboards/memory-ssa-clobber-walk.json`.)
 
 > [!tip] Where this gets used
-> Memory SSA powers memory-aware passes: LICM (is this load invariant?), GVN/DSE, and [[loop-transformations#Fission (distribution)|loop distribution]] — LICM and DSE, for example, query `MemorySSAWalker::getClobberingMemoryAccess(MA)`.
+> Memory SSA powers memory-aware passes: **LICM** (is this load invariant? — it's mandatory there, `reportFatalUsageError` if absent), **DSE**, and the `early-cse<memssa>` variant. All query `MemorySSAWalker::getClobberingMemoryAccess(MA)`.
+>
+> Two passes it does **not** power, despite the plausible assumption: **GVN** uses MemDep — `enable-gvn-memoryssa` is `cl::init(false)` — and **[[loop-transformations#Fission (distribution)|loop distribution]]** contains no MemorySSA at all; it uses `LoopAccessAnalysis` + SCEV.
+
+> [!note] It is capped
+> `getClobberingMemoryAccess` walks are bounded by `memssa-check-limit` (default **100**); past it the walker stops refining and returns a conservative answer. `early-cse` caps its own clobber queries separately (`earlycse-mssa-optimization-cap`, default 500). Precision here is a compile-time budget, not a guarantee.
 
 > [!quote] Sources
 > - [MemorySSA](https://llvm.org/docs/MemorySSA.html)

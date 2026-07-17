@@ -69,7 +69,7 @@ verified_on: ""
 > }
 > ```
 > Every GEP's **second operand** is the base pointer `%P`; the **first index** (`1`, `2`, `0`) steps through it; the **second index** picks the field.
-> Reproduce: `clang -O0 -S -emit-llvm munge.c -o -` — clang emits each access as a step-GEP + field-GEP pair; at `-O1` each pair folds to a single byte-offset GEP (`getelementptr inbounds nuw i8, ptr %0, i64 8` for `&P[1].f1` — the `nuw` appears from LLVM 22's non-negative-index fold; the offset-0 pair for `&P[0].f1` folds away entirely).
+> Reproduce: `clang -O0 -S -emit-llvm munge.c -o -` — clang emits each access as a step-GEP + field-GEP pair; at `-O1` each pair folds to a single byte-offset GEP (`getelementptr inbounds nuw i8, ptr %0, i64 8` for `&P[1].f1` — the `nuw` comes from InstCombine's `nusw + nneg → nuw` fold; the offset-0 pair for `&P[0].f1` folds away entirely).
 
 > [!figure]+ Animation — how the indices become a byte offset
 > ![getelementptr-index-walk.gif](attachments/getelementptr-index-walk.gif)
