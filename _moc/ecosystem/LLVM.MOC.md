@@ -30,6 +30,8 @@ A dependency-ordered reading path plus a jump-to-any-topic index for the LLVM-th
 9. **[[code-generation-overview|Code Generation (Backend)]]** — instruction selection → scheduling → register allocation → MC emission. _Prereq: [[llvm-basics]], [[ssa-form]]._
    - ↳ deep dives: **[[liveness-analysis|Liveness]]** (feeds regalloc), **[[mc-layer|MC Layer]]** (asm/object emission), **[[debug-info|Debug Info]]** (DWARF, debugify)
 10. **[[link-time-optimization|Link-Time Optimization]]** — LTO & ThinLTO: whole-program optimization at link time; `-flto` makes a `.o` LLVM bitcode. _Prereq: [[inlining]], [[call-graph]]._
+11. **[[sanitizers|Sanitizers]]** — instrumentation pass + runtime + shadow memory; the dynamic bug-finders (`llvm/lib/Transforms/Instrumentation`). _Prereq: [[llvm-basics]], [[debug-info]]._
+    - ↳ deep dives: **[[address-sanitizer|ASan]]** · **[[memory-sanitizer|MSan]]** · **[[thread-sanitizer|TSan]]**
 
 > Tip: after [[value-numbering]], revisit the transform half of [[loop-transformations]] (LICM, unroll, fusion) — they build on [[loop-info|LoopInfo]] + LCSSA + [[pointer-alias-analysis|alias analysis]].
 

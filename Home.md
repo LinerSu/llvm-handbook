@@ -82,7 +82,7 @@ Everything left of `AST` is Clang's front end (chapter [[Source-Level-Analysis.M
 
 **Cross-cutting — the *other* level (front end)** → [[Source-Level-Analysis.MOC|Front-End & Source-Level Analysis]] — most of this book analyzes LLVM IR; this chapter covers analysis on the Clang **AST/CFG** *before* lowering (the [[clang-static-analyzer|Static Analyzer]], the [[clang-dataflow-framework|dataflow framework]]) and *when* source-level beats IR-level. *(read after 2 & 5)*
 
-**Cross-cutting — security** → [[Memory-Safety-Hardening.MOC|Memory Safety & C/C++ Hardening]] — the features/analyses that eliminate whole classes of memory-safety bugs: bounds ([[fbounds-safety]], [[safe-buffers]]), lifetime ([[lifetime-safety]]), type ([[typed-allocators]]), control-flow ([[pointer-authentication]]), and scaling them ([[interprocedural-summaries]], [[scalable-static-analysis]]).
+**Cross-cutting — security** → [[Memory-Safety-Hardening.MOC|Memory Safety & C/C++ Hardening]] — the features/analyses that eliminate whole classes of memory-safety bugs: bounds ([[fbounds-safety]], [[safe-buffers]]), lifetime ([[lifetime-safety]]), type ([[typed-allocators]]), control-flow ([[pointer-authentication]]), and scaling them ([[interprocedural-summaries]], [[scalable-static-analysis]]) — plus the *dynamic* counterpart that catches what static guarantees miss: **[[sanitizers]]** ([[address-sanitizer|ASan]], [[memory-sanitizer|MSan]], [[thread-sanitizer|TSan]]).
 
 **Reference shelf** — theory: [[dataflow-foundations]], [[polyhedral-model]]; textbook crosswalks: [[muchnick.MOC|Muchnick]] · [[dragon-book-ch9.MOC|Dragon Book Ch.9]] (and Ch.6/8/10/11/12).
 
