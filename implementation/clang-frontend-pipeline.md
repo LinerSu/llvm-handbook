@@ -9,7 +9,7 @@ implements:
 src: "clang/lib/Sema"
 docs: "Clang — Introduction to the Clang AST ↗ https://clang.llvm.org/docs/IntroductionToTheClangAST.html"
 prereqs: [llvm-basics]
-related: [clang-ast, type-checking, control-flow-translation]
+related: [clang-ast, type-checking, control-flow-translation, clang-preprocessor, clang-codegen, clang-frontend-actions, clang-driver]
 tags: [kind/pass, status/unverified]
 status: unverified
 verified_on: ""
@@ -39,13 +39,13 @@ This realizes [[source-level-analysis|source-level analysis]] at its root: it is
 
 The output is the [[clang-ast|Clang AST]] — the typed, sugar-preserving, source-located tree of `Decl` / `Stmt` (with `Expr` a `Stmt`) / `Type`, all owned by `ASTContext`, rooted at `TranslationUnitDecl`. That one artifact is consumed two ways:
 
-- **Lowering** — [[control-flow-translation|CodeGen]] walks the AST and emits [[control-flow-translation|LLVM IR]] (dropping the source fidelity described in [[clang-ast]]).
+- **Lowering** — [[clang-codegen|CodeGen]] walks the AST and emits [[clang-codegen|LLVM IR]] (dropping the source fidelity described in [[clang-ast]]); the control-flow slice is [[control-flow-translation]].
 - **Source-level analysis** — the Clang CFG, the Static Analyzer, clang-tidy and Sema's own warnings all run on this AST, so their diagnostics point at real source.
 
 ## 3. The stages
 
 **(a) Lex — characters → tokens (`clang/lib/Lex`).**
-The `Lexer` (`clang/include/clang/Lex/Lexer.h`) scans raw characters into `Token`s (`Token.h`); the `Preprocessor` (`Preprocessor.h`) sits on top, driving `#include` resolution and **macro expansion** so the parser sees a single, already-expanded token stream. Tokens, not characters, are the parser's alphabet.
+The `Lexer` (`clang/include/clang/Lex/Lexer.h`) scans raw characters into `Token`s (`Token.h`); the `Preprocessor` (`Preprocessor.h`) sits on top, driving `#include` resolution and **macro expansion** so the parser sees a single, already-expanded token stream. Tokens, not characters, are the parser's alphabet. → deep dive: [[clang-preprocessor]].
 
 **(b) Parse — tokens → structure (`clang/lib/Parse`).**
 A **hand-written recursive-descent parser** (*"our recursive descent parser"*, `clang/lib/Parse/ParseStmt.cpp`): `ParseDeclaration`, `ParseStatement`, `ParseExpression`, …, driven from `ParseFirstTopLevelDecl` / `ParseTopLevelDecl`. It does **not** build nodes itself.

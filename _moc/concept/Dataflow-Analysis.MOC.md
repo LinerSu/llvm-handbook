@@ -27,6 +27,7 @@ Hand-rolled iterations in LLVM (`SparsePropagation`, SCCP), versus MLIR's reusab
 - **[[sparse-conditional-constant-propagation|SCCP]]** — joint constant + reachability lattice.
 - **[[lazy-value-info|Lazy Value Info]]** — on-demand per-edge value ranges/predicates.
 - **[[correlated-value-propagation|Correlated Value Propagation]]** — simplifies from LVI ranges.
+- **[[liveness-analysis|Liveness Analysis]]** — the canonical **backward/union** analysis (`LiveIn = use ∪ (LiveOut − def)`); on SSA IR replaced by def-use chains, it resurfaces at the machine level to drive [[register-allocation]].
 - Feeds [[value-numbering|value numbering]] and [[pointer-alias-analysis|alias analysis]].
 
 ## 5. Limitations & future

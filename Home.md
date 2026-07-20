@@ -42,13 +42,16 @@ Everything left of `AST` is Clang's front end (chapter [[Source-Level-Analysis.M
 
 | Stage | What happens | Note |
 |---|---|---|
-| Lex + Parse + Sema | build a type-checked AST; parsing and semantic analysis are interleaved, not separate passes | [[clang-frontend-pipeline]] |
-| Clang AST | the typed, sugar-preserving tree everything downstream reads | [[clang-ast]] |
+| Driver → `-cc1` | `clang foo.c` builds `Job`s and re-invokes itself as `clang -cc1`; the compiler runs *inside* that child | [[clang-driver]] |
+| Preprocess + Lex | chars → one expanded token stream: the `Lexer` under the `Preprocessor` (`#include`, macros, `#if`) | [[clang-preprocessor]] |
+| Parse + Sema (run by a FrontendAction) | build a type-checked AST, parsing interleaved with Sema; a `FrontendAction` hands the AST to an `ASTConsumer` | [[clang-frontend-pipeline]] · [[clang-frontend-actions]] |
+| Clang AST (+ diagnostics) | the typed, sugar-preserving tree everything downstream reads; every node carries a `SourceLocation` | [[clang-ast]] · [[source-locations-and-diagnostics]] |
 | Clang CFG + source-level analyses | analysis *before* lowering — Static Analyzer, `clang::dataflow`, LifetimeSafety | [[Source-Level-Analysis.MOC]] · [[clang-static-analyzer]] · [[clang-dataflow-framework]] · [[lifetime-safety]] |
-| CodeGen (AST → IR) | `if`/`while`/`switch` lower to basic blocks + terminators + `phi` | [[control-flow-translation]] |
+| CodeGen (AST → IR) | walk the AST, emit naïve `alloca`-heavy IR; `if`/`while`/`switch` lower to blocks + terminators + `phi` | [[clang-codegen]] · [[control-flow-translation]] |
 | Unoptimized IR → SSA | every local starts as an `alloca`; `mem2reg` promotes to `phi`-form SSA | [[mem2reg]] · [[ssa-form]] — see [[running-example#2. Front-end IR — everything is a stack slot|running example §2]] |
-| Optimizer passes | loop opts, redundancy elimination, constant propagation, inlining, alias analysis — the bulk of [[LLVM.MOC|the LLVM chapter]] | [[Loop-Optimization.MOC]] · [[Redundancy-Elimination.MOC]] · [[Constant-Propagation.MOC]] · [[Interprocedural-Analysis.MOC]] · [[pointer-alias-analysis]] |
-| Backend | instruction selection → scheduling → register allocation → MC emission | [[code-generation-overview]] · [[register-allocation]] · [[instruction-scheduling]] · [[instruction-selection]] |
+| Optimizer passes | loop opts, redundancy elimination, constant propagation, inlining, alias analysis, **vectorization** — the bulk of [[LLVM.MOC\|the LLVM chapter]] | [[Loop-Optimization.MOC]] · [[vectorization]] · [[Redundancy-Elimination.MOC]] · [[Constant-Propagation.MOC]] · [[Interprocedural-Analysis.MOC]] · [[pointer-alias-analysis]] |
+| Backend | instruction selection → scheduling → register allocation (on [[liveness-analysis\|liveness]]) → **MC emission** | [[code-generation-overview]] · [[instruction-selection]] · [[instruction-scheduling]] · [[register-allocation]] · [[mc-layer]] · [[debug-info]] |
+| Link-time (whole program) | defer optimization to the link: cross-module inlining/devirt over the *whole* program; under `-flto` a `.o` is LLVM bitcode | [[link-time-optimization]] · [[Interprocedural-Analysis.MOC]] |
 
 > [!tip] Answering "where does pass/feature X plug in?"
 > Find which node above it touches, then open that node's note or MOC. A flag that only changes the IR (most `-fsanitize=`, most `-O` behavior) plugs in at or after `CG`; a flag that changes whether code is well-formed, or a warning's text, plugs in at `Sema`. A flag that changes both (e.g. `-fwrapv`) has a foot in each side — `Sema`'s constexpr evaluator and `CG`'s codegen both have to agree with each other.

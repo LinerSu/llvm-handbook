@@ -20,10 +20,19 @@ The organizing idea of the chapter: the **same** program can be analyzed on the 
 ## 2. The data structures
 - **[[clang-ast|Clang AST]]** — the typed, sugar-preserving parse tree; retains source locations, `typedef`s, macros, templates *(data-structure · frontend)*.
 - **[[clang-cfg|Clang CFG]]** — the source-level control-flow graph built from the AST, modelling C/C++ semantics (short-circuit, destructors) that the [[control-flow-graph|LLVM IR CFG]] has lowered away *(data-structure · frontend)*.
-- *how the AST is built* → **[[clang-frontend-pipeline|Front-End Pipeline]]** — Lex → Parse → Sema → AST, with parsing interleaved with semantic analysis (`ActOn…`) *(implementation)*.
+- **[[source-locations-and-diagnostics|Source Locations & Diagnostics]]** — the positioning backbone: `SourceLocation` / `SourceManager` (spelling vs expansion) and the `DiagnosticsEngine` every warning rides on *(data-structure · frontend)*.
+
+## 3. How the front end is built & run
+The pipeline that produces the AST, and the machinery that runs and persists it — the *text → tokens → AST → IR* spine plus its plumbing.
+- **[[clang-driver|The Clang Driver]]** — `clang foo.c` is the driver: it builds `Job`s and re-invokes itself as `clang -cc1`; the compiler proper runs *inside* that child *(implementation)*.
+- **[[clang-preprocessor|Preprocessor & Lexer]]** — chars → a single expanded token stream: the `Lexer` (one buffer) under the `Preprocessor` (`#include`, macros, `#if`) *(implementation)*.
+- **[[clang-frontend-pipeline|Front-End Pipeline]]** — Lex → Parse → Sema → AST, with parsing interleaved with semantic analysis (`ActOn…`) *(implementation)*.
+- **[[clang-frontend-actions|FrontendActions & CompilerInstance]]** — how the pipeline is *run*: `CompilerInstance` + a `FrontendAction` handing the AST to an `ASTConsumer` (`-emit-llvm`, `-ast-dump`, plugins) *(implementation)*.
+- **[[clang-codegen|Clang CodeGen]]** — the boundary out of the front end: walk the AST, emit naïve `alloca`-heavy LLVM IR (`CodeGenModule` / `CodeGenFunction`) *(implementation)*.
+- **[[clang-modules-and-pch|PCH & Clang Modules]]** — serialize the AST to a bitstream and read it back lazily (`ASTWriter`/`ASTReader`); how `import` replaces textual `#include` *(implementation)*.
 - *how you consume the AST* → **[[ast-traversal|AST Traversal]]** — `RecursiveASTVisitor`, AST matchers, `StmtVisitor` (the AST-side counterpart of IR's [[visitor-pattern|InstVisitor]]) *(concept)*.
 
-## 3. The tools built on it
+## 4. The tools built on it
 - **[[clang-static-analyzer|Clang Static Analyzer]]** — path-sensitive symbolic execution over the Clang CFG *(implementation)*.
 - **[[lifetime-safety|Clang LifetimeSafety]]** — intra-procedural loan/origin dataflow over the Clang CFG for *temporal* safety (use-after-free, dangling captures) *(implementation)*.
 - **[[clang-dataflow-framework|Clang Dataflow Framework]]** — the flow-sensitive, reusable analysis framework in `clang/include/clang/Analysis/FlowSensitive/` *(concept)*.

@@ -22,6 +22,7 @@ Every transform is a **dependence-analysis legality test** + a rewrite (the gold
 
 ## 3. The transforms
 Unrolling, peeling/splitting, LICM (+ rotation), vectorization, fission, fusion. → **[[loop-transformations|Loop Transformations]]** *(concept · optimization)*
+- The highest-impact transform gets its own note → **[[vectorization|Vectorization (LoopVectorize, SLP, VPlan)]]** — legality (via [[dependence-analysis]]) + cost model + widening; the SLP vectorizer for straight-line code *(concept · optimization)*.
 
 ## 4. Where it's used
 Performance (locality, fewer branches), enabling vectorization and parallelism, and bounded model checking (full unrolling). → `application/` *(to be added)*
