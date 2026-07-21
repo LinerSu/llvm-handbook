@@ -93,6 +93,7 @@ Everything left of `AST` is Clang's front end (chapter [[Source-Level-Analysis.M
 - **Chapters** — see the **📖 Reading path** above for the ordered concept-MOC curriculum.
 - **Book bridges** — [[dragon-book-ch6.MOC|Dragon Book Ch.6 → LLVM]] (Intermediate-Code Generation) · [[dragon-book-ch8.MOC|Ch.8 → LLVM]] (Code Generation) · [[dragon-book-ch9.MOC|Ch.9]] (Machine-Indep. Optimizations) · [[dragon-book-ch10.MOC|Ch.10]] (Instruction-Level Parallelism) · [[dragon-book-ch11.MOC|Ch.11]] (Parallelism & Locality) · [[dragon-book-ch12.MOC|Ch.12]] (Interprocedural Analysis) · [[muchnick.MOC|Muchnick — Advanced Compiler Design]] (whole-book reading map)
 - **The rulebook** — [[classification-protocol]] · [[controlled-vocabulary]] · [[callout-legend]] · [[source-hierarchy]] · [[chapter-bridge-pipeline]] · [[note-checklist]] · [[llvm-version]]
+- **What's still missing** — [[coverage-gaps|Coverage Gaps]] (the backlog: which compiler topics have no note yet, with proposed classification) · [[improvement-ledger]] (per-note improvement queue)
 
 ## The bookshelf (facets) — *storage, not reading order*
 Where each note *lives* (one axis: the kind of knowledge). To *read*, use the path above — not these folders.
