@@ -7,7 +7,7 @@ concepts: [visitor-pattern, source-level-analysis]
 src: "clang/include/clang/AST/RecursiveASTVisitor.h"
 docs: "Clang — How to write RecursiveASTVisitor ↗ https://clang.llvm.org/docs/RAVFrontendAction.html"
 prereqs: [clang-ast]
-related: [visitor-pattern, clang-ast, safe-buffers, lifetime-safety]
+related: [visitor-pattern, clang-ast, safe-buffers, lifetime-safety, clang-frontend-actions]
 tags: [kind/concept, status/unverified]
 status: unverified
 verified_on: ""

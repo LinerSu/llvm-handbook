@@ -28,6 +28,8 @@ Assign virtual to physical registers, spilling under pressure. → **[[register-
 
 ## 5. Frame & emission
 - **[[shrink-wrapping|Shrink Wrapping]]** — sink prologue/epilogue so the frame is set up only on paths that need it.
+- **[[mc-layer|The MC Layer]]** — the last lowering: `MachineInstr` → `MCInst` → one `MCStreamer` that prints `.s` *or* writes an object (the integrated assembler) *(concept · codegen)*.
+- **[[debug-info|Debug Info]]** — `!dbg`/`DILocation`/`DISubprogram` → DWARF; how a source location survives optimization, and `debugify` that polices it *(concept · codegen)*.
 
 ## 6. Where it's used / limits
 Every compiled target; quality is dominated by ISel pattern coverage and regalloc heuristics. Target-specific behavior is the main version- and target-sensitivity in the vault.
