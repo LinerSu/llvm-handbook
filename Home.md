@@ -82,7 +82,7 @@ Everything left of `AST` is Clang's front end (chapter [[Source-Level-Analysis.M
 
 **Cross-cutting — the *other* level (front end)** → [[Source-Level-Analysis.MOC|Front-End & Source-Level Analysis]] — most of this book analyzes LLVM IR; this chapter covers analysis on the Clang **AST/CFG** *before* lowering (the [[clang-static-analyzer|Static Analyzer]], the [[clang-dataflow-framework|dataflow framework]]) and *when* source-level beats IR-level. *(read after 2 & 5)*
 
-**Cross-cutting — security** → [[Memory-Safety-Hardening.MOC|Memory Safety & C/C++ Hardening]] — the features/analyses that eliminate whole classes of memory-safety bugs: bounds ([[fbounds-safety]], [[safe-buffers]]), lifetime ([[lifetime-safety]]), type ([[typed-allocators]]), control-flow ([[pointer-authentication]]), and scaling them ([[interprocedural-summaries]], [[scalable-static-analysis]]).
+**Cross-cutting — security** → [[Memory-Safety-Hardening.MOC|Memory Safety & C/C++ Hardening]] — the features/analyses that eliminate whole classes of memory-safety bugs: bounds ([[fbounds-safety]], [[safe-buffers]]), lifetime ([[lifetime-safety]]), type ([[typed-allocators]]), control-flow ([[pointer-authentication]]), and scaling them ([[interprocedural-summaries]], [[scalable-static-analysis]]) — plus the *dynamic* counterpart that catches what static guarantees miss: **[[sanitizers]]** ([[address-sanitizer|ASan]], [[memory-sanitizer|MSan]], [[thread-sanitizer|TSan]]).
 
 **Reference shelf** — theory: [[dataflow-foundations]], [[polyhedral-model]]; textbook crosswalks: [[muchnick.MOC|Muchnick]] · [[dragon-book-ch9.MOC|Dragon Book Ch.9]] (and Ch.6/8/10/11/12).
 
@@ -93,6 +93,7 @@ Everything left of `AST` is Clang's front end (chapter [[Source-Level-Analysis.M
 - **Chapters** — see the **📖 Reading path** above for the ordered concept-MOC curriculum.
 - **Book bridges** — [[dragon-book-ch6.MOC|Dragon Book Ch.6 → LLVM]] (Intermediate-Code Generation) · [[dragon-book-ch8.MOC|Ch.8 → LLVM]] (Code Generation) · [[dragon-book-ch9.MOC|Ch.9]] (Machine-Indep. Optimizations) · [[dragon-book-ch10.MOC|Ch.10]] (Instruction-Level Parallelism) · [[dragon-book-ch11.MOC|Ch.11]] (Parallelism & Locality) · [[dragon-book-ch12.MOC|Ch.12]] (Interprocedural Analysis) · [[muchnick.MOC|Muchnick — Advanced Compiler Design]] (whole-book reading map)
 - **The rulebook** — [[classification-protocol]] · [[controlled-vocabulary]] · [[callout-legend]] · [[source-hierarchy]] · [[chapter-bridge-pipeline]] · [[note-checklist]] · [[llvm-version]]
+- **What's still missing** — [[coverage-gaps|Coverage Gaps]] (the backlog: which compiler topics have no note yet, with proposed classification) · [[improvement-ledger]] (per-note improvement queue)
 
 ## The bookshelf (facets) — *storage, not reading order*
 Where each note *lives* (one axis: the kind of knowledge). To *read*, use the path above — not these folders.

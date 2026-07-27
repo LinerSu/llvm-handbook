@@ -34,10 +34,18 @@ You cannot rewrite the ocean of existing C/C++, so you **harden it**: restrict t
 - **[[interprocedural-summaries|Summary-Based (Compositional) Analysis]]** — the technique (per-procedure summaries composed over the [[call-graph]]) *(concept · analysis)*.
 - **[[scalable-static-analysis|Scalable Static Analysis Framework (SSAF)]]** — "ThinLTO for static analysis": whole-program summary pipeline driving automated raw-pointer→`std::span` migration *(implementation · analysis, WIP)*.
 
-## 6. The source-level analyzers
+## 6. Dynamic detection — the sanitizers
+Everything above is *static*: change the language, or reason about all paths. The complementary attack is to **instrument and run**, catching the bug precisely as it happens (but only on executed paths) → **[[sanitizers|Sanitizers]]** — instrumentation pass + runtime + **shadow memory** *(concept · runtime)*.
+- **[[address-sanitizer|AddressSanitizer]]** — addressability: overflow, use-after-free/return; 1 shadow byte per 8 app bytes + redzones *(implementation · runtime)*.
+- **[[memory-sanitizer|MemorySanitizer]]** — uninitialised reads; bit-precise 1:1 shadow that propagates through arithmetic *(implementation · runtime)*.
+- **[[thread-sanitizer|ThreadSanitizer]]** — data races; a thin instrumentation pass over a happens-before runtime *(implementation · runtime)*.
+
+Read alongside §2–§3: sanitizers *find* the bugs that [[fbounds-safety]] / [[safe-buffers]] / [[lifetime-safety]] aim to make impossible.
+
+## 7. The source-level analyzers
 The bug-finders that catch what the above don't eliminate → the whole [[Source-Level-Analysis.MOC|Front-End & Source-Level Analysis]] chapter: **[[clang-static-analyzer|Clang Static Analyzer]]** (path-sensitive symbolic execution) and the **[[clang-dataflow-framework|Clang Dataflow Framework]]** (flow-sensitive).
 
-## 7. Limitations & frontier
+## 8. Limitations & frontier
 Most of these ship **experimental / incrementally** (`-fbounds-safety`, SSAF); enforcement is cheap-local + runtime because whole-program static proof doesn't scale ([[interprocedural-summaries]] is the scaling answer). The frontier is lowering **adoption cost** via automatic annotation inference / source rewriting (SSAF, clang-reforge).
 
 ```dataview
